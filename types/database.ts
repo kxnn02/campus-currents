@@ -1,29 +1,30 @@
 // Core database types matching Supabase schema
 // Import these in components to ensure type safety
 
-export interface Student {
+export type UserRole = 'student' | 'admin' | 'super_admin';
+export type Level = 'grade_school' | 'junior_high' | 'senior_high' | 'college' | 'law' | 'eteeap';
+export type Program = 'BSIT' | 'BSBA' | 'BSA' | 'BSED' | 'BEED' | 'AB_PSYCH' | 'AB_COMM' | 'JD' | 'ETEEAP' | 'STEM' | 'ABM' | 'HUMSS' | 'GAS' | 'TVL' | 'OTHER';
+
+export interface Profile {
   id: string;
-  student_id: string;
-  first_name: string;
-  last_name: string;
   email: string;
-  program: string;
-  year_level: number;
-  section: string;
+  first_name: string | null;
+  last_name: string | null;
+  role: UserRole;
+  level: Level | null;
+  student_id: string | null;
+  program: Program | null;
+  year_level: number | null;
+  section: string | null;
   phone_number: string | null;
   fcm_token: string | null;
-  created_at: string;
-}
-
-export interface Admin {
-  id: string;
-  name: string;
-  email: string;
-  role: 'super_admin' | 'admin' | 'dept_head' | 'org_officer';
-  office: string;
+  office: string | null;
   can_send_emergency: boolean;
   pin_hash: string | null;
+  avatar_url: string | null;
+  school_id: string;
   created_at: string;
+  updated_at: string;
 }
 
 export type NotificationTier = 'routine' | 'important' | 'emergency';
@@ -41,14 +42,17 @@ export interface Broadcast {
   target_audience: Record<string, unknown>;
   is_pinned: boolean;
   linked_event_id: string | null;
-  linked_suspension_id: string | null;
+  is_deleted: boolean;
+  version: number;
+  school_id: string;
   sent_at: string;
   created_at: string;
+  updated_at: string;
 }
 
 export type SuspensionSource = 'manila_lgu' | 'pagasa' | 'deped' | 'school_admin';
 export type SuspensionReason = 'weather_flooding' | 'weather_typhoon' | 'lgu_order' | 'facilities' | 'security' | 'other';
-export type SuspensionScope = 'all_levels' | 'college_only' | 'specific_programs';
+export type SuspensionScope = 'all_levels' | 'grade_school_only' | 'k12_only' | 'junior_high_only' | 'senior_high_only' | 'college_only' | 'law_only' | 'specific_programs';
 export type SuspensionDuration = 'full_day' | 'am_only' | 'pm_only';
 export type SuspensionStatus = 'active' | 'lifted';
 
@@ -63,7 +67,9 @@ export interface ClassSuspension {
   suspension_date: string;
   status: SuspensionStatus;
   broadcast_id: string | null;
+  school_id: string;
   created_at: string;
+  updated_at: string;
 }
 
 export type EventCategory = 'academic' | 'school_event' | 'org_activity' | 'administrative' | 'holiday' | 'sports' | 'seminar';
@@ -81,16 +87,21 @@ export interface CalendarEvent {
   target_audience: Record<string, unknown>;
   attachment_url: string | null;
   status: 'active' | 'cancelled';
+  is_deleted: boolean;
   created_by: string;
+  school_id: string;
   created_at: string;
+  updated_at: string;
 }
 
+export type DeliveryMethod = 'push' | 'sms' | 'both';
 export type AcknowledgmentType = 'safe' | 'need_help';
 
 export interface DeliveryReceipt {
   id: string;
   broadcast_id: string;
   student_id: string;
+  delivery_method: DeliveryMethod;
   delivered_at: string | null;
   read_at: string | null;
   acknowledged_at: string | null;
