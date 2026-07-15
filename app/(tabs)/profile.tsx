@@ -55,6 +55,10 @@ export default function ProfileScreen() {
     return unsubscribe;
   }, [navigation, fetchProfile]);
 
+  function handleEditProfile() {
+    router.push('/profile-edit' as never);
+  }
+
   function handleSignOut() {
     Alert.alert(
       'Sign Out',
