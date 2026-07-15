@@ -59,16 +59,16 @@ export function getNavigationTarget(data: NotificationData | undefined | null): 
 function navigateToTarget(target: NavigationTarget): void {
   switch (target.type) {
     case 'emergency':
-      router.navigate('/modal');
+      router.navigate('/emergency-overlay' as never);
       break;
     case 'status':
-      router.navigate('/(tabs)/status');
+      router.navigate('/(tabs)/status' as never);
       break;
     case 'broadcast_detail':
-      router.navigate(`/broadcast/${target.broadcastId}`);
+      router.navigate(`/broadcast-detail?id=${target.broadcastId}` as never);
       break;
     case 'feed':
-      router.navigate('/(tabs)');
+      router.navigate('/(tabs)' as never);
       break;
   }
 }

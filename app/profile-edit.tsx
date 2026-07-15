@@ -108,9 +108,10 @@ export default function ProfileEditScreen() {
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('Profile not found');
 
       const profile = data as Profile;
       setEmail(profile.email || '');

@@ -113,6 +113,6 @@ export function useEventDetail(eventId: string) {
       return data as CalendarEvent;
     },
     staleTime: staleTimeConfig.calendarEvents,
-    enabled: !!eventId,
+    enabled: !!eventId && eventId.length > 0,
   });
 }

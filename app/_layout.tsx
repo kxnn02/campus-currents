@@ -145,8 +145,6 @@ function RootLayoutNav() {
     } catch {
       // On error, redirect to profile completion (safe default)
       router.replace('/profile-completion' as never);
-      // On error, default to tabs (profile check is non-blocking)
-      router.replace('/(tabs)' as never);
     }
   }
 
@@ -162,7 +160,7 @@ function RootLayoutNav() {
         .select('id, status')
         .eq('status', 'active')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!emergency) {
         return '/(tabs)';

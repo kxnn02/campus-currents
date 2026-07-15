@@ -148,7 +148,7 @@ export function useBroadcastDetail(broadcastId: string) {
       } as BroadcastWithSender;
     },
     staleTime: staleTimeConfig.broadcasts,
-    enabled: !!broadcastId,
+    enabled: !!broadcastId && broadcastId.length > 0,
   });
 }
 

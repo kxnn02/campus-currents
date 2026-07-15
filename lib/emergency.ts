@@ -71,7 +71,7 @@ export function EmergencyProvider({ children }: { children: React.ReactNode }) {
         .select('*')
         .eq('status', 'active')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         // No active emergency — clear state
