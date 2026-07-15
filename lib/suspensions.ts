@@ -1,3 +1,5 @@
+import { useQuery } from '@tanstack/react-query';
+
 import {
   ClassSuspension,
   Level,
@@ -6,6 +8,8 @@ import {
   SuspensionReason,
   SuspensionSource,
 } from '@/types/database';
+import { queryKeys, staleTimeConfig } from '@/lib/query';
+import { supabase } from '@/lib/supabase';
 
 /**
  * Determines whether a class suspension applies to a given student based on scope matching.
@@ -120,4 +124,45 @@ export function deriveLevelFromProgram(program: Program): Level {
     default:
       return 'college'; // safe default for SSC-R Manila
   }
+}
+
+
+/**
+ * Returns today's date string in Asia/Manila timezone formatted as YYYY-MM-DD.
+ */
+function getTodayManila(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+}
+
+/**
+ * Fetches today's active class suspensions that apply to the given student profile.
+ *
+ * - Queries `class_suspensions` where `suspension_date = today (Asia/Manila)` AND `status = 'active'`
+ * - Applies client-side filtering via `suspensionAppliesToStudent` using the student's level and program
+ * - Derives level from program via `deriveLevelFromProgram` when profile.level is null
+ *
+ * Uses staleTime of 30 seconds per configuration.
+ */
+export function useTodaySuspensions(profile: { level: Level | null; program: Program | null }) {
+  const level = profile.level ?? (profile.program ? deriveLevelFromProgram(profile.program) : null);
+
+  return useQuery<ClassSuspension[]>({
+    queryKey: queryKeys.suspensions.today(),
+    queryFn: async () => {
+      const today = getTodayManila();
+
+      const { data, error } = await supabase
+        .from('class_suspensions')
+        .select('*')
+        .eq('suspension_date', today)
+        .eq('status', 'active');
+
+      if (error) throw error;
+
+      return (data as ClassSuspension[]).filter((suspension) =>
+        suspensionAppliesToStudent(suspension, { level, program: profile.program })
+      );
+    },
+    staleTime: staleTimeConfig.suspensions,
+  });
 }

@@ -1,4 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
 import { CalendarEvent, EventCategory } from '@/types/database';
+import { queryKeys, staleTimeConfig } from '@/lib/query';
+import { supabase } from '@/lib/supabase';
 import Colors from '@/constants/Colors';
 
 /**
@@ -49,5 +52,67 @@ export function sortCalendarEvents(events: CalendarEvent[]): CalendarEvent[] {
     const aStart = new Date(a.start_date).getTime();
     const bStart = new Date(b.start_date).getTime();
     return aStart - bStart;
+  });
+}
+
+// --- React Query Hooks ---
+
+/**
+ * Fetches calendar events for a given month with ±7 day padding for edge visibility.
+ * Filters by is_deleted = false and status = 'active', selecting events whose
+ * date range overlaps with the padded month window.
+ */
+export function useMonthEvents(year: number, month: number) {
+  return useQuery({
+    queryKey: queryKeys.calendar.month(year, month),
+    queryFn: async () => {
+      // Calculate padded date range: first of month - 7 days to last of month + 7 days
+      const firstOfMonth = new Date(year, month - 1, 1);
+      const lastOfMonth = new Date(year, month, 0); // day 0 of next month = last day of current month
+
+      const rangeStart = new Date(firstOfMonth);
+      rangeStart.setDate(rangeStart.getDate() - 7);
+
+      const rangeEnd = new Date(lastOfMonth);
+      rangeEnd.setDate(rangeEnd.getDate() + 7);
+
+      const rangeStartISO = rangeStart.toISOString();
+      const rangeEndISO = rangeEnd.toISOString();
+
+      // Fetch events that overlap with the range:
+      // An event overlaps if its start_date <= rangeEnd AND end_date >= rangeStart
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select('*')
+        .eq('is_deleted', false)
+        .eq('status', 'active')
+        .lte('start_date', rangeEndISO)
+        .gte('end_date', rangeStartISO);
+
+      if (error) throw error;
+      return (data as CalendarEvent[]) ?? [];
+    },
+    staleTime: staleTimeConfig.calendarEvents,
+  });
+}
+
+/**
+ * Fetches a single calendar event by its ID.
+ */
+export function useEventDetail(eventId: string) {
+  return useQuery({
+    queryKey: queryKeys.calendar.event(eventId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+      if (error) throw error;
+      return data as CalendarEvent;
+    },
+    staleTime: staleTimeConfig.calendarEvents,
+    enabled: !!eventId,
   });
 }
