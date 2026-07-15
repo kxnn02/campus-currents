@@ -3,14 +3,20 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { QueryClientProvider } from '@tanstack/react-query';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { supabase } from '@/lib/supabase';
 import { createSessionFromUrl } from '@/lib/auth';
+import { queryClient } from '@/lib/query';
+import { EmergencyProvider, useEmergency } from '@/lib/emergency';
+import { NetworkProvider, StaleDataBanner, TimeoutToast } from '@/lib/network';
+import { useConnectivitySync } from '@/lib/connectivity';
 import * as Linking from 'expo-linking';
 
 export {
@@ -43,7 +49,15 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <EmergencyProvider>
+        <NetworkProvider>
+          <RootLayoutNav />
+        </NetworkProvider>
+      </EmergencyProvider>
+    </QueryClientProvider>
+  );
 }
 
 function RootLayoutNav() {
@@ -52,6 +66,9 @@ function RootLayoutNav() {
   const segments = useSegments();
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const appState = useRef(AppState.currentState);
+  const { checkActiveEmergency, activeEmergency, hasAcknowledged, showOverlay } = useEmergency();
+  const { isServingStaleData, showTimeoutToast, dismissTimeoutToast } = useConnectivitySync();
 
   // Handle deep link redirects from OAuth
   const url = Linking.useURL();
@@ -84,6 +101,26 @@ function RootLayoutNav() {
       router.replace('/(auth)/login' as never);
     }
   }, [session, initialized, segments]);
+
+  // AppState listener: check for active emergency when app returns to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        // App has come to foreground — check if there's an active unacknowledged emergency
+        checkActiveEmergency();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => subscription.remove();
+  }, [checkActiveEmergency]);
+
+  // Navigate to emergency overlay when emergency is active and unacknowledged
+  useEffect(() => {
+    if (showOverlay && activeEmergency && !hasAcknowledged) {
+      router.push('/emergency-overlay' as never);
+    }
+  }, [showOverlay, activeEmergency, hasAcknowledged]);
 
   async function checkProfileAndRedirect() {
     try {
@@ -144,6 +181,8 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <TimeoutToast visible={showTimeoutToast} onDismiss={dismissTimeoutToast} />
+      <StaleDataBanner visible={isServingStaleData} />
       <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

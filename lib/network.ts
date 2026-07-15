@@ -94,6 +94,67 @@ export function OfflineBanner(): React.ReactElement | null {
  */
 export const NetworkBanner = OfflineBanner;
 
+// --- StaleDataBanner ---
+
+/**
+ * Subtle banner shown when the app is offline and serving cached/stale data.
+ * Less urgent than OfflineBanner — uses a muted style.
+ * Rendered conditionally based on `isServingStaleData` prop.
+ */
+export function StaleDataBanner({ visible }: { visible: boolean }): React.ReactElement | null {
+  if (!visible) {
+    return null;
+  }
+
+  return React.createElement(
+    View,
+    { style: styles.staleBanner },
+    React.createElement(
+      Text,
+      { style: styles.staleBannerText },
+      "You\u2019re offline \u2014 showing last available data"
+    )
+  );
+}
+
+// --- TimeoutToast ---
+
+/**
+ * Non-persistent toast banner for "Connection timed out" message.
+ * Auto-dismisses after 4 seconds, or can be manually dismissed.
+ */
+export function TimeoutToast({
+  visible,
+  onDismiss,
+}: {
+  visible: boolean;
+  onDismiss: () => void;
+}): React.ReactElement | null {
+  useEffect(() => {
+    if (visible) {
+      const timer = setTimeout(() => {
+        onDismiss();
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [visible, onDismiss]);
+
+  if (!visible) {
+    return null;
+  }
+
+  return React.createElement(
+    View,
+    { style: styles.toastBanner },
+    React.createElement(
+      Text,
+      { style: styles.toastText },
+      'Connection timed out'
+    )
+  );
+}
+
 // --- Styles ---
 
 const styles = StyleSheet.create({
@@ -108,5 +169,37 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  staleBanner: {
+    backgroundColor: '#F59E0B',
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  staleBannerText: {
+    color: '#1F2937',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  toastBanner: {
+    backgroundColor: '#374151',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginTop: 8,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+  },
+  toastText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
