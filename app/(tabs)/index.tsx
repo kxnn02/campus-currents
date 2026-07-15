@@ -58,6 +58,10 @@ export default function FeedScreen() {
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       resetUnread();
+      // Refetch feed data on focus to pick up new broadcasts
+      if (feedQuery.data) {
+        feedQuery.refetch();
+      }
     });
     return unsubscribe;
   }, [navigation, resetUnread]);

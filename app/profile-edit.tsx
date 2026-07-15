@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { queryClient } from '@/lib/query';
 import { validateProfileForm, ProfileCreateInput } from '@/lib/validation';
 import FormField from '@/components/FormField';
 import LoadingButton from '@/components/LoadingButton';
@@ -180,6 +181,10 @@ export default function ProfileEditScreen() {
         .eq('id', session.user.id);
 
       if (error) throw error;
+
+      // Invalidate any cached profile/feed data so screens refresh immediately
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['broadcasts', 'feed'] });
 
       Alert.alert('Success', 'Profile updated successfully.', [
         { text: 'OK', onPress: () => router.back() },

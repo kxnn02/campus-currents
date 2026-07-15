@@ -1,7 +1,8 @@
 import { StyleSheet, View, Text, Pressable, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { supabase } from '@/lib/supabase';
@@ -13,15 +14,12 @@ export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
+  const navigation = useNavigation();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  async function fetchProfile() {
+  const fetchProfile = useCallback(async () => {
     try {
       setError(null);
       setLoading(true);
@@ -47,11 +45,15 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  function handleEditProfile() {
-    router.push('/profile-edit' as never);
-  }
+  // Refetch profile every time this screen comes into focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchProfile();
+    });
+    return unsubscribe;
+  }, [navigation, fetchProfile]);
 
   function handleSignOut() {
     Alert.alert(
