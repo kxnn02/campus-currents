@@ -195,11 +195,14 @@ export function UnreadCountProvider({ children }: { children: React.ReactNode })
  * - `displayCount`: capped display string ("9+" for counts > 9)
  * - `increment()`: call when a new broadcast arrives
  * - `reset()`: call when user navigates to the feed tab
+ *
+ * Returns a no-op fallback if UnreadCountProvider is not mounted.
  */
 export function useUnreadCount(): UnreadCountContextValue {
   const context = useContext(UnreadCountContext);
   if (!context) {
-    throw new Error('useUnreadCount must be used within an UnreadCountProvider');
+    // Fallback when provider is not mounted — prevents crash during initial renders
+    return { count: 0, displayCount: '0', increment: () => {}, reset: () => {} };
   }
   return context;
 }
