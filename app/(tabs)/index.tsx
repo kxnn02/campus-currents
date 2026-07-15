@@ -63,7 +63,7 @@ export default function FeedScreen() {
   }, [navigation, resetUnread]);
 
   // Feed query — only start when profile is available
-  const feedQuery = useBroadcastFeed(profile as Profile);
+  const feedQuery = useBroadcastFeed(profile);
 
   const {
     data,

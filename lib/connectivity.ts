@@ -1,8 +1,15 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { syncPendingReceipts } from '@/lib/receipts';
 import { queryClient } from '@/lib/query';
+
+// --- Safe NetInfo import ---
+let NetInfo: any = null;
+try {
+  NetInfo = require('@react-native-community/netinfo').default;
+} catch {
+  // NetInfo not available (Expo Go) — connectivity sync will be disabled
+}
 
 // --- Types ---
 
@@ -44,8 +51,10 @@ export function useConnectivitySync(): ConnectivitySyncState {
 
   // --- NetInfo: offline → online transition ---
   useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
-      const isOnline = (state.isConnected ?? false) && (state.isInternetReachable ?? false);
+    if (!NetInfo) return; // Skip if native module unavailable (Expo Go)
+
+    const unsubscribe = NetInfo.addEventListener((state: any) => {
+      const isOnline = (state.isConnected ?? true) && (state.isInternetReachable ?? true);
 
       if (!isOnline) {
         // We just went offline — mark as serving stale data

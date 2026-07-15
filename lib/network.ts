@@ -1,6 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+
+// --- Safe NetInfo import (gracefully handles Expo Go where native module is unavailable) ---
+let NetInfo: any = null;
+try {
+  NetInfo = require('@react-native-community/netinfo').default;
+} catch {
+  // NetInfo not available (Expo Go) — will default to "online"
+}
 
 // --- Types ---
 
@@ -14,6 +21,7 @@ interface NetworkStatus {
 /**
  * Subscribes to device network state via NetInfo.
  * Returns current connectivity and internet reachability.
+ * Falls back to "always online" when NetInfo native module isn't available (Expo Go).
  */
 export function useNetworkStatus(): NetworkStatus {
   const [status, setStatus] = useState<NetworkStatus>({
@@ -22,10 +30,12 @@ export function useNetworkStatus(): NetworkStatus {
   });
 
   useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
+    if (!NetInfo) return; // Skip if native module unavailable
+
+    const unsubscribe = NetInfo.addEventListener((state: any) => {
       setStatus({
-        isConnected: state.isConnected ?? false,
-        isInternetReachable: state.isInternetReachable ?? false,
+        isConnected: state.isConnected ?? true,
+        isInternetReachable: state.isInternetReachable ?? true,
       });
     });
 

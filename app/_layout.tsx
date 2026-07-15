@@ -17,6 +17,7 @@ import { queryClient } from '@/lib/query';
 import { EmergencyProvider, useEmergency } from '@/lib/emergency';
 import { NetworkProvider, StaleDataBanner, TimeoutToast } from '@/lib/network';
 import { useConnectivitySync } from '@/lib/connectivity';
+import { UnreadCountProvider } from '@/lib/feed';
 import * as Linking from 'expo-linking';
 
 export { ErrorBoundary } from 'expo-router';
@@ -51,7 +52,9 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <EmergencyProvider>
         <NetworkProvider>
-          <RootLayoutNav />
+          <UnreadCountProvider>
+            <RootLayoutNav />
+          </UnreadCountProvider>
         </NetworkProvider>
       </EmergencyProvider>
     </QueryClientProvider>

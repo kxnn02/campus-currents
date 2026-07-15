@@ -40,8 +40,7 @@
           "color": "#1B3A5C",
           "sounds": []
         }
-      ],
-      "@react-native-community/netinfo"
+      ]
     ],
     "experiments": {
       "typedRoutes": true

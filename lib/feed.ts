@@ -85,7 +85,7 @@ const PAGE_SIZE = 20;
  * Uses range-based pagination (20 per page), ordered by sent_at desc.
  * Filters out deleted broadcasts server-side and applies audience targeting client-side.
  */
-export function useBroadcastFeed(profile: Profile) {
+export function useBroadcastFeed(profile: Profile | null) {
   return useInfiniteQuery({
     queryKey: ['broadcasts', 'feed'],
     queryFn: async ({ pageParam = 0 }) => {
@@ -104,8 +104,8 @@ export function useBroadcastFeed(profile: Profile) {
       // Apply client-side audience filtering
       const filtered = (data ?? []).filter((broadcast) =>
         matchesTargetAudience(broadcast.target_audience, {
-          program: profile.program,
-          year_level: profile.year_level,
+          program: profile?.program ?? null,
+          year_level: profile?.year_level ?? null,
         })
       );
 
@@ -117,6 +117,7 @@ export function useBroadcastFeed(profile: Profile) {
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     staleTime: staleTimeConfig.broadcasts,
+    enabled: !!profile,
   });
 }
 

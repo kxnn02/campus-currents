@@ -131,21 +131,37 @@ export default function ProfileCompletionScreen() {
 
       const level = deriveLevelFromProgram(program!);
 
+      // Get the school_id (single-school app — fetch the first/only school)
+      let schoolId: string | undefined;
+      const { data: schoolData } = await supabase
+        .from('schools')
+        .select('id')
+        .limit(1)
+        .single();
+      schoolId = schoolData?.id;
+
+      const profileData: Record<string, unknown> = {
+        id: session.user.id,
+        email: session.user.email,
+        student_id: studentId.trim(),
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        program: program,
+        level: level,
+        year_level: yearLevel,
+        section: section.trim(),
+        phone_number: `+63${phoneNumber.trim()}`,
+        role: 'student',
+      };
+
+      // Only include school_id if we found one
+      if (schoolId) {
+        profileData.school_id = schoolId;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: session.user.id,
-          email: session.user.email,
-          student_id: studentId.trim(),
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          program: program,
-          level: level,
-          year_level: yearLevel,
-          section: section.trim(),
-          phone_number: `+63${phoneNumber.trim()}`,
-          role: 'student',
-        });
+        .upsert(profileData);
 
       if (error) throw error;
 
