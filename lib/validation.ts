@@ -25,11 +25,10 @@ export interface ValidationResult {
 }
 
 /**
- * Validates that a student ID follows the format YYYY-NNNNN
- * (four-digit year, a dash, and five digits).
+ * Validates that a student ID is exactly 10 digits (e.g., 2024101291).
  */
 export function validateStudentId(id: string): boolean {
-  return /^\d{4}-\d{5}$/.test(id);
+  return /^\d{10}$/.test(id);
 }
 
 /**
@@ -59,7 +58,7 @@ export function validateProfileForm(data: ProfileCreateInput): ValidationResult 
   const errors: Record<string, string> = {};
 
   if (!validateStudentId(data.student_id)) {
-    errors.student_id = 'Student ID must follow the format YYYY-NNNNN';
+    errors.student_id = 'Student ID must be exactly 10 digits';
   }
 
   if (!data.first_name || data.first_name.trim().length === 0) {

@@ -131,11 +131,14 @@ function RootLayoutNav() {
         .eq('id', session!.user.id)
         .single();
 
-      if (error || !data || !data.program) {
-        // No profile or incomplete profile — redirect to profile completion
+      if (error || !data) {
+        // No profile row at all — redirect to profile completion
+        router.replace('/profile-completion' as never);
+      } else if (!data.program || !data.year_level) {
+        // Profile exists but incomplete (missing program/year) — redirect to profile completion
         router.replace('/profile-completion' as never);
       } else {
-        // Profile exists — check for active emergency with prior acknowledgment
+        // Profile exists and is complete — check for active emergency with prior acknowledgment
         const destination = await getPostLaunchDestination();
         router.replace(destination as never);
       }

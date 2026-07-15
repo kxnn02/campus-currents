@@ -69,7 +69,7 @@ function deriveLevelFromProgram(program: Program): Level {
 }
 
 function validateStudentId(id: string): boolean {
-  return /^\d{4}-\d{5}$/.test(id);
+  return /^\d{10}$/.test(id);
 }
 
 function validatePhoneNumber(phone: string): boolean {
@@ -97,7 +97,7 @@ export default function ProfileCompletionScreen() {
     if (!studentId.trim()) {
       newErrors.studentId = 'Student ID is required';
     } else if (!validateStudentId(studentId.trim())) {
-      newErrors.studentId = 'Format: YYYY-NNNNN (e.g., 2024-00123)';
+      newErrors.studentId = 'Must be exactly 10 digits (e.g., 2024101291)';
     }
 
     if (!firstName.trim()) newErrors.firstName = 'First name is required';
@@ -193,7 +193,7 @@ export default function ProfileCompletionScreen() {
             <Text style={[styles.label, { color: colors.text }]}>Student ID</Text>
             <TextInput
               style={[styles.input, { backgroundColor: colors.surface, borderColor: errors.studentId ? '#DC2626' : colors.border, color: colors.text }]}
-              placeholder="2024-00123"
+              placeholder="2024101291"
               placeholderTextColor={colors.textSecondary}
               value={studentId}
               onChangeText={setStudentId}
