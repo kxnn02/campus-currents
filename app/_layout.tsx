@@ -5,6 +5,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
@@ -96,12 +97,48 @@ function RootLayoutNav() {
         // No profile or incomplete profile — redirect to profile completion
         router.replace('/profile-completion' as never);
       } else {
-        // Profile exists and is complete — redirect to tabs
-        router.replace('/(tabs)' as never);
+        // Profile exists — check for active emergency with prior acknowledgment
+        const destination = await getPostLaunchDestination();
+        router.replace(destination as never);
       }
     } catch {
       // On error, default to tabs (profile check is non-blocking)
       router.replace('/(tabs)' as never);
+    }
+  }
+
+  /**
+   * App relaunch logic:
+   * - If emergency still active AND student already acknowledged → show post-ack screen
+   * - If resolved or no emergency → proceed to normal navigation (tabs)
+   */
+  async function getPostLaunchDestination(): Promise<string> {
+    try {
+      const { data: emergency } = await supabase
+        .from('active_emergencies')
+        .select('id, status')
+        .eq('status', 'active')
+        .limit(1)
+        .single();
+
+      if (!emergency) {
+        return '/(tabs)';
+      }
+
+      // Check if student already acknowledged this emergency
+      const ackKey = `@campus_currents:emergency_ack_${emergency.id}`;
+      const ackData = await AsyncStorage.getItem(ackKey);
+
+      if (ackData) {
+        // Already acknowledged — go to post-acknowledgment screen
+        const parsed = JSON.parse(ackData) as { type: string };
+        return `/post-acknowledgment?type=${parsed.type}`;
+      }
+
+      // Active emergency but not acknowledged — normal flow will show overlay
+      return '/(tabs)';
+    } catch {
+      return '/(tabs)';
     }
   }
 
@@ -111,8 +148,19 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="profile-completion" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen name="post-acknowledgment" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen name="profile-edit" options={{ title: 'Edit Profile' }} />
         <Stack.Screen name="broadcast-detail" options={{ title: 'Announcement' }} />
         <Stack.Screen name="event-detail" options={{ headerShown: true }} />
+        <Stack.Screen
+          name="emergency-overlay"
+          options={{
+            presentation: 'fullScreenModal',
+            headerShown: false,
+            gestureEnabled: false,
+            animation: 'fade',
+          }}
+        />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
