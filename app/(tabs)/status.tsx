@@ -62,7 +62,7 @@ export default function StatusScreen() {
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
         setProfile(data);

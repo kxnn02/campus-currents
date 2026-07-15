@@ -129,7 +129,7 @@ function RootLayoutNav() {
         .from('profiles')
         .select('id, program, year_level')
         .eq('id', session!.user.id)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         // No profile row at all — redirect to profile completion
@@ -143,6 +143,8 @@ function RootLayoutNav() {
         router.replace(destination as never);
       }
     } catch {
+      // On error, redirect to profile completion (safe default)
+      router.replace('/profile-completion' as never);
       // On error, default to tabs (profile check is non-blocking)
       router.replace('/(tabs)' as never);
     }
