@@ -19,9 +19,7 @@ import { NetworkProvider, StaleDataBanner, TimeoutToast } from '@/lib/network';
 import { useConnectivitySync } from '@/lib/connectivity';
 import * as Linking from 'expo-linking';
 
-export {
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
   initialRouteName: '(auth)',
