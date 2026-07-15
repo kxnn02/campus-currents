@@ -85,7 +85,6 @@ export default function ProfileCompletionScreen() {
   const [lastName, setLastName] = useState('');
   const [program, setProgram] = useState<Program | null>(null);
   const [yearLevel, setYearLevel] = useState<number | null>(null);
-  const [section, setSection] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -105,7 +104,6 @@ export default function ProfileCompletionScreen() {
     if (!lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!program) newErrors.program = 'Program is required';
     if (!yearLevel) newErrors.yearLevel = 'Year level is required';
-    if (!section.trim()) newErrors.section = 'Section is required';
 
     if (!phoneNumber.trim()) {
       newErrors.phoneNumber = 'Phone number is required';
@@ -149,7 +147,6 @@ export default function ProfileCompletionScreen() {
         program: program,
         level: level,
         year_level: yearLevel,
-        section: section.trim(),
         phone_number: `+63${phoneNumber.trim()}`,
         role: 'student',
       };
@@ -283,20 +280,6 @@ export default function ProfileCompletionScreen() {
               </View>
             )}
             {errors.yearLevel && <Text style={styles.errorText}>{errors.yearLevel}</Text>}
-          </View>
-
-          {/* Section */}
-          <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.text }]}>Section</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.surface, borderColor: errors.section ? '#DC2626' : colors.border, color: colors.text }]}
-              placeholder="4ITA"
-              placeholderTextColor={colors.textSecondary}
-              value={section}
-              onChangeText={setSection}
-              autoCapitalize="characters"
-            />
-            {errors.section && <Text style={styles.errorText}>{errors.section}</Text>}
           </View>
 
           {/* Phone Number */}

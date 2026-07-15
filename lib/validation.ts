@@ -15,7 +15,7 @@ export interface ProfileCreateInput {
   last_name: string;
   program: Program;
   year_level: number;       // 1-4
-  section: string;
+  section?: string;         // optional — not collected in form
   phone_number: string;     // 10 digits after +63
 }
 
@@ -80,10 +80,6 @@ export function validateProfileForm(data: ProfileCreateInput): ValidationResult 
     data.year_level > 4
   ) {
     errors.year_level = 'Year level must be between 1 and 4';
-  }
-
-  if (!data.section || data.section.trim().length === 0) {
-    errors.section = 'Section is required';
   }
 
   if (!validatePhoneNumber(data.phone_number)) {

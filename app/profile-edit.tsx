@@ -84,7 +84,6 @@ export default function ProfileEditScreen() {
   const [lastName, setLastName] = useState('');
   const [program, setProgram] = useState<Program | null>(null);
   const [yearLevel, setYearLevel] = useState<number | null>(null);
-  const [section, setSection] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
 
   // UI state
@@ -120,7 +119,6 @@ export default function ProfileEditScreen() {
       setLastName(profile.last_name || '');
       setProgram(profile.program || null);
       setYearLevel(profile.year_level || null);
-      setSection(profile.section || '');
       // Strip +63 prefix for editing
       const rawPhone = profile.phone_number || '';
       setPhoneNumber(rawPhone.startsWith('+63') ? rawPhone.slice(3) : rawPhone);
@@ -140,7 +138,7 @@ export default function ProfileEditScreen() {
       last_name: lastName.trim(),
       program: program as Program,
       year_level: yearLevel ?? 0,
-      section: section.trim(),
+      section: '',
       phone_number: phoneNumber.trim(),
     };
 
@@ -176,7 +174,6 @@ export default function ProfileEditScreen() {
           program: formData.program,
           level,
           year_level: formData.year_level,
-          section: formData.section,
           phone_number: `+63${formData.phone_number}`,
         })
         .eq('id', session.user.id);
@@ -331,18 +328,6 @@ export default function ProfileEditScreen() {
             )}
             {errors.year_level ? <Text style={styles.errorText}>{errors.year_level}</Text> : null}
           </View>
-
-          {/* Section */}
-          <FormField
-            label="Section"
-            value={section}
-            onChangeText={(text) => {
-              setSection(text);
-              if (errors.section) setErrors((prev) => ({ ...prev, section: '' }));
-            }}
-            error={errors.section}
-            placeholder="4ITA"
-          />
 
           {/* Phone Number */}
           <View style={styles.field}>

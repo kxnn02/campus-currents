@@ -136,12 +136,6 @@ export default function ProfileScreen() {
               <InfoRow label="Year Level" value={`${profile.year_level}`} colors={colors} />
             </>
           )}
-          {profile?.section && (
-            <>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-              <InfoRow label="Section" value={profile.section} colors={colors} />
-            </>
-          )}
           {profile?.email && (
             <>
               <View style={[styles.divider, { backgroundColor: colors.border }]} />
