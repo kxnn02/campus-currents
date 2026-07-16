@@ -19,8 +19,9 @@ import { NetworkProvider, StaleDataBanner, TimeoutToast } from '@/lib/network';
 import { useConnectivitySync } from '@/lib/connectivity';
 import { UnreadCountProvider } from '@/lib/feed';
 import { InAppBannerProvider, useInAppBanner } from '@/components/InAppBanner';
-import { registerBannerHandler } from '@/lib/notification-router';
+import { registerBannerHandler, handleNotificationResponse, handleForegroundNotification } from '@/lib/notification-router';
 import { registerForPushNotifications, checkAndUpdateToken } from '@/lib/notifications';
+import * as Notifications from 'expo-notifications';
 import * as Linking from 'expo-linking';
 
 export { ErrorBoundary } from 'expo-router';
@@ -123,6 +124,24 @@ function RootLayoutNav() {
         .catch((err) => console.warn('[Push] Registration failed:', err));
     }
   }, [session]);
+
+  // Notification listeners: foreground + tap response
+  useEffect(() => {
+    // Foreground: handle notifications while app is open
+    const foregroundSub = Notifications.addNotificationReceivedListener((notification) => {
+      handleForegroundNotification(notification);
+    });
+
+    // Tap: handle when user taps a notification
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      handleNotificationResponse(response);
+    });
+
+    return () => {
+      foregroundSub.remove();
+      responseSub.remove();
+    };
+  }, []);
 
   // AppState listener: check for active emergency when app returns to foreground
   useEffect(() => {
