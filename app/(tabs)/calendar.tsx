@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -16,12 +16,35 @@ import EventCard from '@/components/EventCard';
 import ErrorState from '@/components/ErrorState';
 import EmptyState from '@/components/EmptyState';
 import { useMonthEvents, getEventsForDate, sortCalendarEvents } from '@/lib/calendar';
-import { CalendarEvent } from '@/types/database';
+import { CalendarEvent, Profile } from '@/types/database';
+import { supabase } from '@/lib/supabase';
 
 export default function CalendarScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
+
+  // Load profile for audience filtering
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        setProfile(data);
+      } catch (err) {
+        console.error('Error fetching profile for calendar:', err);
+      }
+    })();
+  }, []);
 
   // Track current displayed month/year
   const now = new Date();
@@ -29,8 +52,12 @@ export default function CalendarScreen() {
   const [month, setMonth] = useState(now.getMonth() + 1); // 1-based
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  // Fetch events for the displayed month
-  const { data: events, isLoading, isError, refetch, isRefetching } = useMonthEvents(year, month);
+  // Fetch events for the displayed month with audience filtering
+  const { data: events, isLoading, isError, refetch, isRefetching } = useMonthEvents(
+    year,
+    month,
+    profile ? { program: profile.program, year_level: profile.year_level } : null
+  );
 
   // Get sorted events for the selected date
   const eventsForSelectedDate = useMemo(() => {

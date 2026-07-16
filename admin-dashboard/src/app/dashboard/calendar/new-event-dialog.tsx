@@ -124,6 +124,15 @@ export function NewEventDialog() {
             audienceType={audienceType}
             onAudienceTypeChange={setAudienceType}
           />
+          <div className="space-y-2">
+            <Label htmlFor="poster">Event Poster (optional)</Label>
+            <Input
+              id="poster"
+              name="poster"
+              type="file"
+              accept="image/*"
+            />
+          </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel

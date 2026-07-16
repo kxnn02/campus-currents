@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   BarChart3,
   Users,
+  History,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ const navItems = [
   { href: "/dashboard/emergency", label: "Emergency", icon: AlertTriangle },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/students", label: "Students", icon: Users },
+  { href: "/dashboard/history", label: "History", icon: History },
 ];
 
 export function Sidebar({ profile }: { profile: Profile }) {

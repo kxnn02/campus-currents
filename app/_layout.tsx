@@ -233,6 +233,7 @@ function RootLayoutNav() {
         <Stack.Screen name="profile-completion" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="post-acknowledgment" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="profile-edit" options={{ title: 'Edit Profile' }} />
+        <Stack.Screen name="notification-preferences" options={{ title: 'Notifications' }} />
         <Stack.Screen name="broadcast-detail" options={{ title: 'Announcement' }} />
         <Stack.Screen name="event-detail" options={{ headerShown: true }} />
         <Stack.Screen

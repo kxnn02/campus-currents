@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -79,7 +80,12 @@ export default async function BroadcastsPage() {
               broadcasts.map((broadcast) => (
                 <TableRow key={broadcast.id}>
                   <TableCell className="font-medium">
-                    {broadcast.title}
+                    <Link
+                      href={`/dashboard/broadcasts/${broadcast.id}`}
+                      className="hover:underline text-primary"
+                    >
+                      {broadcast.title}
+                    </Link>
                     {broadcast.is_pinned && (
                       <Badge variant="outline" className="ml-2 text-xs">
                         Pinned

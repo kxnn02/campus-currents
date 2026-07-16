@@ -25,10 +25,26 @@ import { Plus } from "lucide-react";
 import { createBroadcast } from "./actions";
 import { AudienceSelector } from "@/components/audience-selector";
 
+function getTierEmoji(tier: string) {
+  switch (tier) {
+    case "emergency":
+      return "🔴";
+    case "important":
+      return "🟡";
+    case "routine":
+      return "🔵";
+    default:
+      return "🔵";
+  }
+}
+
 export function NewBroadcastDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [audienceType, setAudienceType] = useState("all");
+  const [previewTitle, setPreviewTitle] = useState("");
+  const [previewBody, setPreviewBody] = useState("");
+  const [previewTier, setPreviewTier] = useState("routine");
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
@@ -38,6 +54,9 @@ export function NewBroadcastDialog() {
       toast.success("Broadcast sent successfully");
       setOpen(false);
       setAudienceType("all");
+      setPreviewTitle("");
+      setPreviewBody("");
+      setPreviewTier("routine");
     } catch (error) {
       toast.error("Failed to send broadcast");
       console.error("Failed to create broadcast:", error);
@@ -62,16 +81,33 @@ export function NewBroadcastDialog() {
         <form action={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
-            <Input id="title" name="title" required />
+            <Input
+              id="title"
+              name="title"
+              required
+              value={previewTitle}
+              onChange={(e) => setPreviewTitle(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="body">Body</Label>
-            <Textarea id="body" name="body" rows={4} required />
+            <Textarea
+              id="body"
+              name="body"
+              rows={4}
+              required
+              value={previewBody}
+              onChange={(e) => setPreviewBody(e.target.value)}
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Tier</Label>
-              <Select name="tier" defaultValue="routine">
+              <Select
+                name="tier"
+                defaultValue="routine"
+                onValueChange={(value) => setPreviewTier(value ?? "routine")}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -112,6 +148,27 @@ export function NewBroadcastDialog() {
             />
             <Label htmlFor="is_pinned">Pin this broadcast</Label>
           </div>
+
+          {/* Push Notification Preview */}
+          <div className="space-y-2">
+            <Label>Notification Preview</Label>
+            <div className="rounded-lg border border-border bg-muted/50 p-3 font-mono text-sm">
+              <div className="flex items-center gap-1 text-muted-foreground text-xs mb-1">
+                <span>{getTierEmoji(previewTier)}</span>
+                <span className="font-semibold">CampusCurrents</span>
+              </div>
+              <div className="font-semibold text-foreground truncate">
+                {previewTitle || "Title"}
+              </div>
+              <div className="text-muted-foreground text-xs mt-0.5 line-clamp-2">
+                {previewBody || "Body preview..."}
+              </div>
+              <div className="text-right text-muted-foreground text-xs mt-1">
+                Just now
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel

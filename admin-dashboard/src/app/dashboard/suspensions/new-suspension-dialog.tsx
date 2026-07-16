@@ -27,19 +27,32 @@ const PROGRAMS = [
   "BSIT", "BSBA", "BSA", "BSED", "BEED", "AB_PSYCH", "AB_COMM", "JD", "ETEEAP", "STEM", "ABM", "HUMSS", "GAS", "TVL", "OTHER",
 ];
 
+const TEMPLATES = [
+  { label: "Manila LGU", source: "manila_lgu", reason: "lgu_order" },
+  { label: "PAGASA Weather", source: "pagasa", reason: "weather_typhoon" },
+  { label: "DepEd Order", source: "deped", reason: "lgu_order" },
+  { label: "School Decision", source: "school_admin", reason: "other" },
+] as const;
+
 export function NewSuspensionDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [scope, setScope] = useState("all_levels");
+  const [source, setSource] = useState("school_admin");
+  const [reason, setReason] = useState("weather_typhoon");
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
     try {
       formData.set("scope", scope);
+      formData.set("source", source);
+      formData.set("reason", reason);
       await createSuspension(formData);
       toast.success("Suspension declared and students notified");
       setOpen(false);
       setScope("all_levels");
+      setSource("school_admin");
+      setReason("weather_typhoon");
     } catch (error) {
       toast.error("Failed to declare suspension");
       console.error("Failed to create suspension:", error);
@@ -61,6 +74,24 @@ export function NewSuspensionDialog() {
             This will also create a broadcast notification for all students.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Template Cards */}
+        <div className="grid grid-cols-2 gap-3">
+          {TEMPLATES.map((template) => (
+            <button
+              key={template.label}
+              type="button"
+              className="rounded-lg border p-3 text-left text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              onClick={() => {
+                setSource(template.source);
+                setReason(template.reason);
+              }}
+            >
+              {template.label}
+            </button>
+          ))}
+        </div>
+
         <form action={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="suspension_date">Suspension Date</Label>
@@ -73,7 +104,7 @@ export function NewSuspensionDialog() {
           </div>
           <div className="space-y-2">
             <Label>Source</Label>
-            <Select name="source" defaultValue="school_admin">
+            <Select value={source} onValueChange={(val) => setSource(val ?? "school_admin")}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -87,7 +118,7 @@ export function NewSuspensionDialog() {
           </div>
           <div className="space-y-2">
             <Label>Reason</Label>
-            <Select name="reason" defaultValue="weather_typhoon">
+            <Select value={reason} onValueChange={(val) => setReason(val ?? "weather_typhoon")}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

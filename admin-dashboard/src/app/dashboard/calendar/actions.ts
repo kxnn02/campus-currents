@@ -36,7 +36,7 @@ export async function createEvent(formData: FormData) {
     targetAudience = { programs, year_levels: years };
   }
 
-  const { error } = await supabase.from("calendar_events").insert({
+  const { data: eventData, error } = await supabase.from("calendar_events").insert({
     title,
     description: description || null,
     category,
@@ -49,9 +49,31 @@ export async function createEvent(formData: FormData) {
     status: "active",
     is_deleted: false,
     created_by: user.id,
-  });
+  }).select("id").single();
 
   if (error) throw new Error(error.message);
+
+  // Upload event poster if provided
+  // NOTE: The "event-posters" storage bucket must be created in the Supabase dashboard
+  const poster = formData.get("poster") as File | null;
+  if (poster && poster.size > 0 && eventData?.id) {
+    try {
+      const filePath = `${eventData.id}/${poster.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("event-posters")
+        .upload(filePath, poster);
+
+      if (!uploadError) {
+        await supabase
+          .from("calendar_events")
+          .update({ attachment_url: filePath })
+          .eq("id", eventData.id);
+      }
+    } catch {
+      // Upload failed gracefully — event is still created without the poster
+      console.error("Failed to upload event poster");
+    }
+  }
 
   revalidatePath("/dashboard/calendar");
 }
@@ -99,6 +121,28 @@ export async function updateEvent(id: string, formData: FormData) {
     .eq("id", id);
 
   if (error) throw new Error(error.message);
+
+  // Upload new event poster if provided
+  // NOTE: The "event-posters" storage bucket must be created in the Supabase dashboard
+  const poster = formData.get("poster") as File | null;
+  if (poster && poster.size > 0) {
+    try {
+      const filePath = `${id}/${poster.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("event-posters")
+        .upload(filePath, poster, { upsert: true });
+
+      if (!uploadError) {
+        await supabase
+          .from("calendar_events")
+          .update({ attachment_url: filePath })
+          .eq("id", id);
+      }
+    } catch {
+      // Upload failed gracefully — event is still updated without the poster
+      console.error("Failed to upload event poster");
+    }
+  }
 
   revalidatePath("/dashboard/calendar");
 }

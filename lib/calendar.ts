@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { CalendarEvent, EventCategory } from '@/types/database';
+import { CalendarEvent, EventCategory, Program } from '@/types/database';
 import { queryKeys, staleTimeConfig } from '@/lib/query';
 import { supabase } from '@/lib/supabase';
+import { matchesTargetAudience } from '@/lib/feed';
 import Colors from '@/constants/Colors';
 
 /**
@@ -61,8 +62,13 @@ export function sortCalendarEvents(events: CalendarEvent[]): CalendarEvent[] {
  * Fetches calendar events for a given month with ±7 day padding for edge visibility.
  * Filters by is_deleted = false and status = 'active', selecting events whose
  * date range overlaps with the padded month window.
+ * Applies client-side audience filtering when a profile is provided.
  */
-export function useMonthEvents(year: number, month: number) {
+export function useMonthEvents(
+  year: number,
+  month: number,
+  profile?: { program: Program | null; year_level: number | null } | null
+) {
   return useQuery({
     queryKey: queryKeys.calendar.month(year, month),
     queryFn: async () => {
@@ -90,7 +96,20 @@ export function useMonthEvents(year: number, month: number) {
         .gte('end_date', rangeStartISO);
 
       if (error) throw error;
-      return (data as CalendarEvent[]) ?? [];
+
+      const events = (data as CalendarEvent[]) ?? [];
+
+      // Apply client-side audience filtering if profile is provided
+      if (profile) {
+        return events.filter((event) =>
+          matchesTargetAudience(event.target_audience, {
+            program: profile.program,
+            year_level: profile.year_level,
+          })
+        );
+      }
+
+      return events;
     },
     staleTime: staleTimeConfig.calendarEvents,
   });

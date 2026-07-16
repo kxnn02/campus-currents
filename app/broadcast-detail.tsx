@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useBroadcastDetail } from '@/lib/feed';
 import { recordRead } from '@/lib/receipts';
 import { supabase } from '@/lib/supabase';
@@ -35,6 +35,7 @@ export default function BroadcastDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const router = useRouter();
   const { data: broadcast, isLoading, isError, refetch } = useBroadcastDetail(id ?? '');
 
   // Record read receipt on mount
@@ -104,6 +105,16 @@ export default function BroadcastDetailScreen() {
 
         {/* Body */}
         <Text style={[styles.body, { color: colors.text }]}>{broadcast.body}</Text>
+
+        {/* View Event Link */}
+        {broadcast.linked_event_id && (
+          <TouchableOpacity
+            style={[styles.viewEventButton, { backgroundColor: colors.tint }]}
+            onPress={() => router.push(`/event-detail?id=${broadcast.linked_event_id}`)}
+          >
+            <Text style={styles.viewEventText}>View Event →</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );
@@ -150,5 +161,16 @@ const styles = StyleSheet.create({
   body: {
     fontSize: 16,
     lineHeight: 24,
+  },
+  viewEventButton: {
+    marginTop: 24,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  viewEventText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
