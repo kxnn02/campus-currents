@@ -1,88 +1,213 @@
-import { StyleSheet, View, Text } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  ScrollView,
+  RefreshControl,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import StatusIndicator from '@/components/StatusIndicator';
+import ErrorState from '@/components/ErrorState';
+import { useNetworkContext } from '@/lib/network';
+import {
+  useTodaySuspensions,
+  formatSuspensionSource,
+  formatSuspensionReason,
+  formatSuspensionDuration,
+} from '@/lib/suspensions';
+import { supabase } from '@/lib/supabase';
+import { Profile, ClassSuspension, SuspensionScope } from '@/types/database';
 
-// TODO: Replace with Supabase realtime subscription to class_suspensions table
-const CURRENT_STATUS = {
-  status: 'on' as 'on' | 'suspended' | 'monitoring',
-  lastUpdated: '2026-07-14T05:30:00Z',
-  // Uncomment below for suspended state:
-  // status: 'suspended' as const,
-  // source: 'Manila LGU',
-  // reason: 'Weather / Flooding',
-  // scope: 'All levels',
-  // duration: 'Full day',
-  // message: 'All classes suspended due to flooding per Manila LGU directive. Stay safe.',
-};
+/** Two minutes in milliseconds — threshold for stale data warning */
+const STALE_THRESHOLD_MS = 2 * 60 * 1000;
+
+/**
+ * Maps a suspension scope enum value to a human-readable string.
+ */
+function formatSuspensionScope(scope: SuspensionScope): string {
+  const scopeMap: Record<SuspensionScope, string> = {
+    all_levels: 'All levels',
+    grade_school_only: 'Grade school only',
+    junior_high_only: 'Junior high only',
+    senior_high_only: 'Senior high only',
+    k12_only: 'K-12 only',
+    college_only: 'College only',
+    law_only: 'Law only',
+    specific_programs: 'Specific programs',
+  };
+  return scopeMap[scope] ?? scope;
+}
 
 export default function StatusScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { isConnected, isInternetReachable } = useNetworkContext();
+  const isOffline = !isConnected || !isInternetReachable;
 
-  const isOn = CURRENT_STATUS.status === 'on';
-  const isSuspended = CURRENT_STATUS.status === 'suspended';
-  const isMonitoring = CURRENT_STATUS.status === 'monitoring';
+  // Load profile from Supabase session (same pattern as profile tab)
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
-  const statusColor = isOn
-    ? Colors.status.on
-    : isSuspended
-    ? Colors.status.suspended
-    : Colors.status.monitoring;
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
 
-  const statusText = isOn
-    ? 'CLASSES ARE ON'
-    : isSuspended
-    ? 'CLASSES SUSPENDED'
-    : 'MONITORING';
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
 
-  const statusEmoji = isOn ? '✓' : isSuspended ? '✕' : '⚠';
+        if (error) throw error;
+        setProfile(data);
+      } catch (err) {
+        console.error('Error fetching profile for status:', err);
+      } finally {
+        setProfileLoading(false);
+      }
+    })();
+  }, []);
+
+  // Fetch suspensions once profile is available
+  const {
+    data: suspensions,
+    isLoading: suspensionsLoading,
+    isError,
+    refetch,
+    dataUpdatedAt,
+  } = useTodaySuspensions(
+    profile ?? { level: null, program: null }
+  );
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
+
+  // Determine stale data state
+  const isDataStale =
+    dataUpdatedAt > 0 && Date.now() - dataUpdatedAt > STALE_THRESHOLD_MS;
+  const showStaleWarning = isDataStale && isOffline;
+
+  // Loading state: waiting for profile or suspensions initial load
+  const isLoading = profileLoading || (suspensionsLoading && !suspensions);
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.tint} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Error state: query failed and no cached data
+  if (isError && !suspensions) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
+        <ErrorState
+          message="Unable to load suspension status"
+          onRetry={() => refetch()}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  const isSuspended = (suspensions?.length ?? 0) > 0;
+  const lastChecked = dataUpdatedAt ? new Date(dataUpdatedAt) : new Date();
+  const primarySuspension = suspensions?.[0] ?? null;
+  const otherSuspensions = suspensions?.slice(1) ?? [];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
-      <View style={styles.content}>
-        {/* Large status indicator */}
-        <View style={[styles.statusCircle, { backgroundColor: statusColor + '15', borderColor: statusColor }]}>
-          <Text style={[styles.statusEmoji, { color: statusColor }]}>{statusEmoji}</Text>
-        </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {/* Stale data warning banner */}
+        {showStaleWarning && (
+          <View style={styles.staleBanner}>
+            <Text style={styles.staleBannerText}>
+              Status may be outdated. Last checked:{' '}
+              {lastChecked.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Manila',
+              })}
+            </Text>
+          </View>
+        )}
 
-        {/* Status text */}
-        <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
+        {/* Status Indicator */}
+        <StatusIndicator isSuspended={isSuspended} lastChecked={lastChecked} />
 
-        {/* Last updated */}
-        <Text style={[styles.updatedText, { color: colors.textSecondary }]}>
-          As of {new Date(CURRENT_STATUS.lastUpdated).toLocaleTimeString('en-PH', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}, {new Date(CURRENT_STATUS.lastUpdated).toLocaleDateString('en-PH', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-          })}
-        </Text>
-
-        {/* Details card (shown when suspended) */}
-        {isSuspended && (
+        {/* Suspension details card */}
+        {isSuspended && primarySuspension && (
           <View style={[styles.detailsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <DetailRow label="Source" value="Manila LGU" colors={colors} />
-            <DetailRow label="Reason" value="Weather / Flooding" colors={colors} />
-            <DetailRow label="Scope" value="All levels" colors={colors} />
-            <DetailRow label="Duration" value="Full day" colors={colors} />
+            <DetailRow
+              label="Source"
+              value={formatSuspensionSource(primarySuspension.source)}
+              colors={colors}
+            />
+            <DetailRow
+              label="Reason"
+              value={formatSuspensionReason(primarySuspension.reason)}
+              colors={colors}
+            />
+            <DetailRow
+              label="Scope"
+              value={formatSuspensionScope(primarySuspension.scope)}
+              colors={colors}
+            />
+            <DetailRow
+              label="Duration"
+              value={formatSuspensionDuration(primarySuspension.duration)}
+              colors={colors}
+            />
+          </View>
+        )}
+
+        {/* Other active suspensions */}
+        {otherSuspensions.length > 0 && (
+          <View style={styles.otherSection}>
+            <Text style={[styles.otherTitle, { color: colors.textSecondary }]}>
+              Other active suspensions
+            </Text>
+            {otherSuspensions.map((suspension) => (
+              <OtherSuspensionCard
+                key={suspension.id}
+                suspension={suspension}
+                colors={colors}
+              />
+            ))}
           </View>
         )}
 
         {/* Info text when classes are on */}
-        {isOn && (
+        {!isSuspended && (
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             You'll be notified immediately if this changes.
           </Text>
         )}
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-function DetailRow({ label, value, colors }: { label: string; value: string; colors: any }) {
+function DetailRow({ label, value, colors }: { label: string; value: string; colors: Record<string, string> }) {
   return (
     <View style={styles.detailRow}>
       <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{label}</Text>
@@ -91,38 +216,54 @@ function DetailRow({ label, value, colors }: { label: string; value: string; col
   );
 }
 
+function OtherSuspensionCard({
+  suspension,
+  colors,
+}: {
+  suspension: ClassSuspension;
+  colors: Record<string, string>;
+}) {
+  return (
+    <View style={[styles.otherCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <Text style={[styles.otherCardSource, { color: colors.text }]}>
+        {formatSuspensionSource(suspension.source)}
+      </Text>
+      <Text style={[styles.otherCardDetail, { color: colors.textSecondary }]}>
+        {formatSuspensionReason(suspension.reason)} · {formatSuspensionDuration(suspension.duration)}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  loadingContainer: {
     flex: 1,
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 24,
-  },
-  statusCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 3,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
   },
-  statusEmoji: {
-    fontSize: 48,
-    fontWeight: '700',
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 32,
   },
-  statusText: {
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+  staleBanner: {
+    width: '100%',
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
     marginBottom: 8,
+    alignItems: 'center',
   },
-  updatedText: {
-    fontSize: 14,
-    marginBottom: 32,
+  staleBannerText: {
+    color: '#92400E',
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   detailsCard: {
     width: '100%',
@@ -130,6 +271,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     gap: 12,
+    marginTop: 16,
   },
   detailRow: {
     flexDirection: 'row',
@@ -143,6 +285,29 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  otherSection: {
+    width: '100%',
+    marginTop: 24,
+  },
+  otherTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  otherCard: {
+    borderRadius: 10,
+    padding: 14,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  otherCardSource: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  otherCardDetail: {
+    fontSize: 13,
   },
   infoText: {
     fontSize: 14,

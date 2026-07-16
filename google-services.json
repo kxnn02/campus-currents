@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "886380647604",
+    "project_id": "campus-currents-abeda",
+    "storage_bucket": "campus-currents-abeda.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:886380647604:android:22f73a99ecc9daf77ab3e1",
+        "android_client_info": {
+          "package_name": "com.campuscurrents.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB45mWCqNHFS08bIotnuUyVu6yAM_O4uG4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

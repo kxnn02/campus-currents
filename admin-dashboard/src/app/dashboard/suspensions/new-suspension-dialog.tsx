@@ -1,0 +1,168 @@
+"use client";
+
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus } from "lucide-react";
+import { createSuspension } from "./actions";
+
+const PROGRAMS = [
+  "BSIT", "BSBA", "BSA", "BSED", "BEED", "AB_PSYCH", "AB_COMM", "JD", "ETEEAP", "STEM", "ABM", "HUMSS", "GAS", "TVL", "OTHER",
+];
+
+export function NewSuspensionDialog() {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [scope, setScope] = useState("all_levels");
+
+  async function handleSubmit(formData: FormData) {
+    setLoading(true);
+    try {
+      formData.set("scope", scope);
+      await createSuspension(formData);
+      toast.success("Suspension declared and students notified");
+      setOpen(false);
+      setScope("all_levels");
+    } catch (error) {
+      toast.error("Failed to declare suspension");
+      console.error("Failed to create suspension:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={<Button />}>
+        <Plus className="mr-2 h-4 w-4" />
+        Declare Suspension
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Declare Class Suspension</DialogTitle>
+          <DialogDescription>
+            This will also create a broadcast notification for all students.
+          </DialogDescription>
+        </DialogHeader>
+        <form action={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="suspension_date">Suspension Date</Label>
+            <Input
+              id="suspension_date"
+              name="suspension_date"
+              type="date"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Source</Label>
+            <Select name="source" defaultValue="school_admin">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="manila_lgu">Manila LGU</SelectItem>
+                <SelectItem value="pagasa">PAGASA</SelectItem>
+                <SelectItem value="deped">DepEd</SelectItem>
+                <SelectItem value="school_admin">School Admin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Reason</Label>
+            <Select name="reason" defaultValue="weather_typhoon">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weather_flooding">Weather - Flooding</SelectItem>
+                <SelectItem value="weather_typhoon">Weather - Typhoon</SelectItem>
+                <SelectItem value="lgu_order">LGU Order</SelectItem>
+                <SelectItem value="facilities">Facilities</SelectItem>
+                <SelectItem value="security">Security</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Scope</Label>
+            <Select value={scope} onValueChange={(val) => setScope(val ?? "all_levels")}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all_levels">All Levels</SelectItem>
+                <SelectItem value="grade_school_only">Grade School Only</SelectItem>
+                <SelectItem value="k12_only">K-12 Only</SelectItem>
+                <SelectItem value="junior_high_only">Junior High Only</SelectItem>
+                <SelectItem value="senior_high_only">Senior High Only</SelectItem>
+                <SelectItem value="college_only">College Only</SelectItem>
+                <SelectItem value="law_only">Law Only</SelectItem>
+                <SelectItem value="specific_programs">Specific Programs</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {scope === "specific_programs" && (
+            <div className="space-y-2">
+              <Label>Programs</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {PROGRAMS.map((program) => (
+                  <label key={program} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      name="programs"
+                      value={program}
+                      className="h-4 w-4 rounded border-input"
+                    />
+                    {program}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label>Duration</Label>
+            <Select name="duration" defaultValue="full_day">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="full_day">Full Day</SelectItem>
+                <SelectItem value="am_only">AM Only</SelectItem>
+                <SelectItem value="pm_only">PM Only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Declaring..." : "Declare Suspension"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
