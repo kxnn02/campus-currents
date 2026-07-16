@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import StatusIndicator from '@/components/StatusIndicator';
@@ -85,6 +86,23 @@ export default function StatusScreen() {
     profile ?? { level: null, program: null }
   );
 
+  // Fetch recent suspension history (last 3)
+  const { data: suspensionHistory } = useQuery<ClassSuspension[]>({
+    queryKey: ['suspensions', 'history'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('class_suspensions')
+        .select('*')
+        .in('status', ['active', 'lifted'])
+        .order('suspension_date', { ascending: false })
+        .limit(3);
+
+      if (error) throw error;
+      return (data as ClassSuspension[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -128,6 +146,9 @@ export default function StatusScreen() {
   const primarySuspension = suspensions?.[0] ?? null;
   const otherSuspensions = suspensions?.slice(1) ?? [];
 
+  // Derive status for the indicator
+  const indicatorStatus = isSuspended ? 'suspended' : 'on';
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
       <ScrollView
@@ -152,7 +173,7 @@ export default function StatusScreen() {
         )}
 
         {/* Status Indicator */}
-        <StatusIndicator isSuspended={isSuspended} lastChecked={lastChecked} />
+        <StatusIndicator status={indicatorStatus} lastChecked={lastChecked} />
 
         {/* Suspension details card */}
         {isSuspended && primarySuspension && (
@@ -201,6 +222,30 @@ export default function StatusScreen() {
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             You'll be notified immediately if this changes.
           </Text>
+        )}
+
+        {/* Recent Suspensions history */}
+        {suspensionHistory && suspensionHistory.length > 0 && (
+          <View style={styles.historySection}>
+            <Text style={[styles.historyTitle, { color: colors.textSecondary }]}>
+              Recent Suspensions
+            </Text>
+            {suspensionHistory.map((item) => (
+              <View key={item.id} style={[styles.historyRow, { borderColor: colors.border }]}>
+                <Text style={[styles.historyDate, { color: colors.text }]}>
+                  {new Date(item.suspension_date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    timeZone: 'Asia/Manila',
+                  })}
+                </Text>
+                <Text style={[styles.historySource, { color: colors.textSecondary }]}>
+                  {formatSuspensionSource(item.source)}
+                </Text>
+              </View>
+            ))}
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -313,5 +358,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginTop: 16,
+  },
+  historySection: {
+    width: '100%',
+    marginTop: 24,
+  },
+  historyTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  historyDate: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  historySource: {
+    fontSize: 13,
   },
 });
