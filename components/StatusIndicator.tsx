@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Colors from '../constants/Colors';
 
+type StatusState = 'on' | 'suspended' | 'monitoring';
+
 interface StatusIndicatorProps {
-  isSuspended: boolean;
+  status: StatusState;
   lastChecked: Date;
 }
 
@@ -16,10 +18,28 @@ function formatLastCheckedTime(date: Date): string {
   });
 }
 
-export default function StatusIndicator({ isSuspended, lastChecked }: StatusIndicatorProps) {
-  const circleColor = isSuspended ? Colors.status.suspended : Colors.status.on;
-  const statusText = isSuspended ? 'CLASSES SUSPENDED' : 'CLASSES ARE ON';
-  const iconText = isSuspended ? '✕' : '✓';
+export default function StatusIndicator({ status, lastChecked }: StatusIndicatorProps) {
+  const circleColor =
+    status === 'suspended'
+      ? Colors.status.suspended
+      : status === 'monitoring'
+      ? Colors.status.monitoring
+      : Colors.status.on;
+
+  const statusText =
+    status === 'suspended'
+      ? 'CLASSES SUSPENDED'
+      : status === 'monitoring'
+      ? 'MONITORING'
+      : 'CLASSES ARE ON';
+
+  const iconText =
+    status === 'suspended' ? '✕' : status === 'monitoring' ? '⚠️' : '✓';
+
+  const subtitle =
+    status === 'monitoring'
+      ? "No suspension yet. We'll notify you immediately."
+      : undefined;
 
   return (
     <View style={styles.container}>
@@ -27,6 +47,7 @@ export default function StatusIndicator({ isSuspended, lastChecked }: StatusIndi
         <Text style={styles.icon}>{iconText}</Text>
       </View>
       <Text style={[styles.statusText, { color: circleColor }]}>{statusText}</Text>
+      {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       <Text style={styles.timestamp}>As of {formatLastCheckedTime(lastChecked)}</Text>
     </View>
   );
@@ -56,6 +77,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 16,
     textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 32,
   },
   timestamp: {
     fontSize: 14,

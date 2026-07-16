@@ -166,6 +166,16 @@ export default function ProfileScreen() {
           <Text style={styles.editButtonText}>Edit Profile</Text>
         </Pressable>
 
+        {/* Notification Preferences Button */}
+        <Pressable
+          style={[styles.notifButton, { borderColor: colors.border }]}
+          onPress={() => router.push('/notification-preferences' as never)}
+          accessibilityLabel="Notification Preferences"
+          accessibilityRole="button"
+        >
+          <Text style={[styles.notifButtonText, { color: colors.text }]}>Notification Preferences</Text>
+        </Pressable>
+
         {/* Sign Out Button */}
         <Pressable
           style={[styles.signOutButton, { borderColor: colors.border }]}
@@ -247,6 +257,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  notifButton: {
+    borderRadius: 10,
+    padding: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  notifButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   signOutButton: {
     borderRadius: 10,
