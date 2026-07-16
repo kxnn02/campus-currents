@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { theme, useThemeColors } from '@/constants/Theme';
 
 interface EmptyStateProps {
   icon?: string;
@@ -11,10 +12,12 @@ interface EmptyStateProps {
  * Used when a list has no items to display.
  */
 export default function EmptyState({ icon, message }: EmptyStateProps) {
+  const colors = useThemeColors();
+
   return (
     <View style={styles.container}>
       {icon ? <Text style={styles.icon}>{icon}</Text> : null}
-      <Text style={styles.message}>{message}</Text>
+      <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
     </View>
   );
 }
@@ -24,15 +27,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
+    padding: theme.spacing['3xl'],
   },
   icon: {
     fontSize: 48,
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
   },
   message: {
-    fontSize: 16,
-    color: '#6B7280',
+    ...theme.typography.bodyLarge,
     textAlign: 'center',
     lineHeight: 22,
   },
