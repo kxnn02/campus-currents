@@ -12,8 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { router } from 'expo-router';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+import { theme, useThemeColors } from '@/constants/Theme';
 import { supabase } from '@/lib/supabase';
 import { Program, Level } from '@/types/database';
 import { deriveLevelFromProgram } from '@/lib/suspensions';
@@ -52,8 +51,7 @@ function validatePhoneNumber(phone: string): boolean {
 }
 
 export default function ProfileCompletionScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
 
   const [studentId, setStudentId] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -280,52 +278,53 @@ export default function ProfileCompletionScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   keyboardView: { flex: 1 },
-  scrollContent: { padding: 24, paddingBottom: 48 },
-  title: { fontSize: 24, fontWeight: '800', marginBottom: 8 },
-  subtitle: { fontSize: 14, lineHeight: 20, marginBottom: 28 },
-  field: { marginBottom: 18 },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 6 },
+  scrollContent: { padding: theme.spacing['2xl'], paddingBottom: theme.spacing['5xl'] },
+  title: { ...theme.typography.h1, marginBottom: theme.spacing.sm },
+  subtitle: { ...theme.typography.body, lineHeight: 20, marginBottom: theme.spacing['2xl'] + 4 },
+  field: { marginBottom: theme.spacing.lg + 2 },
+  label: { ...theme.typography.label, marginBottom: theme.spacing.xs + 2 },
   input: {
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: theme.radius.lg,
+    paddingHorizontal: theme.spacing.md + 2,
+    paddingVertical: theme.spacing.md,
     fontSize: 15,
   },
-  errorText: { color: '#DC2626', fontSize: 12, marginTop: 4 },
+  errorText: { color: theme.colors.tier.emergency, ...theme.typography.caption, marginTop: theme.spacing.xs },
   pickerButton: { justifyContent: 'center' },
   pickerText: { fontSize: 15 },
   pickerOptions: {
     borderWidth: 1,
-    borderRadius: 10,
-    marginTop: 4,
+    borderRadius: theme.radius.lg,
+    marginTop: theme.spacing.xs,
     maxHeight: 200,
     overflow: 'hidden',
   },
-  pickerOption: { paddingHorizontal: 14, paddingVertical: 10 },
-  pickerOptionText: { fontSize: 14 },
-  phoneRow: { flexDirection: 'row', gap: 8 },
+  pickerOption: { paddingHorizontal: theme.spacing.md + 2, paddingVertical: theme.spacing.sm + 2 },
+  pickerOptionText: { ...theme.typography.body },
+  phoneRow: { flexDirection: 'row', gap: theme.spacing.sm },
   phonePrefix: {
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    borderRadius: theme.radius.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
     justifyContent: 'center',
   },
   phonePrefixText: { fontSize: 15, fontWeight: '600' },
   phoneInput: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: theme.radius.lg,
+    paddingHorizontal: theme.spacing.md + 2,
+    paddingVertical: theme.spacing.md,
     fontSize: 15,
   },
   submitButton: {
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: theme.radius.xl,
+    paddingVertical: theme.spacing.lg,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: theme.spacing['2xl'],
+    ...theme.shadows.md,
   },
-  submitText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  submitText: { color: '#FFFFFF', ...theme.typography.buttonLarge },
 });

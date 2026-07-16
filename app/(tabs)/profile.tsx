@@ -3,16 +3,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+import { theme, useThemeColors } from '@/constants/Theme';
 import { signOut } from '@/lib/auth';
 import { useProfile } from '@/lib/profile';
 import { Profile } from '@/types/database';
 import ProfileAvatar from '@/components/ProfileAvatar';
 
 export default function ProfileScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
   const router = useRouter();
   const navigation = useNavigation();
   const { profile, isLoading: loading, error, refetch: fetchProfile } = useProfile();

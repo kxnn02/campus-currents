@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Colors from '../constants/Colors';
+import { theme, useThemeColors } from '@/constants/Theme';
 
 type StatusState = 'on' | 'suspended' | 'monitoring';
 
@@ -19,12 +19,14 @@ function formatLastCheckedTime(date: Date): string {
 }
 
 export default function StatusIndicator({ status, lastChecked }: StatusIndicatorProps) {
+  const colors = useThemeColors();
+
   const circleColor =
     status === 'suspended'
-      ? Colors.status.suspended
+      ? theme.colors.status.suspended
       : status === 'monitoring'
-      ? Colors.status.monitoring
-      : Colors.status.on;
+      ? theme.colors.status.monitoring
+      : theme.colors.status.on;
 
   const statusText =
     status === 'suspended'
@@ -43,12 +45,18 @@ export default function StatusIndicator({ status, lastChecked }: StatusIndicator
 
   return (
     <View style={styles.container}>
-      <View style={[styles.circle, { backgroundColor: circleColor }]}>
-        <Text style={styles.icon}>{iconText}</Text>
+      {/* Outer glow ring */}
+      <View style={[styles.glowRing, { backgroundColor: circleColor + '1A' }]}>
+        {/* Main status circle */}
+        <View style={[styles.circle, { backgroundColor: circleColor }, theme.shadows.lg]}>
+          <Text style={styles.icon}>{iconText}</Text>
+        </View>
       </View>
       <Text style={[styles.statusText, { color: circleColor }]}>{statusText}</Text>
-      {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-      <Text style={styles.timestamp}>As of {formatLastCheckedTime(lastChecked)}</Text>
+      {subtitle && <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
+      <Text style={[styles.timestamp, { color: colors.textSecondary }]}>
+        As of {formatLastCheckedTime(lastChecked)}
+      </Text>
     </View>
   );
 }
@@ -58,37 +66,41 @@ const styles = StyleSheet.create({
     flex: 0.4,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 24,
+    paddingVertical: theme.spacing['2xl'],
+  },
+  glowRing: {
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   circle: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+    width: theme.layout.statusCircleSize,
+    height: theme.layout.statusCircleSize,
+    borderRadius: theme.layout.statusCircleSize / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   icon: {
-    fontSize: 80,
+    fontSize: 72,
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
   statusText: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 16,
+    ...theme.typography.h1,
+    marginTop: theme.spacing.lg,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 8,
+    ...theme.typography.body,
+    marginTop: theme.spacing.sm,
     textAlign: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: theme.spacing['3xl'],
   },
   timestamp: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 8,
+    ...theme.typography.caption,
+    marginTop: theme.spacing.sm,
     textAlign: 'center',
   },
 });

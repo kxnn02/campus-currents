@@ -9,8 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+import { theme, useThemeColors } from '@/constants/Theme';
 import CalendarGrid from '@/components/CalendarGrid';
 import EventCard from '@/components/EventCard';
 import ErrorState from '@/components/ErrorState';
@@ -20,8 +19,7 @@ import { useProfile } from '@/lib/profile';
 import { CalendarEvent } from '@/types/database';
 
 export default function CalendarScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
   const router = useRouter();
 
   // Get profile from shared context

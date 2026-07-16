@@ -2,7 +2,7 @@ import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 
-import Colors from '@/constants/Colors';
+import { theme, useThemeColors } from '@/constants/Theme';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useUnreadCount } from '@/lib/feed';
 
@@ -10,26 +10,42 @@ function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
   color: string;
 }) {
-  return <FontAwesome size={24} style={{ marginBottom: -3 }} {...props} />;
+  return <FontAwesome size={22} style={{ marginBottom: -2 }} {...props} />;
 }
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const colors = useThemeColors();
   const { count } = useUnreadCount();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
+        tabBarActiveTintColor: colors.tint,
+        tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarStyle: {
-          backgroundColor: Colors[colorScheme ?? 'light'].surface,
-          borderTopColor: Colors[colorScheme ?? 'light'].border,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          height: theme.layout.tabBarHeight,
+          paddingBottom: 4,
+          paddingTop: 4,
         },
         headerStyle: {
-          backgroundColor: Colors[colorScheme ?? 'light'].surface,
+          backgroundColor: colors.surface,
+          shadowColor: 'transparent',
+          elevation: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
         },
-        headerTintColor: Colors[colorScheme ?? 'light'].text,
+        headerTintColor: colors.text,
+        headerTitleStyle: {
+          ...theme.typography.h3,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
       }}>
       <Tabs.Screen
         name="index"
@@ -42,7 +58,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="status"
         options={{
-          title: 'Class Status',
+          title: 'Status',
           tabBarIcon: ({ color }) => <TabBarIcon name="graduation-cap" color={color} />,
         }}
       />

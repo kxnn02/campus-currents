@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useEmergency } from '@/lib/emergency';
 import { AcknowledgmentType } from '@/types/database';
+import { theme } from '@/constants/Theme';
 
 /**
  * Post-Acknowledgment screen shown after a student acknowledges an emergency.
@@ -13,8 +14,6 @@ import { AcknowledgmentType } from '@/types/database';
  *
  * Subscribes to active_emergencies table UPDATE events via Supabase Realtime.
  * When emergency status changes to "resolved": dismiss screen, show ALL CLEAR alert, navigate to tabs.
- *
- * This screen has no back button and cannot be dismissed via gesture.
  */
 export default function PostAcknowledgmentScreen() {
   const router = useRouter();
@@ -22,7 +21,6 @@ export default function PostAcknowledgmentScreen() {
   const { activeEmergency, acknowledgmentType } = useEmergency();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  // Determine the acknowledgment type: from params first, then from emergency context
   const ackType: AcknowledgmentType =
     (params.type as AcknowledgmentType) || acknowledgmentType || 'safe';
 
@@ -30,12 +28,10 @@ export default function PostAcknowledgmentScreen() {
 
   useEffect(() => {
     if (!activeEmergency) {
-      // No active emergency — resolve immediately to normal nav
       router.replace('/(tabs)' as never);
       return;
     }
 
-    // Subscribe to active_emergencies table UPDATE events
     const channel = supabase
       .channel('post-ack-emergency-updates')
       .on(
@@ -49,7 +45,6 @@ export default function PostAcknowledgmentScreen() {
         (payload) => {
           const newRecord = payload.new as { status?: string };
           if (newRecord.status === 'resolved') {
-            // Dismiss screen, show ALL CLEAR alert, navigate to tabs
             Alert.alert('ALL CLEAR', 'The emergency has been resolved. It is now safe to move.', [
               {
                 text: 'OK',
@@ -76,7 +71,6 @@ export default function PostAcknowledgmentScreen() {
     <View style={[styles.container, isSafe ? styles.safeBackground : styles.helpBackground]}>
       {isSafe ? (
         <>
-          {/* Green checkmark icon */}
           <View style={styles.checkmarkCircle}>
             <Text style={styles.checkmarkIcon}>✓</Text>
           </View>
@@ -84,14 +78,24 @@ export default function PostAcknowledgmentScreen() {
           <Text style={styles.instruction}>
             Stay where you are. You will be notified when it is safe to move.
           </Text>
+          <View style={styles.waitingBadge}>
+            <View style={styles.liveDot} />
+            <Text style={styles.waitingText}>Waiting for ALL CLEAR...</Text>
+          </View>
         </>
       ) : (
         <>
           <View style={styles.helpIconCircle}>
             <Text style={styles.helpIcon}>!</Text>
           </View>
-          <Text style={styles.headingLarge}>Security has been notified.</Text>
-          <Text style={styles.instruction}>Stay where you are.</Text>
+          <Text style={styles.headingLarge}>Security has been notified</Text>
+          <Text style={styles.instruction}>
+            Stay where you are. Help is on the way.
+          </Text>
+          <View style={styles.waitingBadge}>
+            <View style={[styles.liveDot, { backgroundColor: theme.colors.tier.emergency }]} />
+            <Text style={styles.waitingText}>Alert still active</Text>
+          </View>
         </>
       )}
     </View>
@@ -103,53 +107,75 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: theme.spacing['3xl'],
   },
   safeBackground: {
-    backgroundColor: '#ECFDF5', // light green background
+    backgroundColor: theme.colors.light.successBg,
   },
   helpBackground: {
-    backgroundColor: '#FEF2F2', // light red background
+    backgroundColor: theme.colors.light.errorBg,
   },
   checkmarkCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#16A34A',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: theme.colors.status.on,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: theme.spacing['3xl'],
+    ...theme.shadows.lg,
   },
   checkmarkIcon: {
-    fontSize: 48,
+    fontSize: 56,
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
   helpIconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#DC2626',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: theme.colors.tier.emergency,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: theme.spacing['3xl'],
+    ...theme.shadows.lg,
   },
   helpIcon: {
-    fontSize: 48,
+    fontSize: 56,
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
   headingLarge: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#111827',
+    ...theme.typography.display,
+    color: theme.palette.gray900,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
   },
   instruction: {
-    fontSize: 16,
-    color: '#4B5563',
+    ...theme.typography.bodyLarge,
+    color: theme.palette.gray600,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 26,
+    marginBottom: theme.spacing['3xl'],
+  },
+  waitingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm + 2,
+    borderRadius: theme.radius.full,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.colors.status.on,
+  },
+  waitingText: {
+    ...theme.typography.caption,
+    color: theme.palette.gray600,
+    fontWeight: '600',
   },
 });

@@ -9,8 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+import { theme, useThemeColors } from '@/constants/Theme';
 import StatusIndicator from '@/components/StatusIndicator';
 import ErrorState from '@/components/ErrorState';
 import { useNetworkContext } from '@/lib/network';
@@ -45,8 +44,7 @@ function formatSuspensionScope(scope: SuspensionScope): string {
 }
 
 export default function StatusScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
   const { isConnected, isInternetReachable } = useNetworkContext();
   const isOffline = !isConnected || !isInternetReachable;
 

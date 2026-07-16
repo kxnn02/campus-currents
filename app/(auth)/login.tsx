@@ -2,13 +2,11 @@ import { StyleSheet, View, Text, Pressable, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+import { theme, useThemeColors } from '@/constants/Theme';
 import { signInWithGoogle } from '@/lib/auth';
 
 export default function LoginScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
   const [loading, setLoading] = useState(false);
 
   async function handleGoogleSignIn() {
@@ -72,49 +70,49 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: theme.layout.screenPaddingHorizontal,
   },
   branding: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: theme.spacing['3xl'],
   },
   logoPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+    width: 88,
+    height: 88,
+    borderRadius: theme.radius['2xl'],
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
   },
   logoText: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: '800',
     color: '#FFFFFF',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
-    marginBottom: 4,
+    ...theme.typography.display,
+    marginBottom: theme.spacing.xs,
   },
   subtitle: {
-    fontSize: 14,
+    ...theme.typography.body,
     textAlign: 'center',
   },
   description: {
-    fontSize: 15,
+    ...theme.typography.bodyLarge,
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 40,
+    lineHeight: 24,
+    marginBottom: theme.spacing['5xl'],
   },
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
+    paddingVertical: theme.spacing.md + 2,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.radius.xl,
     borderWidth: 1,
     width: '100%',
-    gap: 12,
+    gap: theme.spacing.md,
+    ...theme.shadows.md,
   },
   googleIcon: {
     fontSize: 20,
@@ -122,12 +120,11 @@ const styles = StyleSheet.create({
     color: '#4285F4',
   },
   googleButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...theme.typography.label,
     flex: 1,
   },
   note: {
-    fontSize: 12,
-    marginTop: 16,
+    ...theme.typography.caption,
+    marginTop: theme.spacing.lg,
   },
 });
