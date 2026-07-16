@@ -18,10 +18,11 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
       if (signInError) {
         setError(signInError.message);
@@ -30,7 +31,6 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // Check if user has admin role
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("role")
@@ -45,7 +45,9 @@ export default function LoginPage() {
         }
 
         if (!["admin", "super_admin"].includes(profile.role)) {
-          setError("Access denied. This dashboard is for administrators only.");
+          setError(
+            "Access denied. This dashboard is for administrators only."
+          );
           await supabase.auth.signOut();
           setLoading(false);
           return;
@@ -61,55 +63,76 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 bg-gray-50">
-      <div className="w-full max-w-md rounded-lg border bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-center mb-1">Campus Currents</h1>
-        <p className="text-center text-gray-500 text-sm mb-6">Admin Dashboard Login</p>
+    <div className="flex min-h-screen items-center justify-center px-4 bg-background">
+      <div className="w-full max-w-sm">
+        {/* Brand header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-xl mb-4">
+            CC
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">Campus Currents</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Admin Dashboard
+          </p>
+        </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          {error && (
-            <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-              {error}
+        {/* Login card */}
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <form onSubmit={handleLogin} className="space-y-4">
+            {error && (
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium"
+              >
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+                placeholder="admin@sscrmnl.edu.ph"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
-          )}
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="admin@sscrmnl.edu.ph"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+            <div className="space-y-1.5">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium"
+              >
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            >
+              {loading ? "Signing in..." : "Sign In"}
+            </button>
+          </form>
+        </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
+        <p className="text-center text-xs text-muted-foreground mt-4">
+          San Sebastian College – Recoletos, Manila
+        </p>
       </div>
     </div>
   );

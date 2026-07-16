@@ -51,10 +51,17 @@ export function Sidebar({ profile }: { profile: Profile }) {
     : profile.email;
 
   return (
-    <aside className="flex w-64 flex-col border-r bg-sidebar text-sidebar-foreground">
+    <aside className="flex w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
       <div className="p-6">
-        <h1 className="text-lg font-bold">Campus Currents</h1>
-        <p className="text-xs text-muted-foreground">Admin Dashboard</p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
+            CC
+          </div>
+          <div>
+            <h1 className="text-sm font-bold leading-tight">Campus Currents</h1>
+            <p className="text-xs text-muted-foreground">Admin Dashboard</p>
+          </div>
+        </div>
       </div>
       <Separator />
       <nav className="flex-1 space-y-1 p-3">
