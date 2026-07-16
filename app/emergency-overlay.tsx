@@ -10,21 +10,13 @@ import {
 import { useRouter } from 'expo-router';
 import { useEmergency } from '@/lib/emergency';
 import { useBroadcastDetail } from '@/lib/feed';
+import { theme } from '@/constants/Theme';
 
 /**
  * Emergency Overlay Screen
  *
  * Full-screen modal with solid red background that cannot be dismissed
  * except by tapping one of the two acknowledgment buttons.
- *
- * Displays:
- * - Emergency type heading (from broadcast title)
- * - Instruction text (from broadcast body)
- * - Elapsed timer since emergency created_at
- * - "I'M SAFE ✓" green button
- * - "NEED HELP 🆘" white-outlined button
- *
- * Validates: Requirements 10.5, 10.6, 10.7, 10.8, 10.9
  */
 export default function EmergencyOverlayScreen() {
   const router = useRouter();
@@ -71,10 +63,8 @@ export default function EmergencyOverlayScreen() {
     setIsSubmitting(true);
     try {
       await acknowledge('safe');
-      // Navigate to post-acknowledgment screen (safe)
       router.replace('/post-acknowledgment?type=safe' as never);
     } catch {
-      // Retry logic handled in EmergencyProvider; if it throws, the overlay was already dismissed
       setIsSubmitting(false);
     }
   }, [isSubmitting, acknowledge, router]);
@@ -85,7 +75,6 @@ export default function EmergencyOverlayScreen() {
     setIsSubmitting(true);
     try {
       await acknowledge('need_help');
-      // Navigate to "Security notified" screen
       router.replace('/post-acknowledgment?type=need_help' as never);
     } catch {
       setIsSubmitting(false);
@@ -98,6 +87,11 @@ export default function EmergencyOverlayScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Warning badge at top */}
+      <View style={styles.warningBadge}>
+        <Text style={styles.warningBadgeText}>⚠️ EMERGENCY ⚠️</Text>
+      </View>
+
       {/* Elapsed Timer */}
       <View style={styles.timerContainer}>
         <Text style={styles.timerLabel}>ALERT ACTIVE</Text>
@@ -122,7 +116,7 @@ export default function EmergencyOverlayScreen() {
           accessibilityLabel="I'm Safe"
         >
           {isSubmitting ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color="#FFFFFF" size="large" />
           ) : (
             <Text style={styles.safeButtonText}>I'M SAFE ✓</Text>
           )}
@@ -138,7 +132,7 @@ export default function EmergencyOverlayScreen() {
           accessibilityLabel="Need Help"
         >
           {isSubmitting ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color="#FFFFFF" size="large" />
           ) : (
             <Text style={styles.helpButtonText}>NEED HELP 🆘</Text>
           )}
@@ -148,98 +142,116 @@ export default function EmergencyOverlayScreen() {
   );
 }
 
-/**
- * Formats the emergency_type enum into a readable heading as fallback.
- */
 function formatEmergencyType(type?: string | null): string {
   switch (type) {
     case 'active_threat':
-      return '⚠️ ACTIVE THREAT';
+      return 'ACTIVE THREAT - LOCKDOWN';
     case 'fire':
-      return '🔥 FIRE EMERGENCY';
+      return 'FIRE EMERGENCY';
     case 'earthquake':
-      return '🌍 EARTHQUAKE';
+      return 'EARTHQUAKE';
     case 'flooding':
-      return '🌊 FLOODING';
+      return 'SEVERE FLOODING';
     default:
-      return '🚨 EMERGENCY ALERT';
+      return 'EMERGENCY ALERT';
   }
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#DC2626',
+    backgroundColor: theme.colors.tier.emergency,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 48,
+    paddingHorizontal: theme.spacing['2xl'],
+    paddingVertical: theme.spacing['5xl'],
+  },
+  warningBadge: {
+    position: 'absolute',
+    top: 60,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.full,
+  },
+  warningBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 2,
   },
   timerContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: theme.spacing['3xl'],
   },
   timerLabel: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    letterSpacing: 2,
-    opacity: 0.8,
+    letterSpacing: 3,
+    opacity: 0.75,
   },
   timerValue: {
     color: '#FFFFFF',
-    fontSize: 48,
+    fontSize: 56,
     fontWeight: '700',
-    marginTop: 4,
+    marginTop: theme.spacing.xs,
+    fontVariant: ['tabular-nums'],
   },
   heading: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '700',
+    ...theme.typography.display,
+    fontSize: 26,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   instructions: {
     color: '#FFFFFF',
-    fontSize: 16,
+    ...theme.typography.bodyLarge,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 48,
+    lineHeight: 26,
+    marginBottom: theme.spacing['5xl'],
     opacity: 0.95,
+    paddingHorizontal: theme.spacing.sm,
   },
   buttonContainer: {
     width: '100%',
-    gap: 16,
+    gap: theme.spacing.lg,
   },
   safeButton: {
-    backgroundColor: '#16A34A',
-    minHeight: 56,
-    borderRadius: 12,
+    backgroundColor: theme.colors.status.on,
+    minHeight: 64,
+    borderRadius: theme.radius.xl,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.spacing['2xl'],
+    ...theme.shadows.lg,
   },
   safeButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   helpButton: {
     backgroundColor: 'transparent',
-    minHeight: 56,
-    borderRadius: 12,
-    borderWidth: 2,
+    minHeight: 64,
+    borderRadius: theme.radius.xl,
+    borderWidth: 2.5,
     borderColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.spacing['2xl'],
   },
   helpButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   disabledButton: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
 });

@@ -1,11 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
+import { theme, useThemeColors } from '@/constants/Theme';
 
 /**
  * Shimmer loading placeholder that mimics the BroadcastCard layout.
  * Uses an animated opacity pulse to create a shimmer effect.
  */
 export default function SkeletonCard() {
+  const colors = useThemeColors();
   const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -28,19 +30,24 @@ export default function SkeletonCard() {
   }, [opacity]);
 
   return (
-    <Animated.View style={[styles.card, { opacity }]}>
+    <Animated.View
+      style={[
+        styles.card,
+        { opacity, backgroundColor: colors.shimmer },
+      ]}
+    >
       {/* Tier indicator bar */}
-      <View style={styles.tierBar} />
+      <View style={[styles.tierBar, { backgroundColor: colors.border }]} />
       <View style={styles.content}>
         {/* Title placeholder */}
-        <View style={styles.titleLine} />
+        <View style={[styles.titleLine, { backgroundColor: colors.border }]} />
         {/* Body preview placeholder lines */}
-        <View style={styles.bodyLine} />
-        <View style={styles.bodyLineShort} />
+        <View style={[styles.bodyLine, { backgroundColor: colors.border }]} />
+        <View style={[styles.bodyLineShort, { backgroundColor: colors.border }]} />
         {/* Footer row: timestamp + channel pill */}
         <View style={styles.footer}>
-          <View style={styles.timestamp} />
-          <View style={styles.channelPill} />
+          <View style={[styles.timestamp, { backgroundColor: colors.border }]} />
+          <View style={[styles.channelPill, { backgroundColor: colors.border }]} />
         </View>
       </View>
     </Animated.View>
@@ -50,41 +57,36 @@ export default function SkeletonCard() {
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    backgroundColor: '#E5E7EB',
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginVertical: 8,
+    borderRadius: theme.radius.xl,
+    marginHorizontal: theme.spacing.lg,
+    marginVertical: theme.spacing.sm,
     height: 120,
     overflow: 'hidden',
   },
   tierBar: {
     width: 4,
-    backgroundColor: '#D1D5DB',
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
+    borderTopLeftRadius: theme.radius.xl,
+    borderBottomLeftRadius: theme.radius.xl,
   },
   content: {
     flex: 1,
-    padding: 14,
+    padding: theme.spacing.md + 2,
     justifyContent: 'space-between',
   },
   titleLine: {
     width: '70%',
     height: 14,
-    backgroundColor: '#D1D5DB',
-    borderRadius: 4,
+    borderRadius: theme.radius.xs,
   },
   bodyLine: {
     width: '90%',
     height: 10,
-    backgroundColor: '#D1D5DB',
-    borderRadius: 4,
+    borderRadius: theme.radius.xs,
   },
   bodyLineShort: {
     width: '55%',
     height: 10,
-    backgroundColor: '#D1D5DB',
-    borderRadius: 4,
+    borderRadius: theme.radius.xs,
   },
   footer: {
     flexDirection: 'row',
@@ -94,13 +96,11 @@ const styles = StyleSheet.create({
   timestamp: {
     width: 50,
     height: 10,
-    backgroundColor: '#D1D5DB',
-    borderRadius: 4,
+    borderRadius: theme.radius.xs,
   },
   channelPill: {
     width: 60,
     height: 18,
-    backgroundColor: '#D1D5DB',
-    borderRadius: 9,
+    borderRadius: theme.radius.full,
   },
 });

@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, useColorScheme } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { CalendarEvent } from '@/types/database';
 import { getCategoryColor } from '@/lib/calendar';
-import Colors from '@/constants/Colors';
+import { theme, useThemeColors } from '@/constants/Theme';
 
 interface EventCardProps {
   event: CalendarEvent;
@@ -14,8 +14,7 @@ interface EventCardProps {
  * Pressable card used in the calendar date detail list.
  */
 export default function EventCard({ event, onPress }: EventCardProps) {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
   const categoryColor = getCategoryColor(event.category);
 
   const formatTimeRange = (): string => {
@@ -38,7 +37,11 @@ export default function EventCard({ event, onPress }: EventCardProps) {
 
   return (
     <Pressable
-      style={[styles.card, { backgroundColor: colors.surface }]}
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: colors.surface },
+        pressed && styles.cardPressed,
+      ]}
       onPress={() => onPress(event)}
       accessibilityRole="button"
       accessibilityLabel={`${event.title}, ${formatTimeRange()}`}
@@ -50,7 +53,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
         </Text>
         <Text style={[styles.time, { color: colors.textSecondary }]}>{formatTimeRange()}</Text>
         {event.location ? (
-          <Text style={[styles.location, { color: colors.textSecondary }]} numberOfLines={1}>
+          <Text style={[styles.location, { color: colors.textTertiary }]} numberOfLines={1}>
             📍 {event.location}
           </Text>
         ) : null}
@@ -63,35 +66,34 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    borderRadius: 10,
-    padding: 14,
-    marginVertical: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md + 2,
+    marginVertical: theme.spacing.xs,
+    ...theme.shadows.sm,
+  },
+  cardPressed: {
+    opacity: 0.8,
   },
   dot: {
     width: 10,
     height: 10,
     borderRadius: 5,
     marginTop: 5,
-    marginRight: 12,
+    marginRight: theme.spacing.md,
   },
   content: {
     flex: 1,
   },
   title: {
+    ...theme.typography.h3,
     fontSize: 15,
-    fontWeight: '600',
     marginBottom: 2,
   },
   time: {
-    fontSize: 13,
+    ...theme.typography.bodySmall,
     marginBottom: 2,
   },
   location: {
-    fontSize: 12,
+    ...theme.typography.caption,
   },
 });

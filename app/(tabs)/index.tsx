@@ -11,8 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+import { theme, useThemeColors } from '@/constants/Theme';
 import { BroadcastCard } from '@/components/BroadcastCard';
 import SkeletonCard from '@/components/SkeletonCard';
 import EmptyState from '@/components/EmptyState';
@@ -22,8 +21,7 @@ import { useProfile } from '@/lib/profile';
 import { Broadcast } from '@/types/database';
 
 export default function FeedScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
   const router = useRouter();
   const navigation = useNavigation();
 
@@ -215,25 +213,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    paddingVertical: 8,
+    paddingVertical: theme.spacing.sm,
   },
   skeletonContainer: {
     flex: 1,
-    paddingTop: 16,
+    paddingTop: theme.spacing.lg,
   },
   pinnedHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 4,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.xs,
   },
   pinnedHeaderText: {
-    fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    ...theme.typography.overline,
   },
   footer: {
-    paddingVertical: 16,
+    paddingVertical: theme.spacing.lg,
     alignItems: 'center',
   },
 });

@@ -1,10 +1,10 @@
 import React from 'react';
-import { Pressable, View, Text, StyleSheet, useColorScheme } from 'react-native';
+import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Broadcast, NotificationTier } from '@/types/database';
 import { formatRelativeTime } from '@/lib/feed';
 import { ChannelPill } from '@/components/ChannelPill';
-import Colors from '@/constants/Colors';
+import { theme, useThemeColors } from '@/constants/Theme';
 
 export interface BroadcastCardProps {
   broadcast: Broadcast;
@@ -12,9 +12,9 @@ export interface BroadcastCardProps {
 }
 
 const tierColors: Record<NotificationTier, string> = {
-  emergency: Colors.tier.emergency,  // #DC2626
-  important: Colors.tier.important,  // #F59E0B
-  routine: Colors.tier.routine,      // #3B82F6
+  emergency: theme.colors.tier.emergency,
+  important: theme.colors.tier.important,
+  routine: theme.colors.tier.routine,
 };
 
 const tierLabels: Record<NotificationTier, string> = {
@@ -32,9 +32,8 @@ const tierLabels: Record<NotificationTier, string> = {
  *   and a bottom row with relative timestamp, channel pill, and optional pin icon
  */
 export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
-  const borderColor = tierColors[broadcast.tier] ?? Colors.tier.routine;
+  const colors = useThemeColors();
+  const borderColor = tierColors[broadcast.tier] ?? theme.colors.tier.routine;
   const tierLabel = tierLabels[broadcast.tier] ?? 'Routine';
 
   return (
@@ -66,7 +65,7 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
 
         {/* Bottom row: timestamp + channel pill + pin icon */}
         <View style={styles.bottomRow}>
-          <Text style={styles.timestamp}>
+          <Text style={[styles.timestamp, { color: colors.textTertiary }]}>
             {formatRelativeTime(broadcast.sent_at)}
           </Text>
 
@@ -89,48 +88,40 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 10,
+    borderRadius: theme.radius.lg,
     borderLeftWidth: 4,
-    borderLeftColor: Colors.tier.routine,
-    marginHorizontal: 16,
-    marginVertical: 6,
-    // Subtle shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    borderLeftColor: theme.colors.tier.routine,
+    marginHorizontal: theme.spacing.lg,
+    marginVertical: theme.spacing.xs + 2,
+    ...theme.shadows.md,
   },
   cardPressed: {
     opacity: 0.85,
   },
   content: {
-    padding: 12,
+    padding: theme.spacing.md,
   },
   tierLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    marginBottom: 4,
+    ...theme.typography.overline,
+    marginBottom: theme.spacing.xs,
   },
   title: {
     fontSize: 15,
     fontWeight: '700',
-    marginBottom: 4,
+    lineHeight: 20,
+    marginBottom: theme.spacing.xs,
   },
   body: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 8,
+    ...theme.typography.bodySmall,
+    marginBottom: theme.spacing.sm,
   },
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: theme.spacing.sm,
   },
   timestamp: {
-    fontSize: 11,
-    color: '#9CA3AF',
+    ...theme.typography.caption,
   },
   pinIcon: {
     marginLeft: 'auto',
