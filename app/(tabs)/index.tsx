@@ -1,105 +1,234 @@
-import { StyleSheet, FlatList, View, Text } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  StyleSheet,
+  FlatList,
+  View,
+  Text,
+  RefreshControl,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
+
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-
-// Placeholder data - will be replaced with Supabase fetch
-const SAMPLE_BROADCASTS = [
-  {
-    id: '1',
-    tier: 'emergency',
-    title: 'ACTIVE THREAT - LOCKDOWN',
-    body: 'Stay in your room. Lock doors. Keep silent. Do NOT exit building.',
-    channel: 'security',
-    sent_at: '2026-07-14T14:34:00Z',
-  },
-  {
-    id: '2',
-    tier: 'important',
-    title: 'Classes Suspended - July 14',
-    body: 'All classes suspended due to flooding per Manila LGU directive. Stay safe.',
-    channel: 'suspension',
-    sent_at: '2026-07-14T04:47:00Z',
-  },
-  {
-    id: '3',
-    tier: 'routine',
-    title: 'SSC-R Foundation Day 2026',
-    body: 'Annual foundation day celebration on August 28. Cultural performances, booth fair, and awarding ceremony.',
-    channel: 'event',
-    sent_at: '2026-07-13T10:00:00Z',
-  },
-  {
-    id: '4',
-    tier: 'routine',
-    title: 'Web Development Workshop',
-    body: 'GDSC SSC-R invites all BSIT students to a React basics workshop on August 5.',
-    channel: 'event',
-    sent_at: '2026-07-12T09:00:00Z',
-  },
-];
-
-function getTierColor(tier: string) {
-  switch (tier) {
-    case 'emergency': return Colors.tier.emergency;
-    case 'important': return Colors.tier.important;
-    case 'routine': return Colors.tier.routine;
-    default: return Colors.tier.routine;
-  }
-}
-
-function getTierLabel(tier: string) {
-  switch (tier) {
-    case 'emergency': return 'EMERGENCY';
-    case 'important': return 'IMPORTANT';
-    case 'routine': return 'ROUTINE';
-    default: return 'ROUTINE';
-  }
-}
-
-function formatTime(dateStr: string) {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-
-  if (diffHrs < 1) return 'Just now';
-  if (diffHrs < 24) return `${diffHrs}h ago`;
-  return date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
+import { BroadcastCard } from '@/components/BroadcastCard';
+import SkeletonCard from '@/components/SkeletonCard';
+import EmptyState from '@/components/EmptyState';
+import ErrorState from '@/components/ErrorState';
+import { useBroadcastFeed, useUnreadCount } from '@/lib/feed';
+import { supabase } from '@/lib/supabase';
+import { Broadcast, Profile } from '@/types/database';
 
 export default function FeedScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const router = useRouter();
+  const navigation = useNavigation();
 
-  const renderItem = ({ item }: { item: typeof SAMPLE_BROADCASTS[0] }) => (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-      <View style={styles.cardHeader}>
-        <View style={[styles.tierBadge, { backgroundColor: getTierColor(item.tier) + '15' }]}>
-          <View style={[styles.tierDot, { backgroundColor: getTierColor(item.tier) }]} />
-          <Text style={[styles.tierLabel, { color: getTierColor(item.tier) }]}>
-            {getTierLabel(item.tier)}
+  // Get profile from current session
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          setProfile(data as Profile | null);
+        }
+      } catch {
+        // Profile load failed — will show error state via feed query
+      } finally {
+        setProfileLoading(false);
+      }
+    }
+    loadProfile();
+  }, []);
+
+  // Reset unread count on screen focus
+  const { reset: resetUnread } = useUnreadCount();
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      resetUnread();
+      // Refetch feed data on focus to pick up new broadcasts
+      if (feedQuery.data) {
+        feedQuery.refetch();
+      }
+    });
+    return unsubscribe;
+  }, [navigation, resetUnread]);
+
+  // Feed query — only start when profile is available
+  const feedQuery = useBroadcastFeed(profile);
+
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = feedQuery;
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Flatten pages into a single list
+  const allBroadcasts = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flatMap((page) => page.broadcasts);
+  }, [data]);
+
+  // Separate pinned from non-pinned
+  const pinnedBroadcasts = useMemo(
+    () => allBroadcasts.filter((b) => b.is_pinned),
+    [allBroadcasts]
+  );
+  const regularBroadcasts = useMemo(
+    () => allBroadcasts.filter((b) => !b.is_pinned),
+    [allBroadcasts]
+  );
+
+  // Pull-to-refresh handler — triggers hard refetch
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetch]);
+
+  // Infinite scroll — load next page
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Navigate to broadcast detail
+  const handleCardPress = useCallback(
+    (broadcast: Broadcast) => {
+      router.push(`/broadcast-detail?id=${broadcast.id}` as never);
+    },
+    [router]
+  );
+
+  // Loading state: profile loading or initial feed loading
+  if (profileLoading || (!profile && isLoading)) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
+        <View style={styles.skeletonContainer}>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Feed loading state (profile available, first load)
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
+        <View style={styles.skeletonContainer}>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Error state — no cached data available
+  if (isError && allBroadcasts.length === 0) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
+        <ErrorState
+          message="Unable to load announcements"
+          onRetry={() => refetch()}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // Empty state — query succeeded but no broadcasts
+  if (!isLoading && allBroadcasts.length === 0) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
+        <EmptyState icon="📭" message="No announcements yet" />
+      </SafeAreaView>
+    );
+  }
+
+  // Build list data with pinned section header
+  type ListItem =
+    | { type: 'pinned-header' }
+    | { type: 'broadcast'; broadcast: Broadcast };
+
+  const listData: ListItem[] = [];
+
+  if (pinnedBroadcasts.length > 0) {
+    listData.push({ type: 'pinned-header' });
+    pinnedBroadcasts.forEach((b) => listData.push({ type: 'broadcast', broadcast: b }));
+  }
+
+  regularBroadcasts.forEach((b) => listData.push({ type: 'broadcast', broadcast: b }));
+
+  const renderItem = ({ item }: { item: ListItem }) => {
+    if (item.type === 'pinned-header') {
+      return (
+        <View style={styles.pinnedHeader}>
+          <Text style={[styles.pinnedHeaderText, { color: colors.textSecondary }]}>
+            📌 Pinned
           </Text>
         </View>
-        <Text style={[styles.timestamp, { color: colors.textSecondary }]}>
-          {formatTime(item.sent_at)}
-        </Text>
-      </View>
-      <Text style={[styles.cardTitle, { color: colors.text }]}>{item.title}</Text>
-      <Text style={[styles.cardBody, { color: colors.textSecondary }]} numberOfLines={2}>
-        {item.body}
-      </Text>
-    </View>
-  );
+      );
+    }
+
+    return (
+      <BroadcastCard broadcast={item.broadcast} onPress={handleCardPress} />
+    );
+  };
+
+  const keyExtractor = (item: ListItem, index: number) => {
+    if (item.type === 'pinned-header') return 'pinned-header';
+    return item.broadcast.id;
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
       <FlatList
-        data={SAMPLE_BROADCASTS}
+        data={listData}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={keyExtractor}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.tint}
+            colors={[colors.tint]}
+          />
+        }
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <View style={styles.footer}>
+              <ActivityIndicator size="small" color={colors.tint} />
+            </View>
+          ) : null
+        }
       />
     </SafeAreaView>
   );
@@ -110,48 +239,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    padding: 16,
-    gap: 12,
+    paddingVertical: 8,
   },
-  card: {
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
+  skeletonContainer: {
+    flex: 1,
+    paddingTop: 16,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+  pinnedHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
   },
-  tierBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    gap: 6,
-  },
-  tierDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  tierLabel: {
-    fontSize: 11,
-    fontWeight: '700',
+  pinnedHeaderText: {
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  timestamp: {
-    fontSize: 12,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  cardBody: {
-    fontSize: 14,
-    lineHeight: 20,
+  footer: {
+    paddingVertical: 16,
+    alignItems: 'center',
   },
 });

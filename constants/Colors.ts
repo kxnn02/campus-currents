@@ -41,5 +41,6 @@ export default {
     administrative: '#F97316', // Orange
     holiday: '#DC2626',      // Red
     sports: '#14B8A6',       // Teal
+    seminar: '#EAB308',      // Yellow
   },
 };

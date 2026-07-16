@@ -1,24 +1,34 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
+import { Session } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { QueryClientProvider } from '@tanstack/react-query';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import { supabase } from '@/lib/supabase';
+import { createSessionFromUrl } from '@/lib/auth';
+import { queryClient } from '@/lib/query';
+import { EmergencyProvider, useEmergency } from '@/lib/emergency';
+import { NetworkProvider, StaleDataBanner, TimeoutToast } from '@/lib/network';
+import { useConnectivitySync } from '@/lib/connectivity';
+import { UnreadCountProvider } from '@/lib/feed';
+import { InAppBannerProvider, useInAppBanner } from '@/components/InAppBanner';
+import { registerBannerHandler } from '@/lib/notification-router';
+import { registerForPushNotifications, checkAndUpdateToken } from '@/lib/notifications';
+import * as Linking from 'expo-linking';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: '(auth)',
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -27,7 +37,6 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -42,16 +51,180 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <EmergencyProvider>
+        <NetworkProvider>
+          <UnreadCountProvider>
+            <InAppBannerProvider>
+              <RootLayoutNav />
+            </InAppBannerProvider>
+          </UnreadCountProvider>
+        </NetworkProvider>
+      </EmergencyProvider>
+    </QueryClientProvider>
+  );
 }
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+  const segments = useSegments();
+  const [session, setSession] = useState<Session | null>(null);
+  const [initialized, setInitialized] = useState(false);
+  const appState = useRef(AppState.currentState);
+  const { checkActiveEmergency, activeEmergency, hasAcknowledged, showOverlay } = useEmergency();
+  const { isServingStaleData, showTimeoutToast, dismissTimeoutToast } = useConnectivitySync();
+  const { show: showBanner } = useInAppBanner();
+
+  // Register in-app banner handler for notification-router
+  useEffect(() => {
+    registerBannerHandler(showBanner);
+  }, [showBanner]);
+
+  // Handle deep link redirects from OAuth
+  const url = Linking.useURL();
+  useEffect(() => {
+    if (url) {
+      createSessionFromUrl(url).catch(console.error);
+    }
+  }, [url]);
+
+  useEffect(() => {
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setInitialized(true);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!initialized) return;
+
+    const inAuthGroup = (segments[0] as string) === '(auth)';
+
+    if (session && inAuthGroup) {
+      // User is signed in — check if profile exists before redirecting to tabs
+      checkProfileAndRedirect();
+    } else if (!session && !inAuthGroup) {
+      // User is not signed in but trying to access protected screen — redirect to login
+      router.replace('/(auth)/login' as never);
+    }
+  }, [session, initialized, segments]);
+
+  // Register push notifications when user is authenticated
+  useEffect(() => {
+    if (session) {
+      console.log('[Push] Session detected, registering for push notifications...');
+      registerForPushNotifications()
+        .then((token) => console.log('[Push] Registration result:', token ?? 'no token'))
+        .catch((err) => console.warn('[Push] Registration failed:', err));
+    }
+  }, [session]);
+
+  // AppState listener: check for active emergency when app returns to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        // App has come to foreground — check if there's an active unacknowledged emergency
+        checkActiveEmergency();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => subscription.remove();
+  }, [checkActiveEmergency]);
+
+  // Navigate to emergency overlay when emergency is active and unacknowledged
+  useEffect(() => {
+    if (showOverlay && activeEmergency && !hasAcknowledged) {
+      router.push('/emergency-overlay' as never);
+    }
+  }, [showOverlay, activeEmergency, hasAcknowledged]);
+
+  async function checkProfileAndRedirect() {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, program, year_level')
+        .eq('id', session!.user.id)
+        .maybeSingle();
+
+      if (error || !data) {
+        // No profile row at all — redirect to profile completion
+        router.replace('/profile-completion' as never);
+      } else if (!data.program || !data.year_level) {
+        // Profile exists but incomplete (missing program/year) — redirect to profile completion
+        router.replace('/profile-completion' as never);
+      } else {
+        // Profile exists and is complete — check for active emergency with prior acknowledgment
+        const destination = await getPostLaunchDestination();
+        router.replace(destination as never);
+      }
+    } catch {
+      // On error, redirect to profile completion (safe default)
+      router.replace('/profile-completion' as never);
+    }
+  }
+
+  /**
+   * App relaunch logic:
+   * - If emergency still active AND student already acknowledged → show post-ack screen
+   * - If resolved or no emergency → proceed to normal navigation (tabs)
+   */
+  async function getPostLaunchDestination(): Promise<string> {
+    try {
+      const { data: emergency } = await supabase
+        .from('active_emergencies')
+        .select('id, status')
+        .eq('status', 'active')
+        .limit(1)
+        .maybeSingle();
+
+      if (!emergency) {
+        return '/(tabs)';
+      }
+
+      // Check if student already acknowledged this emergency
+      const ackKey = `@campus_currents:emergency_ack_${emergency.id}`;
+      const ackData = await AsyncStorage.getItem(ackKey);
+
+      if (ackData) {
+        // Already acknowledged — go to post-acknowledgment screen
+        const parsed = JSON.parse(ackData) as { type: string };
+        return `/post-acknowledgment?type=${parsed.type}`;
+      }
+
+      // Active emergency but not acknowledged — normal flow will show overlay
+      return '/(tabs)';
+    } catch {
+      return '/(tabs)';
+    }
+  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <TimeoutToast visible={showTimeoutToast} onDismiss={dismissTimeoutToast} />
+      <StaleDataBanner visible={isServingStaleData} />
       <Stack>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="profile-completion" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen name="post-acknowledgment" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen name="profile-edit" options={{ title: 'Edit Profile' }} />
+        <Stack.Screen name="broadcast-detail" options={{ title: 'Announcement' }} />
+        <Stack.Screen name="event-detail" options={{ headerShown: true }} />
+        <Stack.Screen
+          name="emergency-overlay"
+          options={{
+            presentation: 'fullScreenModal',
+            headerShown: false,
+            gestureEnabled: false,
+            animation: 'fade',
+          }}
+        />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
