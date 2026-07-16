@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -16,35 +16,16 @@ import EventCard from '@/components/EventCard';
 import ErrorState from '@/components/ErrorState';
 import EmptyState from '@/components/EmptyState';
 import { useMonthEvents, getEventsForDate, sortCalendarEvents } from '@/lib/calendar';
-import { CalendarEvent, Profile } from '@/types/database';
-import { supabase } from '@/lib/supabase';
+import { useProfile } from '@/lib/profile';
+import { CalendarEvent } from '@/types/database';
 
 export default function CalendarScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
 
-  // Load profile for audience filtering
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
-
-        setProfile(data);
-      } catch (err) {
-        console.error('Error fetching profile for calendar:', err);
-      }
-    })();
-  }, []);
+  // Get profile from shared context
+  const { profile } = useProfile();
 
   // Track current displayed month/year
   const now = new Date();

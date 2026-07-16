@@ -1,12 +1,12 @@
 import { StyleSheet, View, Text, Pressable, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { supabase } from '@/lib/supabase';
 import { signOut } from '@/lib/auth';
+import { useProfile } from '@/lib/profile';
 import { Profile } from '@/types/database';
 import ProfileAvatar from '@/components/ProfileAvatar';
 
@@ -15,37 +15,7 @@ export default function ProfileScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
   const navigation = useNavigation();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchProfile = useCallback(async () => {
-    try {
-      setError(null);
-      setLoading(true);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError('No active session');
-        return;
-      }
-
-      const { data, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-      setProfile(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load profile';
-      setError(message);
-      console.error('Error fetching profile:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { profile, isLoading: loading, error, refetch: fetchProfile } = useProfile();
 
   // Refetch profile every time this screen comes into focus
   useEffect(() => {

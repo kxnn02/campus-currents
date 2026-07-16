@@ -45,6 +45,9 @@ yarn-error.*
 .env.local
 .env.production
 
+# Firebase (iOS only — google-services.json is safe for Android/Expo)
+GoogleService-Info.plist
+
 # Editor
 .vscode/
 .idea/

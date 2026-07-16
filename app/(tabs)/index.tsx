@@ -18,8 +18,8 @@ import SkeletonCard from '@/components/SkeletonCard';
 import EmptyState from '@/components/EmptyState';
 import ErrorState from '@/components/ErrorState';
 import { useBroadcastFeed, useUnreadCount } from '@/lib/feed';
-import { supabase } from '@/lib/supabase';
-import { Broadcast, Profile } from '@/types/database';
+import { useProfile } from '@/lib/profile';
+import { Broadcast } from '@/types/database';
 
 export default function FeedScreen() {
   const colorScheme = useColorScheme();
@@ -27,47 +27,23 @@ export default function FeedScreen() {
   const router = useRouter();
   const navigation = useNavigation();
 
-  // Get profile from current session
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.id) {
-          const { data } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-          setProfile(data as Profile | null);
-        }
-      } catch {
-        // Profile load failed — will show error state via feed query
-      } finally {
-        setProfileLoading(false);
-      }
-    }
-    loadProfile();
-  }, []);
+  // Get profile from shared context
+  const { profile, isLoading: profileLoading } = useProfile();
 
   // Reset unread count on screen focus
   const { reset: resetUnread } = useUnreadCount();
+
+  // Feed query — only start when profile is available
+  const feedQuery = useBroadcastFeed(profile);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       resetUnread();
       // Refetch feed data on focus to pick up new broadcasts
-      if (feedQuery.data) {
-        feedQuery.refetch();
-      }
+      feedQuery.refetch();
     });
     return unsubscribe;
-  }, [navigation, resetUnread]);
-
-  // Feed query — only start when profile is available
-  const feedQuery = useBroadcastFeed(profile);
+  }, [navigation, resetUnread, feedQuery]);
 
   const {
     data,

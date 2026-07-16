@@ -53,6 +53,12 @@ export async function createBroadcast(formData: FormData) {
 export async function updateBroadcast(id: string, formData: FormData) {
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
   const title = formData.get("title") as string;
   const body = formData.get("body") as string;
   const tier = formData.get("tier") as string;
@@ -93,6 +99,12 @@ export async function updateBroadcast(id: string, formData: FormData) {
 
 export async function deleteBroadcast(id: string) {
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
 
   const { error } = await supabase
     .from("broadcasts")
