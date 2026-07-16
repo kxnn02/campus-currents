@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import { useUnreadCount } from '@/lib/feed';
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
@@ -14,6 +15,7 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { count } = useUnreadCount();
 
   return (
     <Tabs
@@ -34,6 +36,7 @@ export default function TabLayout() {
         options={{
           title: 'Feed',
           tabBarIcon: ({ color }) => <TabBarIcon name="list-alt" color={color} />,
+          tabBarBadge: count > 0 ? (count > 9 ? '9+' : count) : undefined,
         }}
       />
       <Tabs.Screen
