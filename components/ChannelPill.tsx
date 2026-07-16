@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, useColorScheme } from 'react-native';
-import Colors from '@/constants/Colors';
+import { View, Text, StyleSheet } from 'react-native';
+import { theme, useThemeColors } from '@/constants/Theme';
 
 interface ChannelPillProps {
   channel: string;
@@ -10,12 +10,11 @@ interface ChannelPillProps {
  * Light gray background pill displaying a channel tag name.
  */
 export function ChannelPill({ channel }: ChannelPillProps) {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
 
   return (
-    <View style={[styles.pill, { backgroundColor: colorScheme === 'dark' ? colors.border : '#F3F4F6' }]}>
-      <Text style={[styles.text, { color: colors.text }]}>{channel}</Text>
+    <View style={[styles.pill, { backgroundColor: colors.borderLight }]}>
+      <Text style={[styles.text, { color: colors.textSecondary }]}>{channel}</Text>
     </View>
   );
 }
@@ -24,13 +23,13 @@ export default ChannelPill;
 
 const styles = StyleSheet.create({
   pill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: theme.spacing.sm + 2,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.radius.xl,
     alignSelf: 'flex-start',
   },
   text: {
-    fontSize: 12,
+    ...theme.typography.caption,
     fontWeight: '500',
   },
 });

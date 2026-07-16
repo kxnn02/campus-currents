@@ -7,12 +7,10 @@ import { supabase } from '@/lib/supabase';
 import TierBadge from '@/components/TierBadge';
 import ChannelPill from '@/components/ChannelPill';
 import ErrorState from '@/components/ErrorState';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+import { theme, useThemeColors } from '@/constants/Theme';
 
 /**
  * Formats a date string into "MMM D, YYYY • h:mm A" format.
- * e.g., "Jul 14, 2026 • 3:30 PM"
  */
 function formatDetailDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -33,8 +31,7 @@ function formatDetailDate(dateStr: string): string {
 
 export default function BroadcastDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
   const router = useRouter();
   const { data: broadcast, isLoading, isError, refetch } = useBroadcastDetail(id ?? '');
 
@@ -98,7 +95,7 @@ export default function BroadcastDetailScreen() {
         <Text style={[styles.title, { color: colors.text }]}>{broadcast.title}</Text>
 
         {/* Metadata: sender and date */}
-        <View style={styles.metaRow}>
+        <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
           <Text style={[styles.sender, { color: colors.text }]}>{senderName}</Text>
           <Text style={[styles.date, { color: colors.textSecondary }]}>{formatDetailDate(broadcast.sent_at)}</Text>
         </View>
@@ -109,8 +106,10 @@ export default function BroadcastDetailScreen() {
         {/* View Event Link */}
         {broadcast.linked_event_id && (
           <TouchableOpacity
-            style={[styles.viewEventButton, { backgroundColor: colors.tint }]}
+            style={[styles.viewEventButton, { backgroundColor: colors.primary }]}
             onPress={() => router.push(`/event-detail?id=${broadcast.linked_event_id}`)}
+            accessibilityRole="button"
+            accessibilityLabel="View linked event"
           >
             <Text style={styles.viewEventText}>View Event →</Text>
           </TouchableOpacity>
@@ -133,44 +132,46 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 20,
+    padding: theme.spacing.xl,
+    paddingBottom: theme.spacing['4xl'],
   },
   badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
+    ...theme.typography.h1,
     lineHeight: 32,
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
   },
-  metaRow: {
-    marginBottom: 20,
-    gap: 4,
+  metaCard: {
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    marginBottom: theme.spacing.xl,
+    gap: theme.spacing.xs,
   },
   sender: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...theme.typography.label,
   },
   date: {
-    fontSize: 13,
+    ...theme.typography.bodySmall,
   },
   body: {
-    fontSize: 16,
-    lineHeight: 24,
+    ...theme.typography.bodyLarge,
+    lineHeight: 26,
   },
   viewEventButton: {
-    marginTop: 24,
-    paddingVertical: 14,
-    borderRadius: 10,
+    marginTop: theme.spacing['2xl'],
+    paddingVertical: theme.spacing.md + 2,
+    borderRadius: theme.radius.lg,
     alignItems: 'center',
+    ...theme.shadows.sm,
   },
   viewEventText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    ...theme.typography.buttonLarge,
   },
 });

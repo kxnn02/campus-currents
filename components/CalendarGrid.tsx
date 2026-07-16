@@ -4,11 +4,10 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
 } from 'react-native';
 import { CalendarEvent, EventCategory } from '@/types/database';
 import { getCategoryColor } from '@/lib/calendar';
-import Colors from '@/constants/Colors';
+import { theme, useThemeColors } from '@/constants/Theme';
 
 export interface CalendarGridProps {
   year: number;
@@ -138,8 +137,7 @@ export default function CalendarGrid({
   onDatePress,
   onMonthChange,
 }: CalendarGridProps) {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
   const today = getTodayString();
 
   const grid = useMemo(() => buildMonthGrid(year, month), [year, month]);

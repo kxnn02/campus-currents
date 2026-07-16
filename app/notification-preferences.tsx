@@ -2,8 +2,7 @@ import { StyleSheet, View, Text, Switch, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+import { theme, useThemeColors } from '@/constants/Theme';
 
 const STORAGE_KEY = '@campus_currents:notification_preferences';
 
@@ -32,8 +31,7 @@ const CHANNEL_LABELS: Record<keyof NotificationPreferences, string> = {
 };
 
 export default function NotificationPreferencesScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
   const [preferences, setPreferences] = useState<NotificationPreferences>(DEFAULT_PREFERENCES);
 
   useEffect(() => {
@@ -66,9 +64,9 @@ export default function NotificationPreferencesScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={[styles.header, { color: colors.text }]}>Notification Settings</Text>
 
-        <View style={[styles.infoBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={[styles.infoBox, { backgroundColor: colors.primaryBg, borderColor: colors.borderLight }]}>
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            Emergency and Important alerts cannot be muted.
+            Emergency and Important alerts cannot be muted — these keep you safe.
           </Text>
         </View>
 
@@ -79,7 +77,7 @@ export default function NotificationPreferencesScreen() {
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           {(Object.keys(CHANNEL_LABELS) as Array<keyof NotificationPreferences>).map((key, index) => (
             <View key={key}>
-              {index > 0 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
+              {index > 0 && <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />}
               <View style={styles.row}>
                 <Text style={[styles.label, { color: colors.text }]}>{CHANNEL_LABELS[key]}</Text>
                 <Switch
@@ -102,49 +100,46 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 24,
-    paddingBottom: 48,
+    padding: theme.spacing['2xl'],
+    paddingBottom: theme.spacing['5xl'],
   },
   header: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 16,
+    ...theme.typography.h1,
+    marginBottom: theme.spacing.lg,
   },
   infoBox: {
-    borderRadius: 10,
-    padding: 14,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md + 2,
     borderWidth: 1,
-    marginBottom: 24,
+    marginBottom: theme.spacing['2xl'],
   },
   infoText: {
-    fontSize: 14,
+    ...theme.typography.body,
     lineHeight: 20,
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    marginBottom: 10,
-    letterSpacing: 0.5,
+    ...theme.typography.overline,
+    marginBottom: theme.spacing.sm + 2,
   },
   card: {
-    borderRadius: 12,
-    padding: 4,
+    borderRadius: theme.radius.xl,
+    padding: theme.spacing.xs,
     borderWidth: 1,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: theme.spacing.md + 2,
+    paddingHorizontal: theme.spacing.lg,
   },
   label: {
+    ...theme.typography.body,
     fontSize: 15,
     fontWeight: '500',
   },
   divider: {
     height: 1,
-    marginHorizontal: 16,
+    marginHorizontal: theme.spacing.lg,
   },
 });
