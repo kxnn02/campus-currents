@@ -151,19 +151,22 @@ export function NewBroadcastDialog() {
 
           {/* Push Notification Preview */}
           <div className="space-y-2">
-            <Label>Notification Preview</Label>
-            <div className="rounded-lg border border-border bg-muted/50 p-3 font-mono text-sm">
-              <div className="flex items-center gap-1 text-muted-foreground text-xs mb-1">
-                <span>{getTierEmoji(previewTier)}</span>
-                <span className="font-semibold">CampusCurrents</span>
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Notification Preview</Label>
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-1.5">
+                <span className="text-base">{getTierEmoji(previewTier)}</span>
+                <span className="font-semibold text-foreground">CampusCurrents</span>
+                {previewTier !== "routine" && (
+                  <span className="uppercase font-bold text-[10px]">• {previewTier}</span>
+                )}
               </div>
-              <div className="font-semibold text-foreground truncate">
-                {previewTitle || "Title"}
+              <div className="font-semibold text-foreground truncate text-sm">
+                {previewTitle || "Announcement title"}
               </div>
               <div className="text-muted-foreground text-xs mt-0.5 line-clamp-2">
-                {previewBody || "Body preview..."}
+                {previewBody || "Message body preview..."}
               </div>
-              <div className="text-right text-muted-foreground text-xs mt-1">
+              <div className="text-right text-muted-foreground/60 text-[10px] mt-2">
                 Just now
               </div>
             </div>

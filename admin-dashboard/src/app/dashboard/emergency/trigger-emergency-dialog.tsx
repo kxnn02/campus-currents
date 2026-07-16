@@ -160,20 +160,23 @@ export function TriggerEmergencyDialog() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-800">
-                <p className="font-semibold">⚠️ This action cannot be undone immediately.</p>
-                <p className="mt-1">All students will receive a full-screen emergency overlay with alarm override.</p>
+              <div className="rounded-xl bg-destructive/10 border border-destructive/30 p-4 text-sm text-destructive">
+                <p className="font-bold flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  This action cannot be undone immediately.
+                </p>
+                <p className="mt-2 text-destructive/80">All students will receive a full-screen emergency overlay with alarm override on their devices.</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pin">Enter PIN to confirm</Label>
+                <Label htmlFor="pin">Enter your PIN to confirm</Label>
                 <Input
                   id="pin"
                   type="password"
-                  placeholder="Enter 4-6 digit PIN"
+                  placeholder="••••••"
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
                   maxLength={6}
-                  className="text-center text-lg tracking-widest"
+                  className="text-center text-2xl tracking-[0.5em] font-mono h-12"
                 />
               </div>
               <div className="flex justify-end gap-2">
@@ -184,6 +187,7 @@ export function TriggerEmergencyDialog() {
                   variant="destructive"
                   onClick={handleConfirmEmergency}
                   disabled={!canConfirm || pin.length < 4 || loading}
+                  className="min-w-[160px]"
                 >
                   {!canConfirm
                     ? `Wait ${countdown}s...`

@@ -77,19 +77,33 @@ export function NewSuspensionDialog() {
 
         {/* Template Cards */}
         <div className="grid grid-cols-2 gap-3">
-          {TEMPLATES.map((template) => (
-            <button
-              key={template.label}
-              type="button"
-              className="rounded-lg border p-3 text-left text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              onClick={() => {
-                setSource(template.source);
-                setReason(template.reason);
-              }}
-            >
-              {template.label}
-            </button>
-          ))}
+          {TEMPLATES.map((template) => {
+            const isSelected = source === template.source && reason === template.reason;
+            const icons: Record<string, string> = {
+              "Manila LGU": "🏛️",
+              "PAGASA Weather": "🌧️",
+              "DepEd Order": "📋",
+              "School Decision": "🏫",
+            };
+            return (
+              <button
+                key={template.label}
+                type="button"
+                className={`rounded-xl border-2 p-4 text-left text-sm font-medium transition-all hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-ring ${
+                  isSelected
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border hover:border-primary/40"
+                }`}
+                onClick={() => {
+                  setSource(template.source);
+                  setReason(template.reason);
+                }}
+              >
+                <span className="text-2xl block mb-1">{icons[template.label] ?? "📄"}</span>
+                <span className="block font-semibold">{template.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         <form action={handleSubmit} className="space-y-4">
