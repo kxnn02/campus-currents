@@ -8,8 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
+import { theme, useThemeColors } from '@/constants/Theme';
 import { useEventDetail, getCategoryColor } from '@/lib/calendar';
 import ErrorState from '@/components/ErrorState';
 import { EventCategory } from '@/types/database';
@@ -71,11 +70,9 @@ function formatEventDateTime(
 }
 
 function getStorageUrl(attachmentUrl: string): string {
-  // If it's already a full URL, use as-is
   if (attachmentUrl.startsWith('http')) {
     return attachmentUrl;
   }
-  // Otherwise, construct the public URL from Supabase Storage
   const { data } = supabase.storage
     .from('event-posters')
     .getPublicUrl(attachmentUrl);
@@ -84,8 +81,7 @@ function getStorageUrl(attachmentUrl: string): string {
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
   const { data: event, isLoading, isError, refetch } = useEventDetail(id ?? '');
   const [imageError, setImageError] = useState(false);
 
@@ -139,57 +135,54 @@ export default function EventDetailScreen() {
         ) : null}
 
         <View style={styles.content}>
-          {/* Title */}
-          <Text
-            style={[styles.title, { color: colors.text }]}
-            accessibilityRole="header"
-          >
-            {event.title}
-          </Text>
-
           {/* Category badge */}
-          <View
-            style={[
-              styles.categoryBadge,
-              { backgroundColor: categoryColor + '15' },
-            ]}
-          >
+          <View style={[styles.categoryBadge, { backgroundColor: categoryColor + '15' }]}>
             <Text style={[styles.categoryText, { color: categoryColor }]}>
               {getCategoryLabel(event.category)}
             </Text>
           </View>
 
-          {/* Date/Time */}
-          <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>🗓️</Text>
-            <Text style={[styles.detailText, { color: colors.text }]}>
-              {formatEventDateTime(event.start_date, event.end_date, event.is_all_day)}
-            </Text>
-          </View>
+          {/* Title */}
+          <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+            {event.title}
+          </Text>
 
-          {/* Location */}
-          {event.location && (
+          {/* Details card */}
+          <View style={[styles.detailsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            {/* Date/Time */}
             <View style={styles.detailRow}>
-              <Text style={styles.detailIcon}>📍</Text>
+              <Text style={styles.detailIcon}>📅</Text>
               <Text style={[styles.detailText, { color: colors.text }]}>
-                {event.location}
+                {formatEventDateTime(event.start_date, event.end_date, event.is_all_day)}
               </Text>
             </View>
-          )}
 
-          {/* Organizer */}
-          <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>👤</Text>
-            <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-              Organized by {event.organizer_name}
-            </Text>
+            {/* Location */}
+            {event.location && (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailIcon}>📍</Text>
+                <Text style={[styles.detailText, { color: colors.text }]}>
+                  {event.location}
+                </Text>
+              </View>
+            )}
+
+            {/* Organizer */}
+            {event.organizer_name && (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailIcon}>👤</Text>
+                <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                  {event.organizer_name}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Description */}
           {event.description && (
             <View style={styles.descriptionSection}>
               <Text style={[styles.descriptionLabel, { color: colors.text }]}>
-                Description
+                About
               </Text>
               <Text style={[styles.descriptionText, { color: colors.textSecondary }]}>
                 {event.description}
@@ -212,73 +205,77 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollContent: {
-    paddingBottom: 32,
+    paddingBottom: theme.spacing['4xl'],
   },
   posterImage: {
     width: '100%',
-    height: 200,
+    height: 220,
   },
   posterPlaceholder: {
     width: '100%',
-    height: 200,
+    height: 220,
     justifyContent: 'center',
     alignItems: 'center',
   },
   placeholderIcon: {
     fontSize: 32,
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
   placeholderText: {
-    fontSize: 14,
+    ...theme.typography.body,
     fontWeight: '500',
   },
   content: {
-    padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 12,
+    padding: theme.spacing.xl,
   },
   categoryBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginBottom: 20,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs + 2,
+    borderRadius: theme.radius['2xl'],
+    marginBottom: theme.spacing.md,
   },
   categoryText: {
-    fontSize: 13,
+    ...theme.typography.caption,
     fontWeight: '600',
+  },
+  title: {
+    ...theme.typography.h1,
+    marginBottom: theme.spacing.lg,
+  },
+  detailsCard: {
+    borderRadius: theme.radius.xl,
+    borderWidth: 1,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
-    gap: 8,
+    gap: theme.spacing.sm + 2,
   },
   detailIcon: {
     fontSize: 16,
     marginTop: 2,
   },
   detailText: {
+    ...theme.typography.body,
     fontSize: 15,
     lineHeight: 22,
     flex: 1,
   },
   descriptionSection: {
-    marginTop: 20,
-    paddingTop: 20,
+    paddingTop: theme.spacing.xl,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: theme.palette.gray200,
   },
   descriptionLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
+    ...theme.typography.h3,
+    marginBottom: theme.spacing.sm,
   },
   descriptionText: {
-    fontSize: 15,
-    lineHeight: 24,
+    ...theme.typography.bodyLarge,
+    lineHeight: 26,
   },
 });

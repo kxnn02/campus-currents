@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Animated, useColorScheme } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
-import Colors from '@/constants/Colors';
+import { theme, useThemeColors } from '@/constants/Theme';
 
 interface BannerData {
   title: string;
@@ -27,8 +27,7 @@ export function InAppBannerProvider({ children }: { children: React.ReactNode })
   const translateY = useRef(new Animated.Value(-120)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
 
   const dismiss = useCallback(() => {
     Animated.timing(translateY, {
@@ -67,8 +66,8 @@ export function InAppBannerProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const tierColor = banner
-    ? Colors.tier[banner.tier as keyof typeof Colors.tier] ?? Colors.tier.routine
-    : Colors.tier.routine;
+    ? theme.colors.tier[banner.tier as keyof typeof theme.colors.tier] ?? theme.colors.tier.routine
+    : theme.colors.tier.routine;
 
   return (
     <InAppBannerContext.Provider value={{ show }}>
@@ -101,35 +100,30 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     top: 50,
-    left: 12,
-    right: 12,
-    borderRadius: 12,
+    left: theme.spacing.md,
+    right: theme.spacing.md,
+    borderRadius: theme.radius.xl,
     borderLeftWidth: 4,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md + 2,
+    ...theme.shadows.xl,
     zIndex: 9999,
   },
   pressable: {
     flex: 1,
   },
   title: {
-    fontSize: 14,
-    fontWeight: '700',
+    ...theme.typography.label,
     marginBottom: 2,
   },
   body: {
-    fontSize: 13,
+    ...theme.typography.bodySmall,
   },
   dismissButton: {
-    paddingLeft: 12,
-    paddingVertical: 4,
+    paddingLeft: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
   },
   dismissText: {
     fontSize: 16,
