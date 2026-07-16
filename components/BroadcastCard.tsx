@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, View, Text, StyleSheet } from 'react-native';
+import { Pressable, View, Text, StyleSheet, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Broadcast, NotificationTier } from '@/types/database';
 import { formatRelativeTime } from '@/lib/feed';
@@ -32,6 +32,8 @@ const tierLabels: Record<NotificationTier, string> = {
  *   and a bottom row with relative timestamp, channel pill, and optional pin icon
  */
 export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
   const borderColor = tierColors[broadcast.tier] ?? Colors.tier.routine;
   const tierLabel = tierLabels[broadcast.tier] ?? 'Routine';
 
@@ -39,7 +41,7 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
     <Pressable
       style={({ pressed }) => [
         styles.card,
-        { borderLeftColor: borderColor },
+        { borderLeftColor: borderColor, backgroundColor: colors.surface },
         pressed && styles.cardPressed,
       ]}
       onPress={() => onPress(broadcast)}
@@ -53,12 +55,12 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
         </Text>
 
         {/* Title — bold, single line with ellipsis */}
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
           {broadcast.title}
         </Text>
 
         {/* Body preview — 2 lines with ellipsis */}
-        <Text style={styles.body} numberOfLines={2}>
+        <Text style={[styles.body, { color: colors.textSecondary }]} numberOfLines={2}>
           {broadcast.body}
         </Text>
 
@@ -74,7 +76,7 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
             <Ionicons
               name="pin"
               size={14}
-              color="#6B7280"
+              color={colors.textSecondary}
               style={styles.pinIcon}
               accessibilityLabel="Pinned"
             />
@@ -87,7 +89,6 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 10,
     borderLeftWidth: 4,
     borderLeftColor: Colors.tier.routine,
@@ -115,12 +116,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#111827',
     marginBottom: 4,
   },
   body: {
     fontSize: 13,
-    color: '#6B7280',
     lineHeight: 18,
     marginBottom: 8,
   },

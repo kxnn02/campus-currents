@@ -14,6 +14,7 @@ import { Stack, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { queryClient } from '@/lib/query';
 import { validateProfileForm, ProfileCreateInput } from '@/lib/validation';
+import { deriveLevelFromProgram } from '@/lib/suspensions';
 import FormField from '@/components/FormField';
 import LoadingButton from '@/components/LoadingButton';
 import { Profile, Program } from '@/types/database';
@@ -42,32 +43,6 @@ const YEAR_LEVELS = [
   { label: '3rd Year', value: 3 },
   { label: '4th Year', value: 4 },
 ];
-
-function deriveLevelFromProgram(program: Program) {
-  switch (program) {
-    case 'BSIT':
-    case 'BSBA':
-    case 'BSA':
-    case 'BSED':
-    case 'BEED':
-    case 'AB_PSYCH':
-    case 'AB_COMM':
-    case 'OTHER':
-      return 'college';
-    case 'JD':
-      return 'law';
-    case 'ETEEAP':
-      return 'eteeap';
-    case 'STEM':
-    case 'ABM':
-    case 'HUMSS':
-    case 'GAS':
-    case 'TVL':
-      return 'senior_high';
-    default:
-      return 'college';
-  }
-}
 
 export default function ProfileEditScreen() {
   const router = useRouter();

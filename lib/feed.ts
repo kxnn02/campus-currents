@@ -36,8 +36,9 @@ export function matchesTargetAudience(
   // Evaluate individual matches
   const programMatch = !hasPrograms ||
     (targetAudience.programs as string[]).includes(profile.program ?? '');
+  // year_levels may be stored as strings (from FormData) or numbers — normalize both sides
   const yearMatch = !hasYearLevels ||
-    (targetAudience.year_levels as number[]).includes(profile.year_level ?? 0);
+    (targetAudience.year_levels as (string | number)[]).map(String).includes(String(profile.year_level ?? 0));
 
   // Rule 3: Both present → AND logic
   if (hasPrograms && hasYearLevels) return programMatch && yearMatch;

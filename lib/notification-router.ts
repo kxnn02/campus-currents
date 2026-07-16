@@ -19,6 +19,17 @@ export type NavigationTarget =
   | { type: 'broadcast_detail'; broadcastId: string }
   | { type: 'feed' }; // fallback
 
+// Reference to the in-app banner show function (wired from _layout.tsx)
+let _showBannerFn: ((data: { title: string; body: string; tier: string; broadcastId?: string }) => void) | null = null;
+
+/**
+ * Registers the in-app banner show function.
+ * Called once from the root layout after InAppBannerProvider mounts.
+ */
+export function registerBannerHandler(fn: typeof _showBannerFn): void {
+  _showBannerFn = fn;
+}
+
 // --- Pure function: route determination ---
 
 /**
@@ -130,10 +141,18 @@ async function recordDeliveryReceipt(data: NotificationData | undefined): Promis
 
 /**
  * Placeholder for in-app banner display.
- * The UI layer (NotificationProvider) can wire this to show a toast/banner.
- * For now, this is a no-op that can be extended.
+ * Uses the registered banner handler to show a toast when notifications arrive in foreground.
  */
-function showInAppBanner(_notification: Notifications.Notification): void {
-  // No-op placeholder — UI layer wires this via NotificationProvider context
-  // When wired, this would trigger an in-app toast/banner for non-emergency notifications
+function showInAppBanner(notification: Notifications.Notification): void {
+  if (!_showBannerFn) return;
+
+  const content = notification.request.content;
+  const data = content.data as NotificationData | undefined;
+
+  _showBannerFn({
+    title: content.title ?? 'New Notification',
+    body: content.body ?? '',
+    tier: data?.tier ?? 'routine',
+    broadcastId: data?.broadcast_id,
+  });
 }

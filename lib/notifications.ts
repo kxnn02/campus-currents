@@ -145,7 +145,7 @@ export async function registerForPushNotifications(): Promise<string | undefined
 
   // Get Expo push token
   const projectId =
-    Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+    Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId ?? '3a405c4f-d07a-4544-b28c-cea875f147c1';
 
   if (!projectId) {
     console.warn('[Notifications] No project ID found for push notifications');
@@ -153,8 +153,10 @@ export async function registerForPushNotifications(): Promise<string | undefined
   }
 
   try {
+    console.log('[Notifications] Getting push token with projectId:', projectId);
     const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
     const token = tokenData.data;
+    console.log('[Notifications] Got push token:', token);
 
     // Store token in Supabase (with retry logic)
     await storeTokenInSupabase(token);

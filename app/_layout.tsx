@@ -18,6 +18,9 @@ import { EmergencyProvider, useEmergency } from '@/lib/emergency';
 import { NetworkProvider, StaleDataBanner, TimeoutToast } from '@/lib/network';
 import { useConnectivitySync } from '@/lib/connectivity';
 import { UnreadCountProvider } from '@/lib/feed';
+import { InAppBannerProvider, useInAppBanner } from '@/components/InAppBanner';
+import { registerBannerHandler } from '@/lib/notification-router';
+import { registerForPushNotifications, checkAndUpdateToken } from '@/lib/notifications';
 import * as Linking from 'expo-linking';
 
 export { ErrorBoundary } from 'expo-router';
@@ -53,7 +56,9 @@ export default function RootLayout() {
       <EmergencyProvider>
         <NetworkProvider>
           <UnreadCountProvider>
-            <RootLayoutNav />
+            <InAppBannerProvider>
+              <RootLayoutNav />
+            </InAppBannerProvider>
           </UnreadCountProvider>
         </NetworkProvider>
       </EmergencyProvider>
@@ -70,6 +75,12 @@ function RootLayoutNav() {
   const appState = useRef(AppState.currentState);
   const { checkActiveEmergency, activeEmergency, hasAcknowledged, showOverlay } = useEmergency();
   const { isServingStaleData, showTimeoutToast, dismissTimeoutToast } = useConnectivitySync();
+  const { show: showBanner } = useInAppBanner();
+
+  // Register in-app banner handler for notification-router
+  useEffect(() => {
+    registerBannerHandler(showBanner);
+  }, [showBanner]);
 
   // Handle deep link redirects from OAuth
   const url = Linking.useURL();
@@ -102,6 +113,16 @@ function RootLayoutNav() {
       router.replace('/(auth)/login' as never);
     }
   }, [session, initialized, segments]);
+
+  // Register push notifications when user is authenticated
+  useEffect(() => {
+    if (session) {
+      console.log('[Push] Session detected, registering for push notifications...');
+      registerForPushNotifications()
+        .then((token) => console.log('[Push] Registration result:', token ?? 'no token'))
+        .catch((err) => console.warn('[Push] Registration failed:', err));
+    }
+  }, [session]);
 
   // AppState listener: check for active emergency when app returns to foreground
   useEffect(() => {

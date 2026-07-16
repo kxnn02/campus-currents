@@ -8,6 +8,7 @@ import TierBadge from '@/components/TierBadge';
 import ChannelPill from '@/components/ChannelPill';
 import ErrorState from '@/components/ErrorState';
 import Colors from '@/constants/Colors';
+import { useColorScheme } from '@/components/useColorScheme';
 
 /**
  * Formats a date string into "MMM D, YYYY • h:mm A" format.
@@ -32,6 +33,8 @@ function formatDetailDate(dateStr: string): string {
 
 export default function BroadcastDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
   const { data: broadcast, isLoading, isError, refetch } = useBroadcastDetail(id ?? '');
 
   // Record read receipt on mount
@@ -50,16 +53,16 @@ export default function BroadcastDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ title: '', headerBackTitle: 'Back' }} />
-        <ActivityIndicator size="large" color={Colors.light.tint} />
+        <ActivityIndicator size="large" color={colors.tint} />
       </View>
     );
   }
 
   if (isError || !broadcast) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ title: '', headerBackTitle: 'Back' }} />
         <ErrorState
           message="Unable to load broadcast details"
@@ -72,7 +75,7 @@ export default function BroadcastDetailScreen() {
   const senderName = `${broadcast.sender.first_name} ${broadcast.sender.last_name}`.trim();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen
         options={{
           title: 'Announcement',
@@ -91,16 +94,16 @@ export default function BroadcastDetailScreen() {
         </View>
 
         {/* Title */}
-        <Text style={styles.title}>{broadcast.title}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{broadcast.title}</Text>
 
         {/* Metadata: sender and date */}
         <View style={styles.metaRow}>
-          <Text style={styles.sender}>{senderName}</Text>
-          <Text style={styles.date}>{formatDetailDate(broadcast.sent_at)}</Text>
+          <Text style={[styles.sender, { color: colors.text }]}>{senderName}</Text>
+          <Text style={[styles.date, { color: colors.textSecondary }]}>{formatDetailDate(broadcast.sent_at)}</Text>
         </View>
 
         {/* Body */}
-        <Text style={styles.body}>{broadcast.body}</Text>
+        <Text style={[styles.body, { color: colors.text }]}>{broadcast.body}</Text>
       </ScrollView>
     </View>
   );
@@ -109,13 +112,11 @@ export default function BroadcastDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.light.background,
   },
   scrollView: {
     flex: 1,
@@ -132,7 +133,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.light.text,
     lineHeight: 32,
     marginBottom: 12,
   },
@@ -143,15 +143,12 @@ const styles = StyleSheet.create({
   sender: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.text,
   },
   date: {
     fontSize: 13,
-    color: Colors.light.textSecondary,
   },
   body: {
     fontSize: 16,
-    color: Colors.light.text,
     lineHeight: 24,
   },
 });

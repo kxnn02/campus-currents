@@ -16,6 +16,7 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { supabase } from '@/lib/supabase';
 import { Program, Level } from '@/types/database';
+import { deriveLevelFromProgram } from '@/lib/suspensions';
 
 const PROGRAMS: { label: string; value: Program }[] = [
   { label: 'BSIT', value: 'BSIT' },
@@ -41,32 +42,6 @@ const YEAR_LEVELS = [
   { label: '3rd Year', value: 3 },
   { label: '4th Year', value: 4 },
 ];
-
-function deriveLevelFromProgram(program: Program): Level {
-  switch (program) {
-    case 'BSIT':
-    case 'BSBA':
-    case 'BSA':
-    case 'BSED':
-    case 'BEED':
-    case 'AB_PSYCH':
-    case 'AB_COMM':
-    case 'OTHER':
-      return 'college';
-    case 'JD':
-      return 'law';
-    case 'ETEEAP':
-      return 'eteeap';
-    case 'STEM':
-    case 'ABM':
-    case 'HUMSS':
-    case 'GAS':
-    case 'TVL':
-      return 'senior_high';
-    default:
-      return 'college';
-  }
-}
 
 function validateStudentId(id: string): boolean {
   return /^\d{10}$/.test(id);
