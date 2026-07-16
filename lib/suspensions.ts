@@ -143,8 +143,12 @@ function getTodayManila(): string {
  *
  * Uses staleTime of 30 seconds per configuration.
  */
-export function useTodaySuspensions(profile: { level: Level | null; program: Program | null }) {
+export function useTodaySuspensions(
+  profile: { level: Level | null; program: Program | null },
+  options?: { enabled?: boolean }
+) {
   const level = profile.level ?? (profile.program ? deriveLevelFromProgram(profile.program) : null);
+  const enabled = options?.enabled ?? true;
 
   return useQuery<ClassSuspension[]>({
     queryKey: queryKeys.suspensions.today(),
@@ -164,5 +168,6 @@ export function useTodaySuspensions(profile: { level: Level | null; program: Pro
       );
     },
     staleTime: staleTimeConfig.suspensions,
+    enabled,
   });
 }

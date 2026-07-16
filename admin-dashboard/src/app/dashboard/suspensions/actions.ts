@@ -64,6 +64,12 @@ export async function createSuspension(formData: FormData) {
 export async function liftSuspension(id: string) {
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
   const { error } = await supabase
     .from("class_suspensions")
     .update({ status: "lifted" })

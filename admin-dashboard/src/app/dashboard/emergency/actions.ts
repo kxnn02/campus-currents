@@ -50,6 +50,12 @@ export async function triggerEmergency(formData: FormData) {
 export async function resolveEmergency(id: string) {
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
   const { error } = await supabase
     .from("active_emergencies")
     .update({

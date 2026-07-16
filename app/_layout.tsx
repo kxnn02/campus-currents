@@ -18,6 +18,7 @@ import { EmergencyProvider, useEmergency } from '@/lib/emergency';
 import { NetworkProvider, StaleDataBanner, TimeoutToast } from '@/lib/network';
 import { useConnectivitySync } from '@/lib/connectivity';
 import { UnreadCountProvider } from '@/lib/feed';
+import { ProfileProvider } from '@/lib/profile';
 import { InAppBannerProvider, useInAppBanner } from '@/components/InAppBanner';
 import { registerBannerHandler, handleNotificationResponse, handleForegroundNotification } from '@/lib/notification-router';
 import { registerForPushNotifications, checkAndUpdateToken } from '@/lib/notifications';
@@ -56,11 +57,13 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <EmergencyProvider>
         <NetworkProvider>
-          <UnreadCountProvider>
-            <InAppBannerProvider>
-              <RootLayoutNav />
-            </InAppBannerProvider>
-          </UnreadCountProvider>
+          <ProfileProvider>
+            <UnreadCountProvider>
+              <InAppBannerProvider>
+                <RootLayoutNav />
+              </InAppBannerProvider>
+            </UnreadCountProvider>
+          </ProfileProvider>
         </NetworkProvider>
       </EmergencyProvider>
     </QueryClientProvider>

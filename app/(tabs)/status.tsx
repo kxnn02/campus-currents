@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -14,6 +14,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import StatusIndicator from '@/components/StatusIndicator';
 import ErrorState from '@/components/ErrorState';
 import { useNetworkContext } from '@/lib/network';
+import { useProfile } from '@/lib/profile';
 import {
   useTodaySuspensions,
   formatSuspensionSource,
@@ -49,31 +50,8 @@ export default function StatusScreen() {
   const { isConnected, isInternetReachable } = useNetworkContext();
   const isOffline = !isConnected || !isInternetReachable;
 
-  // Load profile from Supabase session (same pattern as profile tab)
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
-
-        if (error) throw error;
-        setProfile(data);
-      } catch (err) {
-        console.error('Error fetching profile for status:', err);
-      } finally {
-        setProfileLoading(false);
-      }
-    })();
-  }, []);
+  // Get profile from shared context
+  const { profile, isLoading: profileLoading } = useProfile();
 
   // Fetch suspensions once profile is available
   const {
@@ -83,7 +61,8 @@ export default function StatusScreen() {
     refetch,
     dataUpdatedAt,
   } = useTodaySuspensions(
-    profile ?? { level: null, program: null }
+    profile ?? { level: null, program: null },
+    { enabled: !!profile }
   );
 
   // Fetch recent suspension history (last 3)
