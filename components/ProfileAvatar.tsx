@@ -1,11 +1,24 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { theme } from '@/constants/Theme';
 
 interface ProfileAvatarProps {
   firstName: string;
   lastName: string;
   size?: number;
 }
+
+// Colors from the design palette for deterministic avatar coloring
+const avatarColors = [
+  theme.palette.blue500,
+  theme.palette.green600,
+  theme.palette.purple500,
+  theme.palette.orange500,
+  theme.palette.red600,
+  theme.palette.teal500,
+  theme.palette.yellow500,
+  theme.palette.blue800,
+];
 
 /**
  * Initials-based circle avatar.
@@ -16,11 +29,10 @@ export default function ProfileAvatar({ firstName, lastName, size = 48 }: Profil
   const initials = `${(firstName || '').charAt(0).toUpperCase()}${(lastName || '').charAt(0).toUpperCase()}`;
 
   // Deterministic color from name string
-  const colorPalette = ['#3B82F6', '#16A34A', '#8B5CF6', '#F97316', '#DC2626', '#14B8A6', '#EAB308', '#EC4899'];
   const hash = (firstName + lastName).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const backgroundColor = colorPalette[hash % colorPalette.length];
+  const backgroundColor = avatarColors[hash % avatarColors.length];
 
-  const fontSize = size * 0.4;
+  const fontSize = size * 0.38;
 
   return (
     <View
@@ -44,6 +56,7 @@ const styles = StyleSheet.create({
   avatar: {
     justifyContent: 'center',
     alignItems: 'center',
+    ...theme.shadows.sm,
   },
   initials: {
     color: '#FFFFFF',
