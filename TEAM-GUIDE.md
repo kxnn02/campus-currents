@@ -177,7 +177,7 @@ Open http://localhost:3000 in your browser (Chrome recommended).
 
 ## Testing on Your Phone
 
-### Install the App
+### Android — Install the Development Build
 
 **📥 Download the APK:** https://expo.dev/accounts/kxnn02/projects/campus-currents/builds/d46e2360-c0e7-480d-be39-54ff5eb0af3e
 
@@ -188,7 +188,18 @@ Open http://localhost:3000 in your browser (Chrome recommended).
 3. Your phone will ask "Allow installation from unknown sources?" → Go to Settings → Allow for your browser → Tap **Install**
 4. Once installed, you'll see a **"CampusCurrents"** app on your home screen
 
-### Connect to the Dev Server
+### iOS — Install via Expo Go (Temporary)
+
+> ⚠️ Push notifications do NOT work on iOS via Expo Go. For full iOS testing with notifications, a paid Apple Developer account ($99/year) is required to build an IPA. For now, use Expo Go for UI/functionality testing.
+
+1. Install **Expo Go** from the App Store on your iPhone
+2. On your computer, run: `npx expo start`
+3. Scan the QR code using your iPhone's **Camera app** — it will open in Expo Go
+4. Everything works except push notifications
+
+> If the team later gets an Apple Developer account, we can build an iOS development build with: `eas build --platform ios --profile development`
+
+### Connect to the Dev Server (Android with APK)
 
 5. On your computer, run:
 ```bash
