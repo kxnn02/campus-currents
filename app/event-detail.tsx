@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   descriptionSection: {
     paddingTop: theme.spacing.xl,
     borderTopWidth: 1,
-    borderTopColor: theme.palette.gray200,
+    borderTopColor: '#E4BEBA',
   },
   descriptionLabel: {
     ...theme.typography.h3,

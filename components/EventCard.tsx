@@ -39,14 +39,15 @@ export default function EventCard({ event, onPress }: EventCardProps) {
     <Pressable
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: colors.surface },
+        { backgroundColor: colors.surface, borderColor: colors.borderLight },
         pressed && styles.cardPressed,
       ]}
       onPress={() => onPress(event)}
       accessibilityRole="button"
       accessibilityLabel={`${event.title}, ${formatTimeRange()}`}
     >
-      <View style={[styles.dot, { backgroundColor: categoryColor }]} />
+      {/* Colored left strip matching Figma event cards */}
+      <View style={[styles.leftStrip, { backgroundColor: categoryColor }]} />
       <View style={styles.content}>
         <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
           {event.title}
@@ -65,33 +66,31 @@ export default function EventCard({ event, onPress }: EventCardProps) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    borderRadius: theme.radius.lg,
-    padding: theme.spacing.md + 2,
-    marginVertical: theme.spacing.xs,
+    borderRadius: theme.radius['2xl'],
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginVertical: theme.spacing.xs + 2,
     ...theme.shadows.sm,
   },
   cardPressed: {
-    opacity: 0.8,
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginTop: 5,
-    marginRight: theme.spacing.md,
+  leftStrip: {
+    width: 4,
   },
   content: {
     flex: 1,
+    padding: theme.spacing.lg,
   },
   title: {
     ...theme.typography.h3,
     fontSize: 15,
-    marginBottom: 2,
+    marginBottom: theme.spacing.xs,
   },
   time: {
     ...theme.typography.bodySmall,
-    marginBottom: 2,
+    marginBottom: theme.spacing.xs,
   },
   location: {
     ...theme.typography.caption,

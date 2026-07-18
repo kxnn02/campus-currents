@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { theme, useThemeColors } from '@/constants/Theme';
 import { signOut } from '@/lib/auth';
 import { useProfile } from '@/lib/profile';
@@ -15,7 +16,6 @@ export default function ProfileScreen() {
   const navigation = useNavigation();
   const { profile, isLoading: loading, error, refetch: fetchProfile } = useProfile();
 
-  // Refetch profile every time this screen comes into focus
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       fetchProfile();
@@ -64,7 +64,7 @@ export default function ProfileScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
         <View style={styles.centered}>
-          <Text style={[styles.errorText, { color: '#DC2626' }]}>{error}</Text>
+          <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
           <Pressable style={[styles.retryButton, { borderColor: colors.border }]} onPress={fetchProfile}>
             <Text style={[styles.retryText, { color: colors.tint }]}>Retry</Text>
           </Pressable>
@@ -83,87 +83,143 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Avatar and Name Header */}
-        <View style={styles.header}>
-          <ProfileAvatar
-            firstName={profile?.first_name || ''}
-            lastName={profile?.last_name || ''}
-            size={80}
-          />
-          <Text style={[styles.name, { color: colors.text }]}>{fullName}</Text>
+        {/* Header Card with Avatar */}
+        <View style={[styles.headerCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={[styles.headerBanner, { backgroundColor: colors.primaryBg }]} />
+          <View style={styles.headerContent}>
+            <ProfileAvatar
+              firstName={profile?.first_name || ''}
+              lastName={profile?.last_name || ''}
+              size={80}
+            />
+            <Text style={[styles.name, { color: colors.text }]}>{fullName}</Text>
+            {profile?.student_id && (
+              <Text style={[styles.studentId, { color: colors.textSecondary }]}>
+                {profile.student_id}
+              </Text>
+            )}
+            {profile?.program && (
+              <View style={[styles.programBadge, { backgroundColor: colors.primaryBg }]}>
+                <Text style={[styles.programBadgeText, { color: colors.primary }]}>
+                  {profile.program}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
-        {/* Profile Info Card */}
-        <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          {profile?.student_id && (
-            <InfoRow label="Student ID" value={profile.student_id} colors={colors} />
-          )}
+        {/* Academic Information Section */}
+        <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>
+          ACADEMIC INFORMATION
+        </Text>
+        <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           {profile?.program && (
-            <>
-              {profile?.student_id && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
-              <InfoRow label="Program" value={profile.program} colors={colors} />
-            </>
+            <InfoRow
+              icon="school-outline"
+              label="Program"
+              value={profile.program}
+              colors={colors}
+            />
           )}
           {profile?.year_level && (
             <>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-              <InfoRow label="Year Level" value={`${profile.year_level}`} colors={colors} />
+              <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+              <InfoRow
+                icon="layers-outline"
+                label="Year Level"
+                value={`${profile.year_level}`}
+                colors={colors}
+              />
             </>
           )}
           {profile?.email && (
             <>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-              <InfoRow label="Email" value={profile.email} colors={colors} />
+              <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+              <InfoRow
+                icon="mail-outline"
+                label="Email"
+                value={profile.email}
+                colors={colors}
+              />
             </>
           )}
           {phoneDisplay && (
             <>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-              <InfoRow label="Phone" value={phoneDisplay} colors={colors} />
+              <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+              <InfoRow
+                icon="call-outline"
+                label="Phone"
+                value={phoneDisplay}
+                colors={colors}
+              />
             </>
           )}
         </View>
 
-        {/* Edit Profile Button */}
-        <Pressable
-          style={[styles.editButton, { backgroundColor: colors.tint }]}
-          onPress={handleEditProfile}
-          accessibilityLabel="Edit Profile"
-          accessibilityRole="button"
-        >
-          <Text style={styles.editButtonText}>Edit Profile</Text>
-        </Pressable>
-
-        {/* Notification Preferences Button */}
-        <Pressable
-          style={[styles.notifButton, { borderColor: colors.border }]}
-          onPress={() => router.push('/notification-preferences' as never)}
-          accessibilityLabel="Notification Preferences"
-          accessibilityRole="button"
-        >
-          <Text style={[styles.notifButtonText, { color: colors.text }]}>Notification Preferences</Text>
-        </Pressable>
-
-        {/* Sign Out Button */}
-        <Pressable
-          style={[styles.signOutButton, { borderColor: colors.border }]}
-          onPress={handleSignOut}
-          accessibilityLabel="Sign Out"
-          accessibilityRole="button"
-        >
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </Pressable>
+        {/* Preferences Section */}
+        <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>
+          PREFERENCES
+        </Text>
+        <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <MenuRow
+            icon="create-outline"
+            label="Edit Profile"
+            onPress={handleEditProfile}
+            colors={colors}
+          />
+          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <MenuRow
+            icon="notifications-outline"
+            label="Notification Preferences"
+            onPress={() => router.push('/notification-preferences' as never)}
+            colors={colors}
+          />
+          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <MenuRow
+            icon="log-out-outline"
+            label="Sign Out"
+            onPress={handleSignOut}
+            colors={colors}
+            destructive
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function InfoRow({ label, value, colors }: { label: string; value: string; colors: Record<string, string> }) {
+function InfoRow({ icon, label, value, colors }: { icon: string; label: string; value: string; colors: Record<string, string> }) {
   return (
     <View style={styles.infoRow}>
-      <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{label}</Text>
-      <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1}>{value}</Text>
+      <View style={[styles.infoIconBg, { backgroundColor: colors.primaryBg }]}>
+        <Ionicons name={icon as any} size={18} color={colors.primary} />
+      </View>
+      <View style={styles.infoTextContainer}>
+        <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{label}</Text>
+        <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1}>{value}</Text>
+      </View>
     </View>
+  );
+}
+
+function MenuRow({ icon, label, onPress, colors, destructive }: { icon: string; label: string; onPress: () => void; colors: Record<string, string>; destructive?: boolean }) {
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.menuRow, pressed && { opacity: 0.7 }]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <Ionicons
+        name={icon as any}
+        size={18}
+        color={destructive ? colors.error : colors.text}
+      />
+      <Text style={[styles.menuLabel, { color: destructive ? colors.error : colors.text }]}>
+        {label}
+      </Text>
+      <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+    </Pressable>
   );
 }
 
@@ -175,92 +231,117 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: theme.spacing['2xl'],
   },
   scrollContent: {
-    padding: 24,
-    paddingBottom: 48,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: 96,
   },
-  header: {
+  // Header Card
+  headerCard: {
+    borderRadius: theme.radius['2xl'],
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginBottom: theme.spacing['2xl'],
+    ...theme.shadows.sm,
+  },
+  headerBanner: {
+    height: 64,
+  },
+  headerContent: {
     alignItems: 'center',
-    marginBottom: 28,
+    paddingBottom: theme.spacing['2xl'],
+    marginTop: -40,
   },
   name: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginTop: 14,
+    ...theme.typography.h2,
+    marginTop: theme.spacing.md,
   },
-  infoCard: {
-    borderRadius: 12,
-    padding: 16,
+  studentId: {
+    ...theme.typography.bodySmall,
+    marginTop: theme.spacing.xs,
+  },
+  programBadge: {
+    marginTop: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.radius.full,
+  },
+  programBadgeText: {
+    ...theme.typography.caption,
+    fontWeight: '600',
+  },
+  // Section headers
+  sectionHeader: {
+    ...theme.typography.overline,
+    marginBottom: theme.spacing.sm,
+    marginLeft: theme.spacing.xs,
+  },
+  // Section card
+  sectionCard: {
+    borderRadius: theme.radius['2xl'],
     borderWidth: 1,
-    marginBottom: 24,
+    paddingVertical: theme.spacing.xs,
+    marginBottom: theme.spacing['2xl'],
+    ...theme.shadows.sm,
   },
+  // Info rows (icon + label/value)
   infoRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  infoIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoTextContainer: {
+    flex: 1,
+    marginLeft: theme.spacing.md,
   },
   infoLabel: {
-    fontSize: 14,
+    ...theme.typography.caption,
   },
   infoValue: {
-    fontSize: 14,
+    ...theme.typography.body,
     fontWeight: '600',
-    maxWidth: '60%',
-    textAlign: 'right',
+    marginTop: 2,
   },
   divider: {
     height: 1,
-    marginVertical: 8,
+    marginHorizontal: theme.spacing.lg,
   },
-  editButton: {
-    borderRadius: 10,
-    padding: 14,
+  // Menu rows (settings-style)
+  menuRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
-  editButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FFFFFF',
+  menuLabel: {
+    ...theme.typography.body,
+    fontWeight: '500',
+    flex: 1,
   },
-  notifButton: {
-    borderRadius: 10,
-    padding: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    marginBottom: 12,
-  },
-  notifButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  signOutButton: {
-    borderRadius: 10,
-    padding: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  signOutText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#DC2626',
-  },
+  // Error/retry states
   errorText: {
-    fontSize: 15,
+    ...theme.typography.body,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
   },
   retryButton: {
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 24,
+    borderRadius: theme.radius.md,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing['2xl'],
     borderWidth: 1,
   },
   retryText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...theme.typography.button,
   },
 });

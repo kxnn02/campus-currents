@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { theme, useThemeColors } from '@/constants/Theme';
 
 type StatusState = 'on' | 'suspended' | 'monitoring';
@@ -18,8 +18,15 @@ function formatLastCheckedTime(date: Date): string {
   });
 }
 
+/**
+ * StatusIndicator — The "peak moment" of the app (per Peak-End Rule).
+ * Uses pulsing glow animation to communicate live status at a glance.
+ * Designed as the hero element with strong visual hierarchy.
+ */
 export default function StatusIndicator({ status, lastChecked }: StatusIndicatorProps) {
   const colors = useThemeColors();
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0.15)).current;
 
   const circleColor =
     status === 'suspended'
@@ -35,26 +42,93 @@ export default function StatusIndicator({ status, lastChecked }: StatusIndicator
       ? 'MONITORING'
       : 'CLASSES ARE ON';
 
-  const iconText =
-    status === 'suspended' ? '✕' : status === 'monitoring' ? '⚠️' : '✓';
+  const statusEmoji =
+    status === 'suspended' ? '🚫' : status === 'monitoring' ? '⚠️' : '✓';
 
-  const subtitle =
-    status === 'monitoring'
+  const statusSubtext =
+    status === 'suspended'
+      ? 'Stay safe. Check details below.'
+      : status === 'monitoring'
       ? "No suspension yet. We'll notify you immediately."
-      : undefined;
+      : "You're all set for today.";
+
+  // Subtle pulse animation for the glow ring — communicates "alive" status
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.06,
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    const glow = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, {
+          toValue: 0.25,
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 0.12,
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    pulse.start();
+    glow.start();
+
+    return () => {
+      pulse.stop();
+      glow.stop();
+    };
+  }, [pulseAnim, glowAnim]);
 
   return (
     <View style={styles.container}>
-      {/* Outer glow ring */}
-      <View style={[styles.glowRing, { backgroundColor: circleColor + '1A' }]}>
-        {/* Main status circle */}
-        <View style={[styles.circle, { backgroundColor: circleColor }, theme.shadows.lg]}>
-          <Text style={styles.icon}>{iconText}</Text>
+      {/* Outer glow ring — animated pulse for emotional feedback */}
+      <Animated.View
+        style={[
+          styles.glowRing,
+          {
+            backgroundColor: circleColor,
+            opacity: glowAnim,
+            transform: [{ scale: pulseAnim }],
+          },
+        ]}
+      >
+        {/* Inner soft ring for depth */}
+        <View style={[styles.innerGlow, { backgroundColor: circleColor + '20' }]}>
+          {/* Main status circle */}
+          <View style={[styles.circle, { backgroundColor: circleColor }, theme.shadows.xl]}>
+            <Text style={styles.icon}>{statusEmoji}</Text>
+          </View>
         </View>
-      </View>
+      </Animated.View>
+
+      {/* Status text — bold, single hierarchy level */}
       <Text style={[styles.statusText, { color: circleColor }]}>{statusText}</Text>
-      {subtitle && <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
-      <Text style={[styles.timestamp, { color: colors.textSecondary }]}>
+
+      {/* Supportive subtext — emotional, human copy */}
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+        {statusSubtext}
+      </Text>
+
+      {/* Timestamp — lowest hierarchy */}
+      <Text style={[styles.timestamp, { color: colors.textTertiary }]}>
         As of {formatLastCheckedTime(lastChecked)}
       </Text>
     </View>
@@ -63,12 +137,18 @@ export default function StatusIndicator({ status, lastChecked }: StatusIndicator
 
 const styles = StyleSheet.create({
   container: {
-    flex: 0.4,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: theme.spacing['2xl'],
+    paddingVertical: theme.spacing['3xl'],
   },
   glowRing: {
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  innerGlow: {
     width: 220,
     height: 220,
     borderRadius: 110,
@@ -83,24 +163,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   icon: {
-    fontSize: 72,
+    fontSize: 64,
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
   statusText: {
-    ...theme.typography.h1,
-    marginTop: theme.spacing.lg,
+    ...theme.typography.display,
+    marginTop: theme.spacing.xl,
     textAlign: 'center',
+    letterSpacing: 1,
   },
   subtitle: {
     ...theme.typography.body,
     marginTop: theme.spacing.sm,
     textAlign: 'center',
-    paddingHorizontal: theme.spacing['3xl'],
+    paddingHorizontal: theme.spacing['4xl'],
   },
   timestamp: {
     ...theme.typography.caption,
-    marginTop: theme.spacing.sm,
+    marginTop: theme.spacing.md,
     textAlign: 'center',
   },
 });

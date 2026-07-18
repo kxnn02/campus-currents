@@ -102,8 +102,8 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl font-bold tracking-tight text-[#1A1C1C]">Dashboard</h2>
+        <p className="text-[#444653]">
           Overview of Campus Currents communication system.
         </p>
       </div>
@@ -111,14 +111,14 @@ export default async function DashboardPage() {
       {/* Stats Row */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title}>
+          <Card key={stat.title} className="border-[#E4BEBA]/50 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-[#444653]">{stat.title}</CardTitle>
+              <stat.icon className="h-4 w-4 text-[#8E0002]/60" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
+              <div className="text-2xl font-bold text-[#1A1C1C]">{stat.value}</div>
+              <p className="text-xs text-[#5B403D]/70">{stat.description}</p>
             </CardContent>
           </Card>
         ))}
@@ -127,40 +127,40 @@ export default async function DashboardPage() {
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-3">
         <Link href="/dashboard/broadcasts" className="block">
-          <Card className="hover:border-blue-300 transition-colors cursor-pointer border-blue-200 bg-blue-50/50">
+          <Card className="hover:border-[#8E0002]/40 transition-colors cursor-pointer border-[#E4BEBA]/50 bg-[#FFF1F1]/50 shadow-sm">
             <CardContent className="pt-6 text-center">
-              <Megaphone className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-              <p className="font-semibold text-blue-900">New Broadcast</p>
-              <p className="text-xs text-blue-700/70 mt-1">Send announcement to students</p>
+              <Megaphone className="h-8 w-8 mx-auto mb-2 text-[#8E0002]" />
+              <p className="font-semibold text-[#1A1C1C]">New Broadcast</p>
+              <p className="text-xs text-[#5B403D]/70 mt-1">Send announcement to students</p>
             </CardContent>
           </Card>
         </Link>
         <Link href="/dashboard/suspensions" className="block">
-          <Card className="hover:border-red-300 transition-colors cursor-pointer border-red-200 bg-red-50/50">
+          <Card className="hover:border-[#BA1A1A]/40 transition-colors cursor-pointer border-[#E4BEBA]/50 bg-[#FEF2F2]/50 shadow-sm">
             <CardContent className="pt-6 text-center">
-              <CloudOff className="h-8 w-8 mx-auto mb-2 text-red-600" />
-              <p className="font-semibold text-red-900">Post Suspension</p>
-              <p className="text-xs text-red-700/70 mt-1">Declare class suspension</p>
+              <CloudOff className="h-8 w-8 mx-auto mb-2 text-[#BA1A1A]" />
+              <p className="font-semibold text-[#1A1C1C]">Post Suspension</p>
+              <p className="text-xs text-[#5B403D]/70 mt-1">Declare class suspension</p>
             </CardContent>
           </Card>
         </Link>
         <Link href="/dashboard/calendar" className="block">
-          <Card className="hover:border-green-300 transition-colors cursor-pointer border-green-200 bg-green-50/50">
+          <Card className="hover:border-[#16A34A]/40 transition-colors cursor-pointer border-[#E4BEBA]/50 bg-[#ECFDF5]/50 shadow-sm">
             <CardContent className="pt-6 text-center">
-              <CalendarDays className="h-8 w-8 mx-auto mb-2 text-green-600" />
-              <p className="font-semibold text-green-900">New Event</p>
-              <p className="text-xs text-green-700/70 mt-1">Add to school calendar</p>
+              <CalendarDays className="h-8 w-8 mx-auto mb-2 text-[#16A34A]" />
+              <p className="font-semibold text-[#1A1C1C]">New Event</p>
+              <p className="text-xs text-[#5B403D]/70 mt-1">Add to school calendar</p>
             </CardContent>
           </Card>
         </Link>
       </div>
 
       {/* Recent Broadcasts Table */}
-      <Card>
+      <Card className="border-[#E4BEBA]/50 shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Recent Broadcasts</CardTitle>
-            <span className="text-xs text-muted-foreground">
+            <CardTitle className="text-base text-[#1A1C1C]">Recent Broadcasts</CardTitle>
+            <span className="text-xs text-[#5B403D]/70">
               {studentCount ?? 0} registered students
             </span>
           </div>

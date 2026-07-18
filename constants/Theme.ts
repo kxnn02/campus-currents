@@ -20,47 +20,53 @@ import { useColorScheme, TextStyle, ViewStyle } from 'react-native';
 // ============================================================
 
 const palette = {
-  blue50: '#EFF6FF',
-  blue100: '#DBEAFE',
-  blue200: '#BFDBFE',
-  blue400: '#60A5FA',
-  blue500: '#3B82F6',
-  blue800: '#1E40AF',
-  blue900: '#1E3A5F',
-
+  // Brand — SSC-R Manila warm palette (from Figma)
+  red900: '#AF101A',    // Brand primary (header titles)
+  red700: '#BA1A1A',    // Emergency / danger
   red50: '#FEF2F2',
   red100: '#FEE2E2',
-  red200: '#FECACA',
-  red600: '#DC2626',
-  red800: '#991B1B',
 
+  amber500: '#F89C00',  // Important tier / active tab highlight
   amber50: '#FFFBEB',
   amber100: '#FEF3C7',
-  amber500: '#F59E0B',
-  amber800: '#92400E',
+  amber800: '#623A00',  // Active tab text (dark brown)
 
+  green600: '#16A34A',  // Success / classes ON
   green50: '#ECFDF5',
   green100: '#D1FAE5',
-  green600: '#16A34A',
 
-  purple500: '#8B5CF6',
+  indigo500: '#5E67C2', // Pinned badge / accent
+  purple500: '#9333EA', // Org activity category
   orange500: '#F97316',
   teal500: '#14B8A6',
   yellow500: '#EAB308',
 
-  gray50: '#F9FAFB',
-  gray100: '#F3F4F6',
-  gray200: '#E5E7EB',
-  gray300: '#D1D5DB',
-  gray400: '#9CA3AF',
-  gray500: '#6B7280',
-  gray600: '#4B5563',
-  gray700: '#374151',
-  gray800: '#1F2937',
-  gray900: '#111827',
+  // Warm neutrals (from Figma — NOT cool grays)
+  warm50: '#F9F9F9',    // Background (warm off-white)
+  warm100: '#F5F0EF',   // Surface elevated
+  warmBorder: '#E4BEBA', // Card borders (pinkish-tan)
+  warmBorderLight: '#F0DDD9', // Lighter border variant
+
+  // Text colors (warm brown tones from Figma)
+  textDark: '#1A1C1C',  // Primary text (near-black)
+  textBrown: '#5B403D', // Secondary text (warm brown)
+  textMuted: '#8B7370', // Tertiary/muted text
 
   white: '#FFFFFF',
   black: '#000000',
+
+  // Legacy (kept for backwards compatibility where needed)
+  blue50: '#EFF6FF',
+  blue500: '#3B82F6',
+  blue800: '#1E40AF',
+  gray50: '#F9FAFB',
+  gray100: '#F3F4F6',
+  gray200: '#E5E7EB',
+  gray400: '#9CA3AF',
+  gray500: '#6B7280',
+  gray700: '#374151',
+  gray800: '#1F2937',
+  gray900: '#111827',
 } as const;
 
 // ============================================================
@@ -69,75 +75,75 @@ const palette = {
 
 const lightColors = {
   // Brand
-  primary: palette.blue800,
-  primaryLight: palette.blue500,
-  primaryBg: palette.blue50,
+  primary: palette.red900,         // SSC-R red (header titles, brand accent)
+  primaryLight: palette.amber500,  // Amber for active states
+  primaryBg: palette.red50,        // Light red background
 
   // Backgrounds
-  background: palette.gray50,
-  surface: palette.white,
+  background: palette.warm50,      // Warm off-white (#F9F9F9)
+  surface: palette.white,          // Card backgrounds
   surfaceElevated: palette.white,
 
-  // Text
-  text: palette.gray900,
-  textSecondary: palette.gray500,
-  textTertiary: palette.gray400,
+  // Text (warm brown tones from Figma)
+  text: palette.textDark,          // #1A1C1C
+  textSecondary: palette.textBrown, // #5B403D (warm brown)
+  textTertiary: palette.textMuted,  // #8B7370
   textInverse: palette.white,
 
-  // Borders
-  border: palette.gray200,
-  borderLight: palette.gray100,
-  borderFocus: palette.blue500,
+  // Borders (warm pinkish-tan from Figma)
+  border: palette.warmBorder,      // #E4BEBA
+  borderLight: palette.warmBorderLight, // Lighter variant
+  borderFocus: palette.red900,
 
   // Interactive
-  tint: palette.blue800,
-  tabIconDefault: palette.gray400,
-  tabIconSelected: palette.blue800,
+  tint: palette.red900,            // Brand red for CTAs
+  tabIconDefault: palette.textBrown, // Warm brown inactive
+  tabIconSelected: palette.amber800, // Dark amber active
 
   // Semantic
   success: palette.green600,
   successBg: palette.green50,
-  error: palette.red600,
+  error: palette.red700,
   errorBg: palette.red50,
   warning: palette.amber500,
   warningBg: palette.amber50,
 
   // Overlays
   overlay: 'rgba(0, 0, 0, 0.5)',
-  shimmer: palette.gray200,
+  shimmer: palette.warmBorder,
 } as const;
 
 const darkColors = {
-  primary: palette.blue400,
-  primaryLight: palette.blue500,
+  primary: palette.amber500,
+  primaryLight: palette.amber500,
   primaryBg: palette.gray800,
 
-  background: palette.gray900,
-  surface: palette.gray800,
-  surfaceElevated: palette.gray700,
+  background: '#1A1A1A',
+  surface: '#252525',
+  surfaceElevated: '#2F2F2F',
 
-  text: palette.gray50,
-  textSecondary: palette.gray400,
-  textTertiary: palette.gray500,
-  textInverse: palette.gray900,
+  text: '#F5F0EF',
+  textSecondary: '#BBA9A5',
+  textTertiary: '#8B7370',
+  textInverse: palette.textDark,
 
-  border: palette.gray700,
-  borderLight: palette.gray800,
-  borderFocus: palette.blue400,
+  border: '#3D3332',
+  borderLight: '#2F2828',
+  borderFocus: palette.amber500,
 
-  tint: palette.blue400,
-  tabIconDefault: palette.gray500,
-  tabIconSelected: palette.blue400,
+  tint: palette.amber500,
+  tabIconDefault: '#8B7370',
+  tabIconSelected: palette.amber500,
 
   success: palette.green600,
-  successBg: palette.gray800,
-  error: palette.red600,
-  errorBg: palette.gray800,
+  successBg: '#1A2A1F',
+  error: '#E85454',
+  errorBg: '#2A1A1A',
   warning: palette.amber500,
-  warningBg: palette.gray800,
+  warningBg: '#2A2518',
 
   overlay: 'rgba(0, 0, 0, 0.7)',
-  shimmer: palette.gray700,
+  shimmer: '#3D3332',
 } as const;
 
 // ============================================================
@@ -145,21 +151,21 @@ const darkColors = {
 // ============================================================
 
 const tier = {
-  emergency: palette.red600,
+  emergency: palette.red700,       // #BA1A1A from Figma
   emergencyBg: palette.red50,
-  emergencyText: palette.red800,
-  important: palette.amber500,
+  emergencyText: palette.red700,
+  important: palette.amber500,     // #F89C00 from Figma
   importantBg: palette.amber50,
   importantText: palette.amber800,
-  routine: palette.blue500,
+  routine: palette.indigo500,      // #5E67C2 from Figma (pinned/routine blue-purple)
   routineBg: palette.blue50,
-  routineText: palette.blue800,
+  routineText: palette.indigo500,
 } as const;
 
 const status = {
   on: palette.green600,
   onBg: palette.green50,
-  suspended: palette.red600,
+  suspended: palette.red700,
   suspendedBg: palette.red50,
   monitoring: palette.amber500,
   monitoringBg: palette.amber50,
@@ -170,7 +176,7 @@ const calendar = {
   schoolEvent: palette.green600,
   orgActivity: palette.purple500,
   administrative: palette.orange500,
-  holiday: palette.red600,
+  holiday: palette.red700,
   sports: palette.teal500,
   seminar: palette.yellow500,
 } as const;
@@ -528,8 +534,8 @@ export const theme = {
  * </View>
  */
 export function useThemeColors() {
-  const colorScheme = useColorScheme();
-  return colorScheme === 'dark' ? darkColors : lightColors;
+  // Always use light mode — app does not follow system dark mode
+  return lightColors;
 }
 
 /**
