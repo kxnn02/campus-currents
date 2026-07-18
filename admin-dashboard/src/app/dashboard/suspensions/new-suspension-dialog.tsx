@@ -113,6 +113,7 @@ export function NewSuspensionDialog() {
               id="suspension_date"
               name="suspension_date"
               type="date"
+              defaultValue={new Date().toISOString().slice(0, 10)}
               required
             />
           </div>

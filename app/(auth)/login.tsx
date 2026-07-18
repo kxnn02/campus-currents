@@ -1,6 +1,5 @@
-import { StyleSheet, View, Text, Pressable, Alert, Image } from 'react-native';
+import { StyleSheet, View, Text, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { theme, useThemeColors } from '@/constants/Theme';
 import { signInWithGoogle } from '@/lib/auth';
@@ -13,7 +12,6 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       await signInWithGoogle();
-      // If successful, the auth state listener in _layout.tsx will redirect to tabs
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Sign in failed';
       Alert.alert('Sign In Error', message);
@@ -25,38 +23,59 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        {/* Logo / Branding */}
+        {/* Logo & Brand */}
         <View style={styles.branding}>
-          <View style={[styles.logoPlaceholder, { backgroundColor: colors.tint }]}>
+          <View style={[styles.logoCircle, { backgroundColor: colors.primary }]}>
             <Text style={styles.logoText}>CC</Text>
           </View>
-          <Text style={[styles.title, { color: colors.text }]}>CampusCurrents</Text>
+          <Text style={[styles.brandName, { color: colors.primary }]}>CampusCurrents</Text>
+        </View>
+
+        {/* Heading */}
+        <View style={styles.headingSection}>
+          <Text style={[styles.heading, { color: colors.text }]}>Welcome Back</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            San Sebastian College – Recoletos, Manila
+            Sign in to your campus portal
           </Text>
         </View>
 
-        {/* Description */}
-        <Text style={[styles.description, { color: colors.textSecondary }]}>
-          Get instant class suspension alerts, emergency notifications, and school event updates — all in one app.
-        </Text>
+        {/* Google Sign In Button */}
+        <View style={styles.formSection}>
+          <Pressable
+            style={[
+              styles.signInButton,
+              { backgroundColor: colors.primary, opacity: loading ? 0.7 : 1 },
+            ]}
+            onPress={handleGoogleSignIn}
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Sign in with Google"
+          >
+            <Text style={styles.signInButtonText}>
+              {loading ? 'SIGNING IN...' : 'SIGN IN WITH GOOGLE'}
+            </Text>
+          </Pressable>
 
-        {/* Sign In Button */}
-        <Pressable
-          style={[styles.googleButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
-          onPress={handleGoogleSignIn}
-          disabled={loading}
-        >
-          <Text style={styles.googleIcon}>G</Text>
-          <Text style={[styles.googleButtonText, { color: colors.text }]}>
-            {loading ? 'Signing in...' : 'Sign in with your SSC-R Google account'}
+          <Text style={[styles.emailHint, { color: colors.textSecondary }]}>
+            Use your @sscrmnl.edu.ph email
           </Text>
-        </Pressable>
 
-        {/* Domain note */}
-        <Text style={[styles.note, { color: colors.textSecondary }]}>
-          Use your @sscrmnl.edu.ph email to sign in
-        </Text>
+          {/* Emergency consent notice (matches Figma) */}
+          <View style={[styles.noticeBox, { backgroundColor: '#F3F3F3', borderLeftColor: colors.primary }]}>
+            <Text style={[styles.noticeText, { color: colors.textSecondary }]}>
+              By signing in, you agree to receive urgent campus alerts and emergency notifications.
+            </Text>
+          </View>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={[styles.footerLink, { color: colors.textSecondary }]}>Privacy Policy</Text>
+          <Text style={[styles.footerDivider, { color: colors.border }]}>·</Text>
+          <Text style={[styles.footerLink, { color: colors.textSecondary }]}>Terms of Service</Text>
+          <Text style={[styles.footerDivider, { color: colors.border }]}>·</Text>
+          <Text style={[styles.footerLink, { color: colors.textSecondary }]}>IT Support</Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -70,61 +89,101 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: theme.layout.screenPaddingHorizontal,
+    paddingHorizontal: 32,
   },
+  // Branding
   branding: {
     alignItems: 'center',
-    marginBottom: theme.spacing['3xl'],
+    marginBottom: 32,
   },
-  logoPlaceholder: {
-    width: 88,
-    height: 88,
-    borderRadius: theme.radius['2xl'],
+  logoCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: 12,
   },
   logoText: {
-    fontSize: 34,
+    fontSize: 28,
     fontWeight: '800',
     color: '#FFFFFF',
   },
-  title: {
-    ...theme.typography.display,
-    marginBottom: theme.spacing.xs,
+  brandName: {
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
+  // Heading
+  headingSection: {
+    alignItems: 'center',
+    marginBottom: 40,
+    gap: 8,
+  },
+  heading: {
+    fontSize: 32,
+    fontWeight: '700',
   },
   subtitle: {
-    ...theme.typography.body,
-    textAlign: 'center',
-  },
-  description: {
-    ...theme.typography.bodyLarge,
-    textAlign: 'center',
+    fontSize: 16,
     lineHeight: 24,
-    marginBottom: theme.spacing['5xl'],
   },
-  googleButton: {
+  // Form / Button
+  formSection: {
+    width: '100%',
+    maxWidth: 340,
+    gap: 16,
+    alignItems: 'center',
+  },
+  signInButton: {
+    width: '100%',
+    paddingVertical: 16,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  signInButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.7,
+  },
+  emailHint: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+  noticeBox: {
+    width: '100%',
+    borderLeftWidth: 4,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingLeft: 20,
+    borderRadius: 2,
+    marginTop: 8,
+  },
+  noticeText: {
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  // Footer
+  footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.md + 2,
-    paddingHorizontal: theme.spacing.xl,
-    borderRadius: theme.radius.xl,
-    borderWidth: 1,
-    width: '100%',
-    gap: theme.spacing.md,
-    ...theme.shadows.md,
+    gap: 12,
+    position: 'absolute',
+    bottom: 32,
   },
-  googleIcon: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#4285F4',
+  footerLink: {
+    fontSize: 12,
+    fontWeight: '500',
   },
-  googleButtonText: {
-    ...theme.typography.label,
-    flex: 1,
-  },
-  note: {
-    ...theme.typography.caption,
-    marginTop: theme.spacing.lg,
+  footerDivider: {
+    fontSize: 12,
   },
 });

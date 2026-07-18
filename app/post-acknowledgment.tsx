@@ -147,13 +147,13 @@ const styles = StyleSheet.create({
   },
   headingLarge: {
     ...theme.typography.display,
-    color: theme.palette.gray900,
+    color: '#1A1C1C',
     textAlign: 'center',
     marginBottom: theme.spacing.lg,
   },
   instruction: {
     ...theme.typography.bodyLarge,
-    color: theme.palette.gray600,
+    color: '#5B403D',
     textAlign: 'center',
     lineHeight: 26,
     marginBottom: theme.spacing['3xl'],
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   waitingText: {
     ...theme.typography.caption,
-    color: theme.palette.gray600,
+    color: '#5B403D',
     fontWeight: '600',
   },
 });

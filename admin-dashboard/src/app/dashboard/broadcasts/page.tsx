@@ -52,43 +52,43 @@ export default async function BroadcastsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Broadcasts</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl font-bold tracking-tight text-[#1A1C1C]">Broadcasts</h2>
+          <p className="text-[#444653] mt-1">
             Manage announcements and notifications sent to students.
           </p>
         </div>
         <NewBroadcastDialog />
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Tier</TableHead>
-              <TableHead>Channel</TableHead>
-              <TableHead>Audience</TableHead>
-              <TableHead>Sent At</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="font-semibold">Title</TableHead>
+              <TableHead className="font-semibold">Tier</TableHead>
+              <TableHead className="font-semibold">Channel</TableHead>
+              <TableHead className="font-semibold">Audience</TableHead>
+              <TableHead className="font-semibold">Sent At</TableHead>
+              <TableHead className="w-[100px] font-semibold">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {broadcasts && broadcasts.length > 0 ? (
               broadcasts.map((broadcast) => (
-                <TableRow key={broadcast.id}>
+                <TableRow key={broadcast.id} className="group">
                   <TableCell className="font-medium">
                     <Link
                       href={`/dashboard/broadcasts/${broadcast.id}`}
-                      className="hover:underline text-primary"
+                      className="hover:underline text-primary group-hover:text-primary/80 transition-colors"
                     >
                       {broadcast.title}
                     </Link>
                     {broadcast.is_pinned && (
                       <Badge variant="outline" className="ml-2 text-xs">
-                        Pinned
+                        📌 Pinned
                       </Badge>
                     )}
                   </TableCell>
@@ -98,7 +98,7 @@ export default async function BroadcastsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="capitalize">{broadcast.channel}</TableCell>
-                  <TableCell className="max-w-[200px] truncate text-sm">
+                  <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
                     {formatAudience(broadcast.target_audience)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
@@ -113,8 +113,14 @@ export default async function BroadcastsPage() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  No broadcasts yet. Create your first one.
+                <TableCell colSpan={6} className="text-center py-12">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-lg">📢</span>
+                    </div>
+                    <p className="text-sm font-medium text-foreground">No broadcasts yet</p>
+                    <p className="text-xs text-muted-foreground">Create your first broadcast to reach students.</p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}

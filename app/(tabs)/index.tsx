@@ -214,6 +214,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingVertical: theme.spacing.sm,
+    paddingBottom: 80, // Account for absolute-positioned tab bar
   },
   skeletonContainer: {
     flex: 1,

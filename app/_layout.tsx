@@ -227,7 +227,7 @@ function RootLayoutNav() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={DefaultTheme}>
       <TimeoutToast visible={showTimeoutToast} onDismiss={dismissTimeoutToast} />
       <StaleDataBanner visible={isServingStaleData} />
       <Stack>
