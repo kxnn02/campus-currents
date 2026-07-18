@@ -176,7 +176,7 @@ export default function ProfileEditScreen() {
       <>
         <Stack.Screen options={{ title: 'Edit Profile' }} />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E40AF" />
+          <ActivityIndicator size="large" color="#AF101A" />
         </View>
       </>
     );
@@ -350,13 +350,13 @@ export default function ProfileEditScreen() {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F9F9F9',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F9F9F9',
   },
   scrollContent: {
     padding: 24,

@@ -26,10 +26,13 @@ const tierLabels: Record<NotificationTier, string> = {
 /**
  * BroadcastCard displays a single broadcast in the feed.
  *
- * Layout:
- * - 4px colored left border indicating tier (red/amber/blue)
- * - Content area with tier label, title (1 line), body preview (2 lines),
- *   and a bottom row with relative timestamp, channel pill, and optional pin icon
+ * Design principles applied (from mobile-app-ui-design skill):
+ * - 4px colored left border for tier visual hierarchy
+ * - Title emphasized over tier label (values > labels anti-pattern fix)
+ * - Soft shadow matched to surface (not harsh black)
+ * - 8-point grid spacing throughout
+ * - Pressable with scale feedback for tactile feel (emotional micro-interaction)
+ * - Clear 3-level text hierarchy: title → body → metadata
  */
 export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
   const colors = useThemeColors();
@@ -40,7 +43,11 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
     <Pressable
       style={({ pressed }) => [
         styles.card,
-        { borderLeftColor: borderColor, backgroundColor: colors.surface },
+        {
+          borderLeftColor: borderColor,
+          backgroundColor: colors.surface,
+          borderColor: colors.borderLight,
+        },
         pressed && styles.cardPressed,
       ]}
       onPress={() => onPress(broadcast)}
@@ -48,38 +55,41 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
       accessibilityLabel={`${tierLabel} broadcast: ${broadcast.title}`}
     >
       <View style={styles.content}>
-        {/* Tier label */}
-        <Text style={[styles.tierLabel, { color: borderColor }]}>
-          {tierLabel}
-        </Text>
+        {/* Top row: Tier pill + pin */}
+        <View style={styles.topRow}>
+          <View style={[styles.tierPill, { backgroundColor: borderColor + '14' }]}>
+            <Text style={[styles.tierLabel, { color: borderColor }]}>
+              {tierLabel}
+            </Text>
+          </View>
 
-        {/* Title — bold, single line with ellipsis */}
+          {broadcast.is_pinned && (
+            <Ionicons
+              name="pin"
+              size={13}
+              color={colors.textSecondary}
+              accessibilityLabel="Pinned"
+            />
+          )}
+        </View>
+
+        {/* Title — highest visual weight (values > labels) */}
         <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
           {broadcast.title}
         </Text>
 
-        {/* Body preview — 2 lines with ellipsis */}
+        {/* Body preview — 2 lines, secondary hierarchy */}
         <Text style={[styles.body, { color: colors.textSecondary }]} numberOfLines={2}>
           {broadcast.body}
         </Text>
 
-        {/* Bottom row: timestamp + channel pill + pin icon */}
+        {/* Bottom row: timestamp + channel pill */}
         <View style={styles.bottomRow}>
           <Text style={[styles.timestamp, { color: colors.textTertiary }]}>
             {formatRelativeTime(broadcast.sent_at)}
           </Text>
 
           <ChannelPill channel={broadcast.channel} />
-
-          {broadcast.is_pinned && (
-            <Ionicons
-              name="pin"
-              size={14}
-              color={colors.textSecondary}
-              style={styles.pinIcon}
-              accessibilityLabel="Pinned"
-            />
-          )}
         </View>
       </View>
     </Pressable>
@@ -88,32 +98,46 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: theme.radius.lg,
+    borderRadius: theme.radius.md,
     borderLeftWidth: 4,
     borderLeftColor: theme.colors.tier.routine,
+    borderWidth: 1,
     marginHorizontal: theme.spacing.lg,
-    marginVertical: theme.spacing.xs + 2,
-    ...theme.shadows.md,
+    marginVertical: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
   cardPressed: {
-    opacity: 0.85,
+    opacity: 0.92,
+    transform: [{ scale: 0.985 }],
   },
   content: {
-    padding: theme.spacing.md,
+    padding: theme.spacing.xl,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.md,
+  },
+  tierPill: {
+    paddingHorizontal: theme.spacing.sm + 2,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.radius.xs,
   },
   tierLabel: {
     ...theme.typography.overline,
-    marginBottom: theme.spacing.xs,
+    fontSize: 10,
   },
   title: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: '700',
-    lineHeight: 20,
-    marginBottom: theme.spacing.xs,
+    lineHeight: 26,
+    marginBottom: theme.spacing.sm,
   },
   body: {
-    ...theme.typography.bodySmall,
-    marginBottom: theme.spacing.sm,
+    ...theme.typography.body,
+    lineHeight: 22,
+    marginBottom: theme.spacing.lg,
   },
   bottomRow: {
     flexDirection: 'row',
@@ -122,8 +146,5 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     ...theme.typography.caption,
-  },
-  pinIcon: {
-    marginLeft: 'auto',
   },
 });

@@ -152,29 +152,33 @@ export default function StatusScreen() {
         {/* Status Indicator */}
         <StatusIndicator status={indicatorStatus} lastChecked={lastChecked} />
 
-        {/* Suspension details card */}
+        {/* Suspension details — Bento grid style (matching Figma) */}
         {isSuspended && primarySuspension && (
-          <View style={[styles.detailsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <DetailRow
-              label="Source"
-              value={formatSuspensionSource(primarySuspension.source)}
-              colors={colors}
-            />
-            <DetailRow
-              label="Reason"
-              value={formatSuspensionReason(primarySuspension.reason)}
-              colors={colors}
-            />
-            <DetailRow
-              label="Scope"
-              value={formatSuspensionScope(primarySuspension.scope)}
-              colors={colors}
-            />
-            <DetailRow
-              label="Duration"
-              value={formatSuspensionDuration(primarySuspension.duration)}
-              colors={colors}
-            />
+          <View style={styles.bentoGrid}>
+            <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Source</Text>
+              <Text style={[styles.bentoValue, { color: colors.text }]}>
+                {formatSuspensionSource(primarySuspension.source)}
+              </Text>
+            </View>
+            <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Reason</Text>
+              <Text style={[styles.bentoValue, { color: colors.text }]}>
+                {formatSuspensionReason(primarySuspension.reason)}
+              </Text>
+            </View>
+            <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Scope</Text>
+              <Text style={[styles.bentoValue, { color: colors.text }]}>
+                {formatSuspensionScope(primarySuspension.scope)}
+              </Text>
+            </View>
+            <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Duration</Text>
+              <Text style={[styles.bentoValue, { color: colors.text }]}>
+                {formatSuspensionDuration(primarySuspension.duration)}
+              </Text>
+            </View>
           </View>
         )}
 
@@ -201,40 +205,34 @@ export default function StatusScreen() {
           </Text>
         )}
 
-        {/* Recent Suspensions history */}
+        {/* Recent Suspensions history — card style matching Figma */}
         {suspensionHistory && suspensionHistory.length > 0 && (
           <View style={styles.historySection}>
             <Text style={[styles.historyTitle, { color: colors.textSecondary }]}>
-              Recent Suspensions
+              RECENT HISTORY
             </Text>
             {suspensionHistory.map((item) => (
-              <View key={item.id} style={[styles.historyRow, { borderColor: colors.border }]}>
-                <Text style={[styles.historyDate, { color: colors.text }]}>
-                  {new Date(item.suspension_date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    timeZone: 'Asia/Manila',
-                  })}
-                </Text>
-                <Text style={[styles.historySource, { color: colors.textSecondary }]}>
-                  {formatSuspensionSource(item.source)}
-                </Text>
+              <View key={item.id} style={[styles.historyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <View style={[styles.historyStripe, { backgroundColor: theme.colors.status.suspended }]} />
+                <View style={styles.historyContent}>
+                  <Text style={[styles.historyDate, { color: colors.text }]}>
+                    {new Date(item.suspension_date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      timeZone: 'Asia/Manila',
+                    })}
+                  </Text>
+                  <Text style={[styles.historySource, { color: colors.textSecondary }]}>
+                    {formatSuspensionSource(item.source)}
+                  </Text>
+                </View>
               </View>
             ))}
           </View>
         )}
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-function DetailRow({ label, value, colors }: { label: string; value: string; colors: Record<string, string> }) {
-  return (
-    <View style={styles.detailRow}>
-      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{label}</Text>
-      <Text style={[styles.detailValue, { color: colors.text }]}>{value}</Text>
-    </View>
   );
 }
 
@@ -268,95 +266,101 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingBottom: 32,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: 96,
   },
   staleBanner: {
     width: '100%',
     backgroundColor: '#FEF3C7',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
-    marginBottom: 8,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
     alignItems: 'center',
   },
   staleBannerText: {
     color: '#92400E',
-    fontSize: 13,
+    ...theme.typography.bodySmall,
     fontWeight: '500',
     textAlign: 'center',
   },
-  detailsCard: {
+  // Bento grid for suspension details (Figma style)
+  bentoGrid: {
     width: '100%',
-    borderRadius: 12,
-    padding: 16,
+    marginTop: theme.spacing.lg,
+    gap: theme.spacing.sm,
+  },
+  bentoCard: {
+    borderRadius: theme.radius['2xl'],
     borderWidth: 1,
-    gap: 12,
-    marginTop: 16,
+    padding: theme.spacing.xl,
+    ...theme.shadows.sm,
   },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  detailLabel: {
-    fontSize: 14,
+  bentoLabel: {
+    ...theme.typography.caption,
     fontWeight: '500',
+    marginBottom: theme.spacing.xs,
   },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: '600',
+  bentoValue: {
+    ...theme.typography.h3,
   },
+  // Other suspensions
   otherSection: {
     width: '100%',
-    marginTop: 24,
+    marginTop: theme.spacing['2xl'],
   },
   otherTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 12,
+    ...theme.typography.overline,
+    marginBottom: theme.spacing.md,
   },
   otherCard: {
-    borderRadius: 10,
-    padding: 14,
+    borderRadius: theme.radius['2xl'],
+    padding: theme.spacing.lg,
     borderWidth: 1,
-    marginBottom: 10,
+    marginBottom: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
   otherCardSource: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 4,
+    ...theme.typography.label,
+    marginBottom: theme.spacing.xs,
   },
   otherCardDetail: {
-    fontSize: 13,
+    ...theme.typography.bodySmall,
   },
   infoText: {
-    fontSize: 14,
+    ...theme.typography.body,
     textAlign: 'center',
-    marginTop: 16,
+    marginTop: theme.spacing.lg,
   },
+  // History section (Figma card style with colored left stripe)
   historySection: {
     width: '100%',
-    marginTop: 24,
+    marginTop: theme.spacing['2xl'],
   },
   historyTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 12,
+    ...theme.typography.overline,
+    marginBottom: theme.spacing.md,
   },
-  historyRow: {
+  historyCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderRadius: theme.radius['2xl'],
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginBottom: theme.spacing.sm,
+    ...theme.shadows.sm,
+  },
+  historyStripe: {
+    width: 4,
+  },
+  historyContent: {
+    flex: 1,
+    padding: theme.spacing.lg,
   },
   historyDate: {
-    fontSize: 14,
-    fontWeight: '500',
+    ...theme.typography.label,
+    marginBottom: theme.spacing.xs,
   },
   historySource: {
-    fontSize: 13,
+    ...theme.typography.bodySmall,
   },
 });

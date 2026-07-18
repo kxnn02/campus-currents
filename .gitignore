@@ -56,3 +56,6 @@ GoogleService-Info.plist
 .claude/
 CLAUDE.md
 AGENTS.md
+
+# Team credentials — never commit (share via Messenger GC only)
+CREDENTIALS-FOR-TEAM.md

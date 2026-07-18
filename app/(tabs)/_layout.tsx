@@ -1,6 +1,8 @@
 import React from 'react';
+import { StyleSheet, Platform } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme, useThemeColors } from '@/constants/Theme';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -17,34 +19,46 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const colors = useThemeColors();
   const { count } = useUnreadCount();
+  const insets = useSafeAreaInsets();
+
+  // Ensure bottom padding respects the device's navigation bar (gesture bar, soft keys)
+  // On Android devices without a notch, insets.bottom is 0, so use a minimum padding
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 4);
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.tint,
+        tabBarActiveTintColor: colors.tabIconSelected,
         tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.background,
           borderTopColor: colors.border,
-          borderTopWidth: 1,
-          height: theme.layout.tabBarHeight,
-          paddingBottom: 4,
-          paddingTop: 4,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          height: 56 + bottomPadding,
+          paddingBottom: bottomPadding,
+          paddingTop: 6,
+          position: 'absolute' as const,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          ...theme.shadows.sm,
         },
         headerStyle: {
           backgroundColor: colors.surface,
           shadowColor: 'transparent',
           elevation: 0,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.borderLight,
         },
         headerTintColor: colors.text,
         headerTitleStyle: {
           ...theme.typography.h3,
+          fontWeight: '700',
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          ...theme.typography.caption,
           fontWeight: '600',
+          marginTop: 2,
         },
       }}>
       <Tabs.Screen
