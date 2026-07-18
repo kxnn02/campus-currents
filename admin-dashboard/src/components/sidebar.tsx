@@ -14,6 +14,7 @@ import {
   Users,
   History,
   LogOut,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -52,19 +53,27 @@ export function Sidebar({ profile }: { profile: Profile }) {
 
   return (
     <aside className="flex w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
-      <div className="p-6">
+      {/* Brand Header */}
+      <div className="px-5 py-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
-            CC
+          <div className="flex h-10 w-10 items-center justify-center rounded bg-[#8E0002] text-white">
+            <Shield className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-sm font-bold leading-tight">Campus Currents</h1>
-            <p className="text-xs text-muted-foreground">Admin Dashboard</p>
+            <h1 className="text-[15px] font-bold leading-tight text-[#8E0002]">
+              CampusCurrents
+            </h1>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Emergency Systems
+            </p>
           </div>
         </div>
       </div>
+
       <Separator />
-      <nav className="flex-1 space-y-1 p-3">
+
+      {/* Navigation */}
+      <nav className="flex-1 space-y-0.5 p-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
@@ -72,33 +81,54 @@ export function Sidebar({ profile }: { profile: Profile }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-4 rounded px-4 py-2 text-sm font-semibold transition-all duration-150",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  ? "bg-[#8D1515] text-white shadow-sm"
+                  : "text-[#444653] hover:bg-[#8D1515]/10 hover:text-[#8D1515]"
               )}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon className="h-[18px] w-[18px]" />
               {item.label}
             </Link>
           );
         })}
       </nav>
+
       <Separator />
-      <div className="p-4">
-        <div className="mb-3">
-          <p className="text-sm font-medium truncate">{displayName}</p>
-          <p className="text-xs text-muted-foreground capitalize">{profile.role.replace("_", " ")}</p>
-        </div>
+
+      {/* Bottom section */}
+      <div className="p-4 space-y-3">
+        {/* Emergency Alert Button */}
         <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={handleSignOut}
+          variant="destructive"
+          className="w-full font-bold shadow-md"
+          onClick={() => router.push("/dashboard/emergency")}
         >
-          <LogOut className="mr-2 h-4 w-4" />
-          Sign Out
+          <AlertTriangle className="mr-2 h-4 w-4" />
+          Emergency Alert
         </Button>
+
+        {/* User info */}
+        <div className="flex items-center gap-3 px-1">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#8E0002]/10 text-xs font-bold text-[#8E0002]">
+            {(profile.first_name?.[0] || profile.email[0]).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{displayName}</p>
+            <p className="text-[11px] text-muted-foreground capitalize">
+              {profile.role.replace("_", " ")}
+            </p>
+          </div>
+        </div>
+
+        {/* Sign Out */}
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-3 px-1 py-1 text-sm font-semibold text-[#BA1A1A] hover:text-[#8E0002] transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </button>
       </div>
     </aside>
   );

@@ -267,41 +267,44 @@ export default function CalendarGrid({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: theme.radius['2xl'],
+    padding: theme.spacing.lg,
+    ...theme.shadows.sm,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: theme.spacing.lg,
   },
   arrowButton: {
-    padding: 8,
-    minWidth: 40,
+    padding: theme.spacing.sm,
+    minWidth: 44,
+    minHeight: 44,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.radius.md,
   },
   arrowText: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '600',
-    lineHeight: 32,
+    lineHeight: 28,
   },
   monthTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    ...theme.typography.h2,
   },
   dayLabelsRow: {
     flexDirection: 'row',
-    marginBottom: 4,
+    marginBottom: theme.spacing.sm,
   },
   dayLabelCell: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: theme.spacing.xs,
   },
   dayLabelText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...theme.typography.overline,
+    fontSize: 11,
   },
   grid: {
     flexDirection: 'row',
@@ -310,20 +313,20 @@ const styles = StyleSheet.create({
   dayCell: {
     width: '14.28%', // 100% / 7
     alignItems: 'center',
-    paddingVertical: 6,
-    minHeight: 48,
+    paddingVertical: theme.spacing.sm,
+    minHeight: 52,
     justifyContent: 'flex-start',
   },
   dayNumber: {
-    fontSize: 14,
+    ...theme.typography.body,
     fontWeight: '500',
-    marginBottom: 2,
+    marginBottom: theme.spacing.xs,
   },
   dotsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 10,
-    gap: 2,
+    gap: 3,
   },
   dot: {
     width: 5,
