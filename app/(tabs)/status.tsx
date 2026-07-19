@@ -284,25 +284,29 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-  // Bento grid for suspension details (Figma style)
+  // Bento grid for suspension details (Figma: full-width stacked cards)
   bentoGrid: {
     width: '100%',
     marginTop: theme.spacing.lg,
-    gap: theme.spacing.sm,
+    gap: theme.spacing.lg,
   },
   bentoCard: {
-    borderRadius: theme.radius['2xl'],
+    borderRadius: theme.radius.md,
     borderWidth: 1,
-    padding: theme.spacing.xl,
+    padding: 25,
     ...theme.shadows.sm,
   },
   bentoLabel: {
     ...theme.typography.caption,
     fontWeight: '500',
-    marginBottom: theme.spacing.xs,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: theme.spacing.sm,
   },
   bentoValue: {
-    ...theme.typography.h3,
+    fontSize: 20,
+    fontWeight: '600',
+    lineHeight: 28,
   },
   // Other suspensions
   otherSection: {
@@ -343,14 +347,17 @@ const styles = StyleSheet.create({
   },
   historyCard: {
     flexDirection: 'row',
-    borderRadius: theme.radius['2xl'],
+    borderRadius: theme.radius.md,
     borderWidth: 1,
     overflow: 'hidden',
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
     ...theme.shadows.sm,
   },
   historyStripe: {
-    width: 4,
+    width: 6,
+    borderRadius: theme.radius.xl,
+    marginVertical: 12,
+    marginLeft: 4,
   },
   historyContent: {
     flex: 1,

@@ -159,8 +159,28 @@ export default function CalendarGrid({
     }
   };
 
+  // Swipe gesture handling for month navigation
+  const touchStartX = React.useRef(0);
+  const handleTouchStart = (e: any) => {
+    touchStartX.current = e.nativeEvent.pageX;
+  };
+  const handleTouchEnd = (e: any) => {
+    const deltaX = e.nativeEvent.pageX - touchStartX.current;
+    if (Math.abs(deltaX) > 50) {
+      if (deltaX > 0) {
+        handlePrevMonth();
+      } else {
+        handleNextMonth();
+      }
+    }
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.surface }]}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Header row: arrows + month/year */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -267,9 +287,11 @@ export default function CalendarGrid({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: theme.radius['2xl'],
+    borderRadius: 8,
     padding: theme.spacing.lg,
     ...theme.shadows.sm,
+    borderWidth: 1,
+    borderColor: '#E2E2E2',
   },
   header: {
     flexDirection: 'row',
@@ -325,13 +347,13 @@ const styles = StyleSheet.create({
   dotsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 10,
+    height: 12,
     gap: 3,
   },
   dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   extraDotsText: {
     fontSize: 8,

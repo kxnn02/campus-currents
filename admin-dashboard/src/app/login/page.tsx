@@ -104,12 +104,35 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium"
-              >
-                Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium"
+                >
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!email) {
+                      setError("Enter your email first, then click Forgot Password.");
+                      return;
+                    }
+                    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+                      redirectTo: `${window.location.origin}/login`,
+                    });
+                    if (resetError) {
+                      setError(resetError.message);
+                    } else {
+                      setError("");
+                      alert("Password reset email sent. Check your inbox.");
+                    }
+                  }}
+                  className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
               <input
                 id="password"
                 type="password"
