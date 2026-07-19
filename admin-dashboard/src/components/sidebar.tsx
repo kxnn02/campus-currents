@@ -44,7 +44,7 @@ const navItems = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar({ profile }: { profile: Profile }) {
+export function Sidebar({ profile: _profile }: { profile: Profile }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
