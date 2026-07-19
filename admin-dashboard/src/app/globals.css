@@ -64,7 +64,7 @@
   --muted-foreground: oklch(0.4 0.02 260);    /* #444653 dark blue-gray */
   --accent: oklch(0.97 0.01 20);
   --accent-foreground: oklch(0.15 0.01 250);
-  --destructive: oklch(0.5 0.2 25);           /* #BA1A1A dark red */
+  --destructive: oklch(0.55 0.22 25);           /* #DC2626 bright red (Figma) */
   --border: oklch(0.83 0.02 280);             /* #C4C5D5 lavender-gray */
   --input: oklch(0.83 0.02 280);
   --ring: oklch(0.4 0.18 25);                 /* Maroon brand for focus */

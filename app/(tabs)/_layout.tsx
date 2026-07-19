@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, useThemeColors } from '@/constants/Theme';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useUnreadCount } from '@/lib/feed';
+import { useSuspensionBadge } from '@/lib/suspension-badge';
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
@@ -19,6 +20,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const colors = useThemeColors();
   const { count } = useUnreadCount();
+  const { hasSuspension } = useSuspensionBadge();
   const insets = useSafeAreaInsets();
 
   // Ensure bottom padding respects the device's navigation bar (gesture bar, soft keys)
@@ -74,6 +76,14 @@ export default function TabLayout() {
         options={{
           title: 'Status',
           tabBarIcon: ({ color }) => <TabBarIcon name="graduation-cap" color={color} />,
+          tabBarBadge: hasSuspension ? '' : undefined,
+          tabBarBadgeStyle: hasSuspension ? {
+            backgroundColor: theme.colors.tier.emergency,
+            minWidth: 10,
+            maxHeight: 10,
+            borderRadius: 5,
+            top: 2,
+          } : undefined,
         }}
       />
       <Tabs.Screen

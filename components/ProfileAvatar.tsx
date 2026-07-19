@@ -14,7 +14,7 @@ const avatarColors = [
   theme.palette.green600,
   theme.palette.purple500,
   theme.palette.orange500,
-  theme.palette.red600,
+  theme.palette.red700,
   theme.palette.teal500,
   theme.palette.yellow500,
   theme.palette.blue800,
