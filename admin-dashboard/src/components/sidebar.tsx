@@ -56,9 +56,11 @@ export function Sidebar({ profile }: { profile: Profile }) {
       {/* Brand Header */}
       <div className="px-5 py-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded bg-[#8E0002] text-white">
-            <Shield className="h-5 w-5" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="CampusCurrents"
+            className="h-10 w-10 rounded"
+          />
           <div>
             <h1 className="text-[15px] font-bold leading-tight text-[#8E0002]">
               CampusCurrents
