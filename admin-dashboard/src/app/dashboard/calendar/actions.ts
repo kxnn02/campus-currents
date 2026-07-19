@@ -1,40 +1,21 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { requireAdmin, validateString, validateDate, parseAudience } from "@/lib/server-utils";
+import { EVENT_CATEGORIES } from "@/lib/constants";
 
 export async function createEvent(formData: FormData) {
-  const supabase = await createClient();
+  const { supabase, user } = await requireAdmin();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("Not authenticated");
-
-  const title = formData.get("title") as string;
-  const description = formData.get("description") as string;
-  const category = formData.get("category") as string;
-  const startDate = formData.get("start_date") as string;
-  const endDate = formData.get("end_date") as string;
+  const title = validateString(formData, "title", { maxLength: 200 });
+  const description = validateString(formData, "description", { required: false, maxLength: 5000 });
+  const category = validateString(formData, "category", { allowedValues: EVENT_CATEGORIES });
+  const startDate = validateDate(formData, "start_date");
+  const endDate = validateDate(formData, "end_date", false);
   const isAllDay = formData.get("is_all_day") === "true";
-  const location = formData.get("location") as string;
-  const organizerName = formData.get("organizer_name") as string;
-  const audienceType = formData.get("audience_type") as string;
-
-  let targetAudience: Record<string, unknown> = { all: true };
-
-  if (audienceType === "by_program") {
-    const programs = formData.getAll("programs") as string[];
-    targetAudience = { programs };
-  } else if (audienceType === "by_year") {
-    const years = (formData.getAll("years") as string[]).map(Number);
-    targetAudience = { year_levels: years };
-  } else if (audienceType === "by_program_year") {
-    const programs = formData.getAll("programs") as string[];
-    const years = (formData.getAll("years") as string[]).map(Number);
-    targetAudience = { programs, year_levels: years };
-  }
+  const location = validateString(formData, "location", { required: false, maxLength: 200 });
+  const organizerName = validateString(formData, "organizer_name", { required: false, maxLength: 100 });
+  const targetAudience = parseAudience(formData);
 
   const { data: eventData, error } = await supabase.from("calendar_events").insert({
     title,
@@ -54,9 +35,9 @@ export async function createEvent(formData: FormData) {
   if (error) throw new Error(error.message);
 
   // Upload event poster if provided
-  // NOTE: The "event-posters" storage bucket must be created in the Supabase dashboard
   const poster = formData.get("poster") as File | null;
   if (poster && poster.size > 0 && eventData?.id) {
+    if (poster.size > 5 * 1024 * 1024) throw new Error("Poster file must be under 5MB");
     try {
       const filePath = `${eventData.id}/${poster.name}`;
       const { error: uploadError } = await supabase.storage
@@ -70,46 +51,28 @@ export async function createEvent(formData: FormData) {
           .eq("id", eventData.id);
       }
     } catch {
-      // Upload failed gracefully — event is still created without the poster
-      console.error("Failed to upload event poster");
+      // Upload failed gracefully — event is still created
     }
   }
 
   revalidatePath("/dashboard/calendar");
+  revalidatePath("/dashboard");
 }
 
 export async function updateEvent(id: string, formData: FormData) {
-  const supabase = await createClient();
+  const { supabase } = await requireAdmin();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (!id || typeof id !== "string") throw new Error("Invalid event ID");
 
-  if (!user) throw new Error("Not authenticated");
-
-  const title = formData.get("title") as string;
-  const description = formData.get("description") as string;
-  const category = formData.get("category") as string;
-  const startDate = formData.get("start_date") as string;
-  const endDate = formData.get("end_date") as string;
+  const title = validateString(formData, "title", { maxLength: 200 });
+  const description = validateString(formData, "description", { required: false, maxLength: 5000 });
+  const category = validateString(formData, "category", { allowedValues: EVENT_CATEGORIES });
+  const startDate = validateDate(formData, "start_date");
+  const endDate = validateDate(formData, "end_date", false);
   const isAllDay = formData.get("is_all_day") === "true";
-  const location = formData.get("location") as string;
-  const organizerName = formData.get("organizer_name") as string;
-  const audienceType = formData.get("audience_type") as string;
-
-  let targetAudience: Record<string, unknown> = { all: true };
-
-  if (audienceType === "by_program") {
-    const programs = formData.getAll("programs") as string[];
-    targetAudience = { programs };
-  } else if (audienceType === "by_year") {
-    const years = (formData.getAll("years") as string[]).map(Number);
-    targetAudience = { year_levels: years };
-  } else if (audienceType === "by_program_year") {
-    const programs = formData.getAll("programs") as string[];
-    const years = (formData.getAll("years") as string[]).map(Number);
-    targetAudience = { programs, year_levels: years };
-  }
+  const location = validateString(formData, "location", { required: false, maxLength: 200 });
+  const organizerName = validateString(formData, "organizer_name", { required: false, maxLength: 100 });
+  const targetAudience = parseAudience(formData);
 
   const { error } = await supabase
     .from("calendar_events")
@@ -128,10 +91,10 @@ export async function updateEvent(id: string, formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  // Upload new event poster if provided
-  // NOTE: The "event-posters" storage bucket must be created in the Supabase dashboard
+  // Upload new poster if provided
   const poster = formData.get("poster") as File | null;
   if (poster && poster.size > 0) {
+    if (poster.size > 5 * 1024 * 1024) throw new Error("Poster file must be under 5MB");
     try {
       const filePath = `${id}/${poster.name}`;
       const { error: uploadError } = await supabase.storage
@@ -145,8 +108,7 @@ export async function updateEvent(id: string, formData: FormData) {
           .eq("id", id);
       }
     } catch {
-      // Upload failed gracefully — event is still updated without the poster
-      console.error("Failed to upload event poster");
+      // Upload failed gracefully
     }
   }
 
@@ -154,13 +116,9 @@ export async function updateEvent(id: string, formData: FormData) {
 }
 
 export async function deleteEvent(id: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireAdmin();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("Not authenticated");
+  if (!id || typeof id !== "string") throw new Error("Invalid event ID");
 
   const { error } = await supabase
     .from("calendar_events")

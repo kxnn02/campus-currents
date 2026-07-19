@@ -67,9 +67,11 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Brand header */}
         <div className="text-center mb-8">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-xl mb-4">
-            CC
-          </div>
+          <img
+            src="/logo.png"
+            alt="CampusCurrents"
+            className="h-14 w-14 rounded-xl mx-auto mb-4"
+          />
           <h1 className="text-2xl font-bold tracking-tight">Campus Currents</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Admin Dashboard
@@ -80,7 +82,7 @@ export default function LoginPage() {
         <div className="rounded-xl border bg-card p-6 shadow-sm">
           <form onSubmit={handleLogin} className="space-y-4">
             {error && (
-              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+              <div id="login-error" role="alert" className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -100,6 +102,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                aria-describedby={error ? "login-error" : undefined}
               />
             </div>
 

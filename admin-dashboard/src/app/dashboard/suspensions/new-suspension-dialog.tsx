@@ -22,10 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { createSuspension } from "./actions";
-
-const PROGRAMS = [
-  "BSIT", "BSBA", "BSA", "BSED", "BEED", "AB_PSYCH", "AB_COMM", "JD", "ETEEAP", "STEM", "ABM", "HUMSS", "GAS", "TVL", "OTHER",
-];
+import { PROGRAMS } from "@/lib/constants";
 
 const TEMPLATES = [
   { label: "Manila LGU", source: "manila_lgu", reason: "lgu_order" },

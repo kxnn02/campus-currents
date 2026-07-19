@@ -40,6 +40,7 @@ const YEAR_LEVELS = [
   { label: '2nd Year', value: 2 },
   { label: '3rd Year', value: 3 },
   { label: '4th Year', value: 4 },
+  { label: '5th Year', value: 5 },
 ];
 
 function validateStudentId(id: string): boolean {
@@ -155,6 +156,8 @@ export default function ProfileCompletionScreen() {
               value={studentId}
               onChangeText={setStudentId}
               autoCapitalize="none"
+              keyboardType="number-pad"
+              maxLength={10}
             />
             {errors.studentId && <Text style={styles.errorText}>{errors.studentId}</Text>}
           </View>

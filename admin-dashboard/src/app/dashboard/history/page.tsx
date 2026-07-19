@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface BroadcastRecord {
   id: string;
@@ -43,12 +44,15 @@ function getTierColor(tier: string) {
   }
 }
 
+const PAGE_SIZE = 20;
+
 export default function HistoryPage() {
   const [broadcasts, setBroadcasts] = useState<BroadcastRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tierFilter, setTierFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     async function fetchBroadcasts() {
@@ -71,11 +75,19 @@ export default function HistoryPage() {
     fetchBroadcasts();
   }, []);
 
-  const filtered = broadcasts.filter((b) => {
-    if (tierFilter !== "all" && b.tier !== tierFilter) return false;
-    if (searchQuery && !b.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
-  });
+  const filtered = useMemo(() => {
+    return broadcasts.filter((b) => {
+      if (tierFilter !== "all" && b.tier !== tierFilter) return false;
+      if (searchQuery && !b.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      return true;
+    });
+  }, [broadcasts, tierFilter, searchQuery]);
+
+  // Reset page on filter change
+  useEffect(() => { setPage(1); }, [tierFilter, searchQuery]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   if (error) {
     return <div className="text-destructive">Error loading history: {error}</div>;
@@ -84,8 +96,8 @@ export default function HistoryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Broadcast History</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl font-bold tracking-tight text-[#1A1C1C]">Broadcast History</h2>
+        <p className="text-[#444653]">
           View all broadcasts including deleted ones.
         </p>
       </div>
@@ -113,27 +125,27 @@ export default function HistoryPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-xl border border-[#C4C5D5] bg-white shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Tier</TableHead>
-              <TableHead>Channel</TableHead>
-              <TableHead>Sent At</TableHead>
-              <TableHead>Delivered</TableHead>
-              <TableHead>Read</TableHead>
+            <TableRow className="bg-[#FFF1F1]/50 hover:bg-[#FFF1F1]/50">
+              <TableHead className="font-semibold text-[#444653]">Title</TableHead>
+              <TableHead className="font-semibold text-[#444653]">Tier</TableHead>
+              <TableHead className="font-semibold text-[#444653]">Channel</TableHead>
+              <TableHead className="font-semibold text-[#444653]">Sent At</TableHead>
+              <TableHead className="font-semibold text-[#444653]">Delivered</TableHead>
+              <TableHead className="font-semibold text-[#444653]">Read</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-[#444653]">
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : filtered.length > 0 ? (
-              filtered.map((broadcast) => {
+            ) : paginated.length > 0 ? (
+              paginated.map((broadcast) => {
                 const deliveredCount = broadcast.delivery_receipts?.filter(
                   (r) => r.delivered_at !== null
                 ).length ?? 0;
@@ -143,7 +155,7 @@ export default function HistoryPage() {
 
                 return (
                   <TableRow key={broadcast.id} className={broadcast.is_deleted ? "opacity-50" : ""}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium text-[#141B2B]">
                       {broadcast.title}
                       {broadcast.is_deleted && (
                         <Badge variant="outline" className="ml-2 text-xs">
@@ -156,26 +168,72 @@ export default function HistoryPage() {
                         {broadcast.tier}
                       </Badge>
                     </TableCell>
-                    <TableCell className="capitalize">{broadcast.channel}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="capitalize text-[#444653]">{broadcast.channel}</TableCell>
+                    <TableCell className="text-sm text-[#444653]">
                       {broadcast.sent_at
                         ? new Date(broadcast.sent_at).toLocaleDateString()
                         : "—"}
                     </TableCell>
-                    <TableCell className="text-sm">{deliveredCount}</TableCell>
-                    <TableCell className="text-sm">{readCount}</TableCell>
+                    <TableCell className="text-sm text-[#141B2B]">{deliveredCount}</TableCell>
+                    <TableCell className="text-sm text-[#141B2B]">{readCount}</TableCell>
                   </TableRow>
                 );
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-[#444653] py-8">
                   No broadcasts found.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-[#C4C5D5] px-4 py-3">
+            <p className="text-sm text-[#444653]">
+              Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                aria-label="Previous page"
+                className="rounded-md p-1.5 hover:bg-[#FFF1F1] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4 text-[#444653]" />
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pageNum = Math.max(1, Math.min(page - 2, totalPages - 4)) + i;
+                if (pageNum > totalPages) return null;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setPage(pageNum)}
+                    aria-label={`Page ${pageNum}`}
+                    aria-current={pageNum === page ? "page" : undefined}
+                    className={`h-8 w-8 rounded-md text-sm font-medium transition-colors ${
+                      pageNum === page
+                        ? "bg-[#8D1515] text-white"
+                        : "text-[#444653] hover:bg-[#FFF1F1]"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                aria-label="Next page"
+                className="rounded-md p-1.5 hover:bg-[#FFF1F1] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="h-4 w-4 text-[#444653]" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -47,7 +47,6 @@ export async function createSessionFromUrl(url: string) {
  */
 export async function signInWithGoogle() {
   const redirectTo = Linking.createURL('/auth-callback');
-  console.log('[Auth] Redirect URI:', redirectTo);
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',

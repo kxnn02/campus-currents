@@ -1,5 +1,5 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -10,7 +10,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QueryClientProvider } from '@tanstack/react-query';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
 import { supabase } from '@/lib/supabase';
 import { createSessionFromUrl } from '@/lib/auth';
 import { queryClient } from '@/lib/query';
@@ -71,7 +70,6 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
   const router = useRouter();
   const segments = useSegments();
   const [session, setSession] = useState<Session | null>(null);
@@ -90,7 +88,9 @@ function RootLayoutNav() {
   const url = Linking.useURL();
   useEffect(() => {
     if (url) {
-      createSessionFromUrl(url).catch(console.error);
+      createSessionFromUrl(url).catch(() => {
+        // Silently fail — user will see login screen if auth callback fails
+      });
     }
   }, [url]);
 
@@ -121,10 +121,9 @@ function RootLayoutNav() {
   // Register push notifications when user is authenticated
   useEffect(() => {
     if (session) {
-      console.log('[Push] Session detected, registering for push notifications...');
-      registerForPushNotifications()
-        .then((token) => console.log('[Push] Registration result:', token ?? 'no token'))
-        .catch((err) => console.warn('[Push] Registration failed:', err));
+      registerForPushNotifications().catch(() => {
+        // Silently fail — will retry on next app launch
+      });
     }
   }, [session]);
 

@@ -1,20 +1,21 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { requireAdmin, validateString } from "@/lib/server-utils";
+import { EMERGENCY_TYPES } from "@/lib/constants";
 
 export async function triggerEmergency(formData: FormData) {
-  const supabase = await createClient();
+  // Requires super_admin role for emergency triggers
+  const { supabase, user, role } = await requireAdmin();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Additional guard: only super_admin can trigger emergencies
+  if (role !== "super_admin") {
+    throw new Error("Only super admins can trigger emergency alerts");
+  }
 
-  if (!user) throw new Error("Not authenticated");
-
-  const emergencyType = formData.get("emergency_type") as string;
-  const title = formData.get("title") as string;
-  const instructions = formData.get("instructions") as string;
+  const emergencyType = validateString(formData, "emergency_type", { allowedValues: EMERGENCY_TYPES });
+  const title = validateString(formData, "title", { minLength: 3, maxLength: 200 });
+  const instructions = validateString(formData, "instructions", { minLength: 10, maxLength: 2000 });
 
   // Create the emergency broadcast
   const { data: broadcast, error: broadcastError } = await supabase
@@ -45,16 +46,13 @@ export async function triggerEmergency(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/dashboard/emergency");
+  revalidatePath("/dashboard");
 }
 
 export async function resolveEmergency(id: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireAdmin();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("Not authenticated");
+  if (!id || typeof id !== "string") throw new Error("Invalid emergency ID");
 
   const { error } = await supabase
     .from("active_emergencies")
@@ -67,4 +65,5 @@ export async function resolveEmergency(id: string) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/dashboard/emergency");
+  revalidatePath("/dashboard");
 }

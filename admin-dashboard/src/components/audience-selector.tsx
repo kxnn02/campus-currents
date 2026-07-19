@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -9,26 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const PROGRAMS = [
-  "BSIT",
-  "BSBA",
-  "BSA",
-  "BSED",
-  "BEED",
-  "AB_PSYCH",
-  "AB_COMM",
-  "JD",
-  "ETEEAP",
-  "STEM",
-  "ABM",
-  "HUMSS",
-  "GAS",
-  "TVL",
-  "OTHER",
-];
-
-const YEAR_LEVELS = ["1", "2", "3", "4"];
+import { PROGRAMS, YEAR_LEVELS } from "@/lib/constants";
 
 interface AudienceSelectorProps {
   audienceType: string;
@@ -46,12 +27,22 @@ export function AudienceSelector({
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>(defaultPrograms);
   const [selectedYears, setSelectedYears] = useState<string[]>(defaultYears);
 
+  // Only reset when the actual content changes, not the array reference
+  const prevPrograms = useRef(defaultPrograms);
+  const prevYears = useRef(defaultYears);
+
   useEffect(() => {
-    setSelectedPrograms(defaultPrograms);
+    if (JSON.stringify(prevPrograms.current) !== JSON.stringify(defaultPrograms)) {
+      setSelectedPrograms(defaultPrograms);
+      prevPrograms.current = defaultPrograms;
+    }
   }, [defaultPrograms]);
 
   useEffect(() => {
-    setSelectedYears(defaultYears);
+    if (JSON.stringify(prevYears.current) !== JSON.stringify(defaultYears)) {
+      setSelectedYears(defaultYears);
+      prevYears.current = defaultYears;
+    }
   }, [defaultYears]);
 
   const toggleProgram = (program: string) => {

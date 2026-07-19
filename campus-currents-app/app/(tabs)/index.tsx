@@ -129,7 +129,7 @@ export default function FeedScreen() {
 
   // Filter chips component
   const FilterChips = () => (
-    <View style={styles.filterContainer}>
+    <View style={[styles.filterContainer, { backgroundColor: colors.background }]}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -327,7 +327,6 @@ const styles = StyleSheet.create({
   // Filter chips
   filterContainer: {
     paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.light.background,
   },
   filterScroll: {
     paddingHorizontal: theme.spacing.lg,

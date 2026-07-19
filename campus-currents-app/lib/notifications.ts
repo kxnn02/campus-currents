@@ -71,7 +71,6 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.warn('[Notifications] No authenticated user, cannot store token');
         return false;
       }
 
@@ -87,12 +86,7 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
       // Success - also update local storage as reference
       await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
       return true;
-    } catch (error) {
-      console.warn(
-        `[Notifications] Token storage attempt ${attempt + 1}/${maxRetries} failed:`,
-        error
-      );
-
+    } catch {
       if (attempt < maxRetries - 1) {
         // Exponential backoff: 1s, 2s, 4s
         const delay = baseDelay * Math.pow(2, attempt);
@@ -102,7 +96,6 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
   }
 
   // All retries failed — store locally for sync on next launch
-  console.warn('[Notifications] All retries failed, storing token locally');
   await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
   return false;
 }
@@ -114,7 +107,7 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
  * Behavior:
  * - Sets up Android notification channels first
  * - Requests OS notification permission if not already granted
- * - Retrieves Expo push token
+ * - Retrieves Expo push token (with 3x retry for SERVICE_NOT_AVAILABLE errors)
  * - Stores token in Supabase with 3x retry (exponential backoff: 1s, 2s, 4s)
  * - On total failure: stores token in AsyncStorage for sync later
  *
@@ -122,7 +115,6 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
  */
 export async function registerForPushNotifications(): Promise<string | undefined> {
   if (!Device.isDevice) {
-    console.warn('[Notifications] Push notifications require a physical device');
     return undefined;
   }
 
@@ -139,31 +131,91 @@ export async function registerForPushNotifications(): Promise<string | undefined
   }
 
   if (finalStatus !== 'granted') {
-    console.warn('[Notifications] Notification permission not granted');
     return undefined;
   }
 
-  // Get Expo push token
+  // Get Expo push token with retry logic
   const projectId =
     Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId ?? '3a405c4f-d07a-4544-b28c-cea875f147c1';
 
   if (!projectId) {
-    console.warn('[Notifications] No project ID found for push notifications');
     return undefined;
   }
 
-  try {
-    console.log('[Notifications] Getting push token with projectId:', projectId);
-    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
-    const token = tokenData.data;
-    console.log('[Notifications] Got push token:', token);
+  const token = await getTokenWithRetry(projectId);
 
+  if (token) {
     // Store token in Supabase (with retry logic)
     await storeTokenInSupabase(token);
+  }
 
-    return token;
-  } catch (error) {
-    console.warn('[Notifications] Failed to get Expo push token:', error);
+  return token;
+}
+
+/**
+ * Attempts to get the Expo push token with retry logic.
+ * SERVICE_NOT_AVAILABLE is transient on many Android devices (especially MIUI/Xiaomi)
+ * because Google Play Services takes time to initialize after boot or app install.
+ *
+ * Retries 4 times with exponential backoff: 2s, 4s, 8s, 16s.
+ * Total wait: up to ~30 seconds, which covers the typical GCM registration delay.
+ */
+async function getTokenWithRetry(projectId: string): Promise<string | undefined> {
+  const maxRetries = 4;
+  const baseDelay = 2000; // 2 seconds
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+      return tokenData.data;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isTransient =
+        errorMessage.includes('SERVICE_NOT_AVAILABLE') ||
+        errorMessage.includes('TIMEOUT') ||
+        errorMessage.includes('IOException');
+
+      if (isTransient && attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else {
+        // Non-transient error or all retries exhausted
+        // Try native device push token as fallback (works on some MIUI devices where Expo token fails)
+        if (Platform.OS === 'android') {
+          return await getDeviceTokenFallback(projectId);
+        }
+        return undefined;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Fallback: Try getting a native FCM device push token directly.
+ * Some Xiaomi/MIUI devices have issues with Expo's token wrapper but
+ * can still register via the native FCM path. If this works, we still
+ * return it — the Expo push service accepts device tokens with the right project.
+ */
+async function getDeviceTokenFallback(projectId: string): Promise<string | undefined> {
+  try {
+    const deviceToken = await Notifications.getDevicePushTokenAsync();
+
+    // Now try Expo token one more time — sometimes getting the device token first
+    // warms up Play Services enough for the Expo call to succeed
+    try {
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId,
+        devicePushToken: deviceToken,
+      });
+      return tokenData.data;
+    } catch {
+      // If Expo token still fails, store the native token as-is
+      // The backend can send via FCM directly using this token
+      return `fcm:${deviceToken.data}`;
+    }
+  } catch {
     return undefined;
   }
 }
@@ -188,19 +240,18 @@ export async function checkAndUpdateToken(): Promise<void> {
   if (!projectId) return;
 
   try {
-    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
-    const currentToken = tokenData.data;
+    const currentToken = await getTokenWithRetry(projectId);
+    if (!currentToken) return;
 
     // Get the previously stored token
     const storedToken = await AsyncStorage.getItem(PUSH_TOKEN_STORAGE_KEY);
 
     if (currentToken !== storedToken) {
       // Token has changed (or first sync after local-only storage) — update Supabase
-      console.log('[Notifications] Token changed, updating Supabase');
       await storeTokenInSupabase(currentToken);
     }
-  } catch (error) {
-    console.warn('[Notifications] Failed to check/update token:', error);
+  } catch {
+    // Silently fail — will retry on next app launch
   }
 }
 

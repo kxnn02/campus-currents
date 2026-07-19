@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand colors from Figma */
+  --color-brand-red: #AF101A;
+  --color-brand-red-dark: #8B0D15;
+  --color-brand-red-light: #FEF2F2;
+  --color-brand-amber: #F89C00;
+  --color-brand-amber-light: #FFBA42;
+  --color-brand-amber-bg: #FFFBEB;
+
+  /* Warm palette from Figma */
+  --color-warm-50: #FDFCFB;
+  --color-warm-100: #F9F9F9;
+  --color-warm-150: #F5F0EF;
+  --color-warm-200: #F0DDD9;
+  --color-warm-300: #E4BEBA;
+  --color-warm-400: #D4A8A3;
+  --color-warm-800: #5B403D;
+  --color-warm-900: #3D2420;
+  --color-warm-950: #1A1C1C;
+
+  /* Text */
+  --color-text-dark: #1A1C1C;
+  --color-text-brown: #5B403D;
+  --color-text-muted: #8B7370;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Floating animation for phone mockup */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.float-animation {
+  animation: float 5s ease-in-out infinite;
+}
+
+/* Fade in animation */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-delay-100 { animation-delay: 0.1s; opacity: 0; }
+.animate-delay-200 { animation-delay: 0.2s; opacity: 0; }
+.animate-delay-300 { animation-delay: 0.3s; opacity: 0; }
+.animate-delay-400 { animation-delay: 0.4s; opacity: 0; }
+.animate-delay-500 { animation-delay: 0.5s; opacity: 0; }
+
+/* Warm atmospheric blobs like Figma */
+.warm-blob {
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+}
