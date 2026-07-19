@@ -52,7 +52,6 @@ export function NewSuspensionDialog() {
       setReason("weather_typhoon");
     } catch (error) {
       toast.error("Failed to declare suspension");
-      console.error("Failed to create suspension:", error);
     } finally {
       setLoading(false);
     }

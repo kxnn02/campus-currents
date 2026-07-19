@@ -16,7 +16,6 @@ export function ResolveEmergencyButton({ id }: { id: string }) {
       toast.success("Emergency resolved — ALL CLEAR sent");
     } catch (error) {
       toast.error("Failed to resolve emergency");
-      console.error("Failed to resolve emergency:", error);
     } finally {
       setLoading(false);
     }

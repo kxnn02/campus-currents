@@ -119,6 +119,12 @@ export default function StudentsPage() {
             <SelectItem value="AB_PSYCH">AB Psychology</SelectItem>
             <SelectItem value="AB_COMM">AB Communication</SelectItem>
             <SelectItem value="JD">Juris Doctor</SelectItem>
+            <SelectItem value="ETEEAP">ETEEAP</SelectItem>
+            <SelectItem value="STEM">STEM</SelectItem>
+            <SelectItem value="ABM">ABM</SelectItem>
+            <SelectItem value="HUMSS">HUMSS</SelectItem>
+            <SelectItem value="GAS">GAS</SelectItem>
+            <SelectItem value="TVL">TVL</SelectItem>
           </SelectContent>
         </Select>
         <Select value={yearFilter} onValueChange={(v) => setYearFilter(v ?? "all")}>
@@ -131,6 +137,7 @@ export default function StudentsPage() {
             <SelectItem value="2">2nd Year</SelectItem>
             <SelectItem value="3">3rd Year</SelectItem>
             <SelectItem value="4">4th Year</SelectItem>
+            <SelectItem value="5">5th Year</SelectItem>
           </SelectContent>
         </Select>
         {(search || programFilter !== "all" || yearFilter !== "all") && (

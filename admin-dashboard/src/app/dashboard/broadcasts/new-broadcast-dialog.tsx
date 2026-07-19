@@ -59,7 +59,6 @@ export function NewBroadcastDialog() {
       setPreviewTier("routine");
     } catch (error) {
       toast.error("Failed to send broadcast");
-      console.error("Failed to create broadcast:", error);
     } finally {
       setLoading(false);
     }
