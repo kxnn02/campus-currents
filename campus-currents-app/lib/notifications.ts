@@ -71,7 +71,6 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.warn('[Notifications] No authenticated user, cannot store token');
         return false;
       }
 
@@ -87,12 +86,7 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
       // Success - also update local storage as reference
       await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
       return true;
-    } catch (error) {
-      console.warn(
-        `[Notifications] Token storage attempt ${attempt + 1}/${maxRetries} failed:`,
-        error
-      );
-
+    } catch {
       if (attempt < maxRetries - 1) {
         // Exponential backoff: 1s, 2s, 4s
         const delay = baseDelay * Math.pow(2, attempt);
@@ -102,7 +96,6 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
   }
 
   // All retries failed — store locally for sync on next launch
-  console.warn('[Notifications] All retries failed, storing token locally');
   await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
   return false;
 }
@@ -122,7 +115,6 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
  */
 export async function registerForPushNotifications(): Promise<string | undefined> {
   if (!Device.isDevice) {
-    console.warn('[Notifications] Push notifications require a physical device');
     return undefined;
   }
 
@@ -139,7 +131,6 @@ export async function registerForPushNotifications(): Promise<string | undefined
   }
 
   if (finalStatus !== 'granted') {
-    console.warn('[Notifications] Notification permission not granted');
     return undefined;
   }
 
@@ -148,7 +139,6 @@ export async function registerForPushNotifications(): Promise<string | undefined
     Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId ?? '3a405c4f-d07a-4544-b28c-cea875f147c1';
 
   if (!projectId) {
-    console.warn('[Notifications] No project ID found for push notifications');
     return undefined;
   }
 
@@ -176,16 +166,8 @@ async function getTokenWithRetry(projectId: string): Promise<string | undefined>
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      if (attempt > 0) {
-        console.log(`[Notifications] Token fetch retry ${attempt}/${maxRetries}...`);
-      } else {
-        console.log('[Notifications] Getting push token with projectId:', projectId);
-      }
-
       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
-      const token = tokenData.data;
-      console.log('[Notifications] Got push token:', token);
-      return token;
+      return tokenData.data;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const isTransient =
@@ -195,15 +177,9 @@ async function getTokenWithRetry(projectId: string): Promise<string | undefined>
 
       if (isTransient && attempt < maxRetries) {
         const delay = baseDelay * Math.pow(2, attempt);
-        console.warn(
-          `[Notifications] Token fetch attempt ${attempt + 1} failed (transient), retrying in ${delay}ms:`,
-          errorMessage
-        );
         await new Promise((resolve) => setTimeout(resolve, delay));
       } else {
         // Non-transient error or all retries exhausted
-        console.warn('[Notifications] Failed to get Expo push token after all attempts:', errorMessage);
-
         // Try native device push token as fallback (works on some MIUI devices where Expo token fails)
         if (Platform.OS === 'android') {
           return await getDeviceTokenFallback(projectId);
@@ -224,9 +200,7 @@ async function getTokenWithRetry(projectId: string): Promise<string | undefined>
  */
 async function getDeviceTokenFallback(projectId: string): Promise<string | undefined> {
   try {
-    console.log('[Notifications] Trying native device push token fallback...');
     const deviceToken = await Notifications.getDevicePushTokenAsync();
-    console.log('[Notifications] Got native device token, converting to Expo token...');
 
     // Now try Expo token one more time — sometimes getting the device token first
     // warms up Play Services enough for the Expo call to succeed
@@ -235,16 +209,13 @@ async function getDeviceTokenFallback(projectId: string): Promise<string | undef
         projectId,
         devicePushToken: deviceToken,
       });
-      console.log('[Notifications] Expo token via device token:', tokenData.data);
       return tokenData.data;
     } catch {
       // If Expo token still fails, store the native token as-is
       // The backend can send via FCM directly using this token
-      console.log('[Notifications] Storing native FCM token as fallback');
       return `fcm:${deviceToken.data}`;
     }
-  } catch (error) {
-    console.warn('[Notifications] Device token fallback also failed:', error);
+  } catch {
     return undefined;
   }
 }
@@ -277,11 +248,10 @@ export async function checkAndUpdateToken(): Promise<void> {
 
     if (currentToken !== storedToken) {
       // Token has changed (or first sync after local-only storage) — update Supabase
-      console.log('[Notifications] Token changed, updating Supabase');
       await storeTokenInSupabase(currentToken);
     }
-  } catch (error) {
-    console.warn('[Notifications] Failed to check/update token:', error);
+  } catch {
+    // Silently fail — will retry on next app launch
   }
 }
 

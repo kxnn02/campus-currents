@@ -180,7 +180,7 @@ export default function EventDetailScreen() {
 
           {/* Description */}
           {event.description && (
-            <View style={styles.descriptionSection}>
+            <View style={[styles.descriptionSection, { borderTopColor: colors.border }]}>
               <Text style={[styles.descriptionLabel, { color: colors.text }]}>
                 About
               </Text>
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   descriptionSection: {
     paddingTop: theme.spacing.xl,
     borderTopWidth: 1,
-    borderTopColor: '#E4BEBA',
+    borderTopColor: '#E4BEBA', // fallback; overridden inline with colors.border
   },
   descriptionLabel: {
     ...theme.typography.h3,

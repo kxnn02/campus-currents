@@ -87,14 +87,14 @@ export function parseAudience(formData: FormData): Record<string, unknown> {
   }
 
   if (audienceType === "by_year") {
-    const years = (formData.getAll("years") as string[]).map(Number).filter((n) => n >= 1 && n <= 4);
+    const years = (formData.getAll("years") as string[]).map(Number).filter((n) => n >= 1 && n <= 5);
     if (years.length === 0) throw new Error("Select at least one year level");
     return { year_levels: years };
   }
 
   if (audienceType === "by_program_year") {
     const programs = formData.getAll("programs") as string[];
-    const years = (formData.getAll("years") as string[]).map(Number).filter((n) => n >= 1 && n <= 4);
+    const years = (formData.getAll("years") as string[]).map(Number).filter((n) => n >= 1 && n <= 5);
     if (programs.length === 0) throw new Error("Select at least one program");
     if (years.length === 0) throw new Error("Select at least one year level");
     return { programs, year_levels: years };
