@@ -75,9 +75,10 @@ cd campus-currents
 
 ### Step 2: Install Mobile App Dependencies
 
-Still in the `campus-currents` folder:
+Navigate to the mobile app folder:
 
 ```bash
+cd campus-currents-app
 npm install
 ```
 
@@ -90,7 +91,7 @@ This downloads all the libraries the app needs. It may take 2-5 minutes. You'll 
 The app needs connection details for the database. **Check the Messenger group chat** for a file called `CREDENTIALS-FOR-TEAM.md` — it has the exact values to use.
 
 **On Windows:**
-1. Open the `campus-currents` folder in File Explorer
+1. Open the `campus-currents-app` folder in File Explorer
 2. Right-click → New → Text Document
 3. Name it `.env` (not `.env.txt` — make sure file extensions are visible in File Explorer settings)
 4. Open it in Notepad and paste the values from the credentials file shared in the GC (section "1. Mobile App")
@@ -101,7 +102,7 @@ The app needs connection details for the database. **Check the Messenger group c
 ### Step 4: Install Admin Dashboard Dependencies
 
 ```bash
-cd admin-dashboard
+cd ../admin-dashboard
 npm install
 ```
 
@@ -117,15 +118,16 @@ Create a file called `.env.local` in the `admin-dashboard` folder using the valu
 cd ..
 ```
 
-You're now back in the `campus-currents` folder. Setup is complete!
+You're now back in the `campus-currents` repo root folder. Setup is complete!
 
 ---
 
 ## Running the Mobile App
 
-From the `campus-currents` folder:
+From the `campus-currents-app` folder:
 
 ```bash
+cd campus-currents-app
 npx expo start
 ```
 
@@ -158,7 +160,7 @@ You'll see something like this in your terminal:
 Open a **new** Command Prompt window (keep the mobile app running in the first one).
 
 ```bash
-cd Desktop\Campus-Currents2.0\campus-currents\admin-dashboard
+cd Desktop\campus-currents\admin-dashboard
 npm run dev
 ```
 
@@ -339,32 +341,35 @@ Login (Google SSO) → Profile Completion → Main App (4 tabs)
 ## Project Structure Explained
 
 ```
-Campus-Currents2.0/
-└── campus-currents/           ← Main project folder
-    ├── app/                   ← Mobile app screens
-    │   ├── (auth)/            ← Login screen
-    │   ├── (tabs)/            ← Main tabs (Feed, Status, Calendar, Profile)
-    │   ├── emergency-overlay.tsx   ← Red emergency screen
-    │   ├── broadcast-detail.tsx    ← Full announcement view
-    │   ├── event-detail.tsx        ← Full event view
-    │   └── ...
-    ├── components/            ← Reusable UI pieces (cards, buttons, etc.)
-    ├── lib/                   ← Data fetching, business logic
-    ├── constants/             ← Colors, theme, design tokens
-    ├── types/                 ← TypeScript type definitions
-    ├── assets/                ← Images, fonts, icons
-    ├── .env                   ← Database connection (DO NOT SHARE PUBLICLY)
-    ├── app.json               ← App configuration (name, icons, etc.)
-    ├── package.json           ← Dependencies list
-    │
-    └── admin-dashboard/       ← Admin web app
-        ├── src/app/           ← Web pages
-        │   ├── login/         ← Admin login
-        │   └── dashboard/     ← All admin pages
-        ├── src/components/    ← Reusable web UI pieces
-        ├── src/lib/           ← Database client
-        ├── .env.local         ← Database connection
-        └── package.json       ← Dependencies list
+campus-currents/                   ← GitHub repo root
+├── campus-currents-app/           ← Mobile app folder
+│   ├── app/                       ← Mobile app screens
+│   │   ├── (auth)/                ← Login screen
+│   │   ├── (tabs)/                ← Main tabs (Feed, Status, Calendar, Profile)
+│   │   ├── emergency-overlay.tsx  ← Red emergency screen
+│   │   ├── broadcast-detail.tsx   ← Full announcement view
+│   │   ├── event-detail.tsx       ← Full event view
+│   │   └── ...
+│   ├── components/                ← Reusable UI pieces (cards, buttons, etc.)
+│   ├── lib/                       ← Data fetching, business logic
+│   ├── constants/                 ← Colors, theme, design tokens
+│   ├── types/                     ← TypeScript type definitions
+│   ├── assets/                    ← Images, fonts, icons
+│   ├── .env                       ← Database connection (DO NOT SHARE PUBLICLY)
+│   ├── app.json                   ← App configuration (name, icons, etc.)
+│   └── package.json               ← Dependencies list
+│
+├── admin-dashboard/               ← Admin web app
+│   ├── src/app/                   ← Web pages
+│   │   ├── login/                 ← Admin login
+│   │   └── dashboard/             ← All admin pages
+│   ├── src/components/            ← Reusable web UI pieces
+│   ├── src/lib/                   ← Database client
+│   ├── .env.local                 ← Database connection
+│   └── package.json               ← Dependencies list
+│
+├── campus-currents-website/       ← Landing page (coming soon)
+└── README.md                      ← Project overview
 ```
 
 ---
@@ -378,10 +383,10 @@ Campus-Currents2.0/
 → Your phone and computer aren't on the same WiFi. Either connect to the same network OR use `npx expo start --tunnel`.
 
 ### App shows a blank white screen
-→ The `.env` file is missing or has wrong content. Double-check it exists in the `campus-currents` folder.
+→ The `.env` file is missing or has wrong content. Double-check it exists in the `campus-currents-app` folder.
 
 ### "Unable to resolve module" error
-→ Run `npx expo start --clear` to clear the cache. If that doesn't work, delete the `node_modules` folder and run `npm install` again.
+→ Run `npx expo start --clear` to clear the cache. If that doesn't work, delete the `node_modules` folder in `campus-currents-app` and run `npm install` again.
 
 ### Admin dashboard says "Access denied"
 → Your account doesn't have admin role. Ask the project lead to update your role in Supabase.
@@ -404,12 +409,12 @@ Campus-Currents2.0/
 
 ### For Everyone
 - **Never** commit `.env` or `.env.local` files to Git (they contain database keys)
-- Always run `npm install` after pulling new code from Git
-- The mobile app and admin dashboard are **separate apps** — run them in separate terminal windows
+- Always run `npm install` in the relevant folder after pulling new code from Git
+- The mobile app and admin dashboard are **separate apps** in separate folders — run them in separate terminal windows
 
 ### For Developers
-- Mobile app uses **Expo Router** (file-based routing — each file in `app/` is a screen)
-- Admin dashboard uses **Next.js App Router** (same concept — each folder in `src/app/` is a page)
+- Mobile app uses **Expo Router** (file-based routing — each file in `campus-currents-app/app/` is a screen)
+- Admin dashboard uses **Next.js App Router** (same concept — each folder in `admin-dashboard/src/app/` is a page)
 - Database is **Supabase** — you can view/edit data at https://supabase.com/dashboard
 - UI styling: Mobile uses React Native `StyleSheet`, Admin uses Tailwind CSS
 
@@ -421,6 +426,7 @@ Campus-Currents2.0/
 ### Git Workflow
 ```bash
 git pull                    # Get latest changes from team
+cd campus-currents-app
 npm install                 # Install any new dependencies
 npx expo start             # Run the app
 ```
@@ -438,12 +444,12 @@ git push
 
 | Action | Command |
 |--------|---------|
-| Install dependencies | `npm install` |
-| Run mobile app | `npx expo start` |
-| Run mobile (tunnel mode) | `npx expo start --tunnel` |
-| Run mobile (dev client) | `npx expo start --dev-client` |
+| Install mobile dependencies | `cd campus-currents-app && npm install` |
+| Run mobile app | `cd campus-currents-app && npx expo start` |
+| Run mobile (tunnel mode) | `cd campus-currents-app && npx expo start --tunnel` |
+| Run mobile (dev client) | `cd campus-currents-app && npx expo start --dev-client` |
 | Run admin dashboard | `cd admin-dashboard && npm run dev` |
-| Clear cache | `npx expo start --clear` |
+| Clear cache | `cd campus-currents-app && npx expo start --clear` |
 | Check Node version | `node --version` |
 | Pull latest code | `git pull` |
 
