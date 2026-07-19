@@ -68,7 +68,6 @@ export function EventActions({ event }: { event: CalendarEvent }) {
       setEditOpen(false);
     } catch (error) {
       toast.error("Failed to update event");
-      console.error("Failed to update event:", error);
     } finally {
       setLoading(false);
     }
@@ -81,7 +80,6 @@ export function EventActions({ event }: { event: CalendarEvent }) {
       toast.success("Event deleted");
     } catch (error) {
       toast.error("Failed to delete event");
-      console.error("Failed to delete event:", error);
     }
   }
 

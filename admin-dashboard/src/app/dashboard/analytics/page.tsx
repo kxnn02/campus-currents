@@ -25,10 +25,14 @@ export default async function AnalyticsPage() {
     return <div className="text-destructive">Error loading analytics: {broadcastError.message}</div>;
   }
 
-  // Get delivery receipts grouped by broadcast
-  const { data: receipts } = await supabase
-    .from("delivery_receipts")
-    .select("broadcast_id, delivered_at, read_at, acknowledged_at");
+  // Get delivery receipts only for the displayed broadcasts
+  const broadcastIds = broadcasts?.map((b) => b.id) ?? [];
+  const { data: receipts } = broadcastIds.length > 0
+    ? await supabase
+        .from("delivery_receipts")
+        .select("broadcast_id, delivered_at, read_at, acknowledged_at")
+        .in("broadcast_id", broadcastIds)
+    : { data: [] };
 
   // Aggregate stats per broadcast
   const statsMap: Record<string, { delivered: number; read: number; acknowledged: number }> = {};

@@ -75,7 +75,6 @@ export function TriggerEmergencyDialog() {
       setPin("");
     } catch (error) {
       toast.error("Failed to trigger emergency");
-      console.error("Failed to trigger emergency:", error);
     } finally {
       setLoading(false);
     }
