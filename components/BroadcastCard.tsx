@@ -98,12 +98,12 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: theme.radius.md,
+    borderRadius: 4,
     borderLeftWidth: 4,
     borderLeftColor: theme.colors.tier.routine,
     borderWidth: 1,
     marginHorizontal: theme.spacing.lg,
-    marginVertical: theme.spacing.sm,
+    marginVertical: theme.spacing.sm + 2,
     ...theme.shadows.sm,
   },
   cardPressed: {
@@ -111,7 +111,10 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.985 }],
   },
   content: {
-    padding: theme.spacing.xl,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
+    paddingLeft: theme.spacing.xl,
+    paddingRight: theme.spacing.lg,
   },
   topRow: {
     flexDirection: 'row',
@@ -129,14 +132,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    lineHeight: 26,
+    lineHeight: 28,
     marginBottom: theme.spacing.sm,
   },
   body: {
-    ...theme.typography.body,
-    lineHeight: 22,
+    ...theme.typography.bodyLarge,
+    lineHeight: 24,
     marginBottom: theme.spacing.lg,
   },
   bottomRow: {

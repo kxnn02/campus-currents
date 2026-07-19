@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   // Unified item card
   itemCard: {
     flexDirection: 'row',
-    borderRadius: theme.radius.md,
+    borderRadius: 8,
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: theme.spacing.sm,
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   },
   // Empty state
   emptyCard: {
-    borderRadius: theme.radius['2xl'],
+    borderRadius: 8,
     borderWidth: 1,
     padding: theme.spacing['3xl'],
     alignItems: 'center',

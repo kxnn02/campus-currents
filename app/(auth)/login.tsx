@@ -44,7 +44,7 @@ export default function LoginScreen() {
           <Pressable
             style={[
               styles.signInButton,
-              { backgroundColor: colors.primary, opacity: loading ? 0.7 : 1 },
+              { backgroundColor: '#AF101A', opacity: loading ? 0.7 : 1 },
             ]}
             onPress={handleGoogleSignIn}
             disabled={loading}
@@ -61,8 +61,8 @@ export default function LoginScreen() {
           </Text>
 
           {/* Emergency consent notice (matches Figma) */}
-          <View style={[styles.noticeBox, { backgroundColor: '#F3F3F3', borderLeftColor: colors.primary }]}>
-            <Text style={[styles.noticeText, { color: colors.textSecondary }]}>
+          <View style={[styles.noticeBox, { backgroundColor: '#F3F3F3', borderLeftColor: '#AF101A' }]}>
+            <Text style={[styles.noticeText]}>
               By signing in, you agree to receive urgent campus alerts and emergency notifications.
             </Text>
           </View>
@@ -97,12 +97,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 16,
+    width: 68,
+    height: 86,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   logoText: {
     fontSize: 28,
@@ -110,80 +110,88 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   brandName: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
+    color: '#AF101A',
   },
   // Heading
   headingSection: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 32,
     gap: 8,
   },
   heading: {
     fontSize: 32,
     fontWeight: '700',
+    color: '#1A1C1C',
   },
   subtitle: {
     fontSize: 16,
     lineHeight: 24,
+    color: '#5B403D',
   },
   // Form / Button
   formSection: {
     width: '100%',
-    maxWidth: 340,
-    gap: 16,
+    maxWidth: 384,
+    gap: 24,
     alignItems: 'center',
   },
   signInButton: {
     width: '100%',
     paddingVertical: 16,
-    borderRadius: 4,
+    borderRadius: 2,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 15,
+    elevation: 6,
   },
   signInButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.7,
+    textTransform: 'uppercase',
   },
   emailHint: {
     fontSize: 13,
     marginTop: 4,
+    color: '#5B403D',
   },
   noticeBox: {
     width: '100%',
     borderLeftWidth: 4,
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 16,
     paddingLeft: 20,
     borderRadius: 2,
-    marginTop: 8,
+    marginTop: 0,
   },
   noticeText: {
     fontSize: 12,
     fontWeight: '500',
-    lineHeight: 18,
+    lineHeight: 16,
+    color: '#5B403D',
   },
   // Footer
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 24,
     position: 'absolute',
     bottom: 32,
   },
   footerLink: {
     fontSize: 12,
     fontWeight: '500',
+    color: '#5B403D',
   },
   footerDivider: {
     fontSize: 12,
+    color: '#E4BEBA',
   },
 });

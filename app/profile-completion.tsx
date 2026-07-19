@@ -198,15 +198,25 @@ export default function ProfileCompletionScreen() {
             </Pressable>
             {showProgramPicker && (
               <View style={[styles.pickerOptions, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                {PROGRAMS.map((p) => (
-                  <Pressable
-                    key={p.value}
-                    style={[styles.pickerOption, program === p.value && { backgroundColor: colors.tint + '15' }]}
-                    onPress={() => { setProgram(p.value); setShowProgramPicker(false); }}
-                  >
-                    <Text style={[styles.pickerOptionText, { color: colors.text }]}>{p.label}</Text>
-                  </Pressable>
-                ))}
+                <ScrollView
+                  style={styles.pickerScroll}
+                  showsVerticalScrollIndicator={true}
+                  nestedScrollEnabled={true}
+                  persistentScrollbar={true}
+                >
+                  {PROGRAMS.map((p) => (
+                    <Pressable
+                      key={p.value}
+                      style={[styles.pickerOption, program === p.value && { backgroundColor: colors.tint + '15' }]}
+                      onPress={() => { setProgram(p.value); setShowProgramPicker(false); }}
+                    >
+                      <Text style={[styles.pickerOptionText, { color: colors.text }]}>{p.label}</Text>
+                      {program === p.value && (
+                        <Text style={{ color: colors.tint, fontSize: 16 }}>✓</Text>
+                      )}
+                    </Pressable>
+                  ))}
+                </ScrollView>
               </View>
             )}
             {errors.program && <Text style={styles.errorText}>{errors.program}</Text>}
@@ -232,6 +242,9 @@ export default function ProfileCompletionScreen() {
                     onPress={() => { setYearLevel(y.value); setShowYearPicker(false); }}
                   >
                     <Text style={[styles.pickerOptionText, { color: colors.text }]}>{y.label}</Text>
+                    {yearLevel === y.value && (
+                      <Text style={{ color: colors.tint, fontSize: 16 }}>✓</Text>
+                    )}
                   </Pressable>
                 ))}
               </View>
@@ -297,10 +310,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: theme.radius.lg,
     marginTop: theme.spacing.xs,
-    maxHeight: 200,
+    maxHeight: 240,
     overflow: 'hidden',
   },
-  pickerOption: { paddingHorizontal: theme.spacing.md + 2, paddingVertical: theme.spacing.sm + 2 },
+  pickerScroll: {
+    maxHeight: 236,
+  },
+  pickerOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.md + 2,
+    paddingVertical: theme.spacing.sm + 2,
+  },
   pickerOptionText: { ...theme.typography.body },
   phoneRow: { flexDirection: 'row', gap: theme.spacing.sm },
   phonePrefix: {
@@ -320,7 +342,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   submitButton: {
-    borderRadius: theme.radius.xl,
+    borderRadius: 2,
     paddingVertical: theme.spacing.lg,
     alignItems: 'center',
     marginTop: theme.spacing['2xl'],

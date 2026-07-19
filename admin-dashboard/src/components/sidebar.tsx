@@ -72,8 +72,22 @@ export function Sidebar({ profile }: { profile: Profile }) {
 
       <Separator />
 
+      {/* Emergency Alert — Always visible, high priority placement */}
+      <div className="p-2">
+        <Button
+          variant="destructive"
+          className="w-full font-bold shadow-md bg-[#DC2626] hover:bg-[#DC2626]/90"
+          onClick={() => router.push("/dashboard/emergency")}
+        >
+          <AlertTriangle className="mr-2 h-4 w-4" />
+          Emergency Alert
+        </Button>
+      </div>
+
+      <Separator />
+
       {/* Navigation */}
-      <nav className="flex-1 space-y-0.5 p-2">
+      <nav className="flex-1 space-y-1 p-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
@@ -81,7 +95,7 @@ export function Sidebar({ profile }: { profile: Profile }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-4 rounded px-4 py-2 text-sm font-semibold transition-all duration-150",
+                "flex items-center gap-4 rounded-[4px] px-4 py-2 text-sm font-semibold transition-all duration-150",
                 isActive
                   ? "bg-[#8D1515] text-white shadow-sm"
                   : "text-[#444653] hover:bg-[#8D1515]/10 hover:text-[#8D1515]"
@@ -98,16 +112,6 @@ export function Sidebar({ profile }: { profile: Profile }) {
 
       {/* Bottom section */}
       <div className="p-4 space-y-3">
-        {/* Emergency Alert Button */}
-        <Button
-          variant="destructive"
-          className="w-full font-bold shadow-md"
-          onClick={() => router.push("/dashboard/emergency")}
-        >
-          <AlertTriangle className="mr-2 h-4 w-4" />
-          Emergency Alert
-        </Button>
-
         {/* User info */}
         <div className="flex items-center gap-3 px-1">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#8E0002]/10 text-xs font-bold text-[#8E0002]">

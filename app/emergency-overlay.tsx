@@ -6,17 +6,23 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   BackHandler,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEmergency } from '@/lib/emergency';
 import { useBroadcastDetail } from '@/lib/feed';
 import { theme } from '@/constants/Theme';
 
+// Haptic feedback removed — requires native rebuild to activate.
+// To re-enable, run: npx expo install expo-haptics, then rebuild dev APK.
+const Haptics: any = null;
+
 /**
  * Emergency Overlay Screen
  *
  * Full-screen modal with solid red background that cannot be dismissed
  * except by tapping one of the two acknowledgment buttons.
+ * Includes haptic feedback for tactile confirmation during panic scenarios.
  */
 export default function EmergencyOverlayScreen() {
   const router = useRouter();
@@ -32,6 +38,13 @@ export default function EmergencyOverlayScreen() {
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => backHandler.remove();
+  }, []);
+
+  // Trigger heavy haptic when overlay appears (attention-grabbing)
+  useEffect(() => {
+    if (Haptics) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
   }, []);
 
   // Elapsed timer: updates every second since emergency created_at
@@ -60,9 +73,15 @@ export default function EmergencyOverlayScreen() {
   // Handle "I'm Safe" press
   const handleSafe = useCallback(async () => {
     if (isSubmitting) return;
+    if (Haptics) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
     setIsSubmitting(true);
     try {
       await acknowledge('safe');
+      if (Haptics) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       router.replace('/post-acknowledgment?type=safe' as never);
     } catch {
       setIsSubmitting(false);
@@ -72,9 +91,15 @@ export default function EmergencyOverlayScreen() {
   // Handle "Need Help" press
   const handleNeedHelp = useCallback(async () => {
     if (isSubmitting) return;
+    if (Haptics) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
     setIsSubmitting(true);
     try {
       await acknowledge('need_help');
+      if (Haptics) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      }
       router.replace('/post-acknowledgment?type=need_help' as never);
     } catch {
       setIsSubmitting(false);
@@ -102,7 +127,7 @@ export default function EmergencyOverlayScreen() {
       <Text style={styles.heading}>{emergencyHeading}</Text>
 
       {/* Instruction Text */}
-      <Text style={styles.instructions}>{instructionText}</Text>
+      <Text style={styles.instructions} numberOfLines={6}>{instructionText}</Text>
 
       {/* Action Buttons */}
       <View style={styles.buttonContainer}>
@@ -122,7 +147,7 @@ export default function EmergencyOverlayScreen() {
           )}
         </TouchableOpacity>
 
-        {/* NEED HELP Button */}
+        {/* NEED HELP Button — solid amber/orange for equal visual weight */}
         <TouchableOpacity
           style={[styles.helpButton, isSubmitting && styles.disabledButton]}
           onPress={handleNeedHelp}
@@ -160,43 +185,45 @@ function formatEmergencyType(type?: string | null): string {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#8E0002',
+    backgroundColor: '#AF101A',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing['2xl'],
+    paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing['5xl'],
   },
   warningBadge: {
     position: 'absolute',
     top: 60,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.sm + 2,
-    borderRadius: theme.radius.full,
+    borderRadius: 12,
   },
   warningBadgeText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
+    fontSize: 14,
+    fontWeight: '400',
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
   },
   timerContainer: {
     alignItems: 'center',
-    marginBottom: theme.spacing['3xl'],
+    marginBottom: theme.spacing['2xl'],
   },
   timerLabel: {
     color: 'rgba(255,255,255,0.7)',
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 3,
+    fontSize: 12,
+    fontWeight: '500',
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   timerValue: {
     color: '#FFFFFF',
-    fontSize: 56,
+    fontSize: 48,
     fontWeight: '700',
     marginTop: theme.spacing.xs,
-    fontVariant: ['tabular-nums'],
+    fontVariant: ['tabular-nums'] as any,
+    letterSpacing: 4.8,
   },
   heading: {
     color: '#FFFFFF',
@@ -205,18 +232,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: theme.spacing.lg,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     lineHeight: 32,
   },
   instructions: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '400',
+    color: '#1A1C1C',
+    fontSize: 18,
+    fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: theme.spacing['5xl'],
-    opacity: 0.9,
-    paddingHorizontal: theme.spacing.md,
+    lineHeight: 28,
+    marginBottom: theme.spacing['3xl'],
+    paddingHorizontal: theme.spacing['2xl'],
+    paddingVertical: theme.spacing['2xl'],
+    backgroundColor: '#F9F9F9',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#E2E2E2',
+    overflow: 'hidden',
   },
   buttonContainer: {
     width: '100%',
@@ -224,37 +256,48 @@ const styles = StyleSheet.create({
   },
   safeButton: {
     backgroundColor: '#16A34A',
+    borderWidth: 1,
+    borderColor: '#22C55E',
     minHeight: 70,
-    borderRadius: 8,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: theme.spacing['2xl'],
+    flexDirection: 'row',
+    gap: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.1,
+    shadowRadius: 25,
+    elevation: 8,
   },
   safeButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   helpButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    minHeight: 70,
-    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.6)',
+    borderColor: '#BA1A1A',
+    minHeight: 70,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: theme.spacing['2xl'],
+    flexDirection: 'row',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.1,
+    shadowRadius: 25,
+    elevation: 8,
   },
   helpButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
+    color: '#BA1A1A',
+    fontSize: 20,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
   disabledButton: {
