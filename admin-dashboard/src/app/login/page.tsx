@@ -82,7 +82,7 @@ export default function LoginPage() {
         <div className="rounded-xl border bg-card p-6 shadow-sm">
           <form onSubmit={handleLogin} className="space-y-4">
             {error && (
-              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+              <div id="login-error" role="alert" className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -102,6 +102,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                aria-describedby={error ? "login-error" : undefined}
               />
             </div>
 

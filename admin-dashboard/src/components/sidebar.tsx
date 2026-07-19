@@ -1,20 +1,25 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Megaphone,
   CloudOff,
   CalendarDays,
   AlertTriangle,
-  BarChart3,
-  Users,
+  LayoutDashboard,
   History,
+  Settings,
   LogOut,
-  Shield,
+  HelpCircle,
+  Headphones,
+  Radio,
+  Users,
+  BarChart3,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,19 +32,23 @@ interface Profile {
 }
 
 const navItems = [
-  { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Megaphone },
-  { href: "/dashboard/suspensions", label: "Suspensions", icon: CloudOff },
-  { href: "/dashboard/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/dashboard/broadcasts", label: "New Broadcast", icon: Megaphone },
+  { href: "/dashboard/suspensions", label: "Post Suspension", icon: CloudOff },
+  { href: "/dashboard/calendar", label: "New Event", icon: CalendarDays },
   { href: "/dashboard/emergency", label: "Emergency", icon: AlertTriangle },
-  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/dashboard/history", label: "Broadcast History", icon: History },
+  { href: "/dashboard/delivery", label: "Delivery Monitor", icon: Radio },
   { href: "/dashboard/students", label: "Students", icon: Users },
-  { href: "/dashboard/history", label: "History", icon: History },
+  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar({ profile }: { profile: Profile }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -47,59 +56,59 @@ export function Sidebar({ profile }: { profile: Profile }) {
     router.refresh();
   }
 
-  const displayName = profile.first_name
-    ? `${profile.first_name} ${profile.last_name || ""}`
-    : profile.email;
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
-  return (
-    <aside className="flex w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+  // Close on Escape key
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && mobileOpen) {
+        setMobileOpen(false);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen]);
+
+  const sidebarContent = (
+    <>
       {/* Brand Header */}
-      <div className="px-5 py-6">
-        <div className="flex items-center gap-3">
-          <img
-            src="/logo.png"
-            alt="CampusCurrents"
-            className="h-10 w-10 rounded"
-          />
+      <div className="px-4 pt-6 pb-9">
+        <div className="flex items-center gap-2 px-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded">
+            <img
+              src="/logo.png"
+              alt="CampusCurrents"
+              className="h-10 w-10 object-contain"
+            />
+          </div>
           <div>
-            <h1 className="text-[15px] font-bold leading-tight text-[#8E0002]">
+            <h1 className="text-[20px] font-bold leading-7 text-[#8E0002]">
               CampusCurrents
             </h1>
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="text-[12px] font-normal uppercase tracking-[0.6px] text-[#444653]">
               Emergency Systems
             </p>
           </div>
         </div>
       </div>
 
-      <Separator />
-
-      {/* Emergency Alert — Always visible, high priority placement */}
-      <div className="p-2">
-        <Button
-          variant="destructive"
-          className="w-full font-bold shadow-md bg-[#DC2626] hover:bg-[#DC2626]/90"
-          onClick={() => router.push("/dashboard/emergency")}
-        >
-          <AlertTriangle className="mr-2 h-4 w-4" />
-          Emergency Alert
-        </Button>
-      </div>
-
-      <Separator />
-
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-2">
+      <nav className="flex-1 space-y-1 px-2 overflow-y-auto">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          const isActive = item.exact
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-4 rounded-[4px] px-4 py-2 text-sm font-semibold transition-all duration-150",
+                "flex items-center gap-4 rounded px-4 py-2 text-sm font-semibold transition-all duration-150",
                 isActive
-                  ? "bg-[#8D1515] text-white shadow-sm"
+                  ? "bg-[#8D1515] text-white"
                   : "text-[#444653] hover:bg-[#8D1515]/10 hover:text-[#8D1515]"
               )}
             >
@@ -110,32 +119,89 @@ export function Sidebar({ profile }: { profile: Profile }) {
         })}
       </nav>
 
-      <Separator />
-
       {/* Bottom section */}
-      <div className="p-4 space-y-3">
-        {/* User info */}
-        <div className="flex items-center gap-3 px-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#8E0002]/10 text-xs font-bold text-[#8E0002]">
-            {(profile.first_name?.[0] || profile.email[0]).toUpperCase()}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{displayName}</p>
-            <p className="text-[11px] text-muted-foreground capitalize">
-              {profile.role.replace("_", " ")}
-            </p>
-          </div>
+      <div className="border-t border-[#C4C5D5] px-4 pt-4 pb-4">
+        <div className="border-t border-[#C4C5D5] pt-6 space-y-1">
+          {/* Emergency Alert Button */}
+          <button
+            onClick={() => router.push("/dashboard/emergency")}
+            className="w-full rounded bg-[#DC2626] py-4 text-center text-base font-bold text-white shadow-lg transition-colors hover:bg-[#DC2626]/90 flex items-center justify-center gap-2"
+          >
+            <AlertTriangle className="h-[17px] w-[17px]" />
+            Emergency Alert
+          </button>
+
+          {/* Help & Support links */}
+          <Link
+            href="/dashboard/settings"
+            className="flex items-center gap-4 px-2 pt-7 pb-2 text-base font-normal text-[#444653] hover:text-[#8D1515] transition-colors"
+          >
+            <HelpCircle className="h-5 w-5" />
+            Help Center
+          </Link>
+          <Link
+            href="/dashboard/settings"
+            className="flex items-center gap-4 px-2 py-2 text-base font-normal text-[#444653] hover:text-[#8D1515] transition-colors"
+          >
+            <Headphones className="h-[17px] w-5" />
+            Support
+          </Link>
         </div>
 
         {/* Sign Out */}
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-3 px-1 py-1 text-sm font-semibold text-[#BA1A1A] hover:text-[#8E0002] transition-colors"
-        >
-          <LogOut className="h-4 w-4" />
-          Sign Out
-        </button>
+        <div className="pt-8">
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-4 text-sm font-semibold text-[#BA1A1A] hover:text-[#8E0002] transition-colors"
+          >
+            <LogOut className="h-[18px] w-[18px]" />
+            Sign Out
+          </button>
+        </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="fixed top-4 left-4 z-50 rounded-lg bg-white p-2 shadow-md border border-[#C4C5D5] md:hidden"
+        aria-label="Open menu"
+      >
+        <Menu className="h-5 w-5 text-[#444653]" />
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col border-r border-[#C4C5D5] bg-[#FFF1F1] transition-transform duration-200 md:hidden",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="absolute top-4 right-4 rounded-md p-1 hover:bg-[#8D1515]/10"
+          aria-label="Close menu"
+        >
+          <X className="h-5 w-5 text-[#444653]" />
+        </button>
+        {sidebarContent}
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-[280px] flex-col border-r border-[#C4C5D5] bg-[#FFF1F1]">
+        {sidebarContent}
+      </aside>
+    </>
   );
 }

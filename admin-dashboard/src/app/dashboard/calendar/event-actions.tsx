@@ -97,7 +97,7 @@ export function EventActions({ event }: { event: CalendarEvent }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={<Button variant="ghost" size="icon" className="h-8 w-8" />}
+          render={<Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Actions for ${event.title}`} />}
         >
           <MoreHorizontal className="h-4 w-4" />
         </DropdownMenuTrigger>

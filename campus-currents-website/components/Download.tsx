@@ -25,7 +25,7 @@ export default function Download() {
           {/* Download buttons */}
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="https://expo.dev/accounts/kxnn02/projects/campus-currents/builds"
+              href="https://expo.dev/accounts/kxnn02/projects/campus-currents/builds/770404da-1c30-489c-aa77-c219222fad15"
               target="_blank"
               rel="noopener noreferrer"
               className="group flex items-center gap-4 px-8 py-4 bg-brand-red rounded-2xl hover:bg-brand-red-dark hover:scale-[1.02] transition-all shadow-md"
