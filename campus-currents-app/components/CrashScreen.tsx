@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F9F9F9',
     paddingHorizontal: 32,
   },
   title: {
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E40AF',
+    backgroundColor: '#AF101A',
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 10,

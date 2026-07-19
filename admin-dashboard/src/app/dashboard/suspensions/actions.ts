@@ -1,26 +1,22 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { requireAdmin, validateString, validateDate } from "@/lib/server-utils";
+import { SUSPENSION_SOURCES, SUSPENSION_REASONS, SUSPENSION_SCOPES, SUSPENSION_DURATIONS } from "@/lib/constants";
 
 export async function createSuspension(formData: FormData) {
-  const supabase = await createClient();
+  const { supabase, user } = await requireAdmin();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("Not authenticated");
-
-  const suspensionDate = formData.get("suspension_date") as string;
-  const source = formData.get("source") as string;
-  const reason = formData.get("reason") as string;
-  const scope = formData.get("scope") as string;
-  const duration = formData.get("duration") as string;
+  const suspensionDate = validateDate(formData, "suspension_date");
+  const source = validateString(formData, "source", { allowedValues: SUSPENSION_SOURCES });
+  const reason = validateString(formData, "reason", { allowedValues: SUSPENSION_REASONS });
+  const scope = validateString(formData, "scope", { allowedValues: SUSPENSION_SCOPES });
+  const duration = validateString(formData, "duration", { allowedValues: SUSPENSION_DURATIONS, required: false }) || "full_day";
 
   let scopeDetail: Record<string, unknown> | null = null;
   if (scope === "specific_programs") {
     const programs = formData.getAll("programs") as string[];
+    if (programs.length === 0) throw new Error("Select at least one program for specific scope");
     scopeDetail = { programs };
   }
 
@@ -30,7 +26,7 @@ export async function createSuspension(formData: FormData) {
     .insert({
       sender_id: user.id,
       title: `Class Suspension - ${suspensionDate}`,
-      body: `Classes suspended due to ${reason.replace("_", " ")}. Duration: ${duration.replace("_", " ")}. Source: ${source.replace("_", " ")}.`,
+      body: `Classes suspended due to ${reason.replace(/_/g, " ")}. Duration: ${duration.replace(/_/g, " ")}. Source: ${source.replace(/_/g, " ")}.`,
       tier: "important",
       channel: "suspension",
       is_pinned: true,
@@ -59,16 +55,13 @@ export async function createSuspension(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/dashboard/suspensions");
+  revalidatePath("/dashboard");
 }
 
 export async function liftSuspension(id: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireAdmin();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("Not authenticated");
+  if (!id || typeof id !== "string") throw new Error("Invalid suspension ID");
 
   const { error } = await supabase
     .from("class_suspensions")
@@ -78,4 +71,5 @@ export async function liftSuspension(id: string) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/dashboard/suspensions");
+  revalidatePath("/dashboard");
 }

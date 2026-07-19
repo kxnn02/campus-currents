@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, Pressable, Alert } from 'react-native';
+import { StyleSheet, View, Text, Pressable, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { theme, useThemeColors } from '@/constants/Theme';
@@ -25,9 +25,11 @@ export default function LoginScreen() {
       <View style={styles.content}>
         {/* Logo & Brand */}
         <View style={styles.branding}>
-          <View style={[styles.logoCircle, { backgroundColor: colors.primary }]}>
-            <Text style={styles.logoText}>CC</Text>
-          </View>
+          <Image
+            source={require('@/assets/images/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={[styles.brandName, { color: colors.primary }]}>CampusCurrents</Text>
         </View>
 
@@ -70,11 +72,9 @@ export default function LoginScreen() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={[styles.footerLink, { color: colors.textSecondary }]}>Privacy Policy</Text>
-          <Text style={[styles.footerDivider, { color: colors.border }]}>·</Text>
-          <Text style={[styles.footerLink, { color: colors.textSecondary }]}>Terms of Service</Text>
-          <Text style={[styles.footerDivider, { color: colors.border }]}>·</Text>
-          <Text style={[styles.footerLink, { color: colors.textSecondary }]}>IT Support</Text>
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+            San Sebastian College–Recoletos Manila
+          </Text>
         </View>
       </View>
     </SafeAreaView>
@@ -96,18 +96,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  logoCircle: {
-    width: 68,
-    height: 86,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+  logoImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 16,
     marginBottom: 8,
-  },
-  logoText: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#FFFFFF',
   },
   brandName: {
     fontSize: 24,
@@ -185,13 +178,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 32,
   },
-  footerLink: {
+  footerText: {
     fontSize: 12,
     fontWeight: '500',
     color: '#5B403D',
-  },
-  footerDivider: {
-    fontSize: 12,
-    color: '#E4BEBA',
   },
 });

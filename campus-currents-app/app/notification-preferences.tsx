@@ -44,8 +44,8 @@ export default function NotificationPreferencesScreen() {
       if (stored) {
         setPreferences(JSON.parse(stored));
       }
-    } catch (err) {
-      console.error('Failed to load notification preferences:', err);
+    } catch {
+      // Silently fail — defaults will be used
     }
   }
 
@@ -54,8 +54,8 @@ export default function NotificationPreferencesScreen() {
     setPreferences(updated);
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (err) {
-      console.error('Failed to save notification preferences:', err);
+    } catch {
+      // Silently fail — preference is still updated in memory for current session
     }
   }
 
@@ -67,6 +67,7 @@ export default function NotificationPreferencesScreen() {
         <View style={[styles.infoBox, { backgroundColor: colors.primaryBg, borderColor: colors.borderLight }]}>
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             Emergency and Important alerts cannot be muted — these keep you safe.
+            Routine channel preferences control which in-app notifications you see.
           </Text>
         </View>
 

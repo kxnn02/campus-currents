@@ -76,9 +76,9 @@ export function validateProfileForm(data: ProfileCreateInput): ValidationResult 
   if (
     !Number.isInteger(data.year_level) ||
     data.year_level < 1 ||
-    data.year_level > 4
+    data.year_level > 5
   ) {
-    errors.year_level = 'Year level must be between 1 and 4';
+    errors.year_level = 'Year level must be between 1 and 5';
   }
 
   if (!validatePhoneNumber(data.phone_number)) {

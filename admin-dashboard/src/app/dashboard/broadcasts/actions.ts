@@ -1,37 +1,18 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { requireAdmin, validateString, parseAudience } from "@/lib/server-utils";
+import { BROADCAST_TIERS, BROADCAST_CHANNELS } from "@/lib/constants";
 
 export async function createBroadcast(formData: FormData) {
-  const supabase = await createClient();
+  const { supabase, user } = await requireAdmin();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("Not authenticated");
-
-  const title = formData.get("title") as string;
-  const body = formData.get("body") as string;
-  const tier = formData.get("tier") as string;
-  const channel = formData.get("channel") as string;
+  const title = validateString(formData, "title", { maxLength: 200 });
+  const body = validateString(formData, "body", { maxLength: 5000 });
+  const tier = validateString(formData, "tier", { allowedValues: BROADCAST_TIERS });
+  const channel = validateString(formData, "channel", { allowedValues: BROADCAST_CHANNELS });
   const isPinned = formData.get("is_pinned") === "true";
-  const audienceType = formData.get("audience_type") as string;
-
-  let targetAudience: Record<string, unknown> = { all: true };
-
-  if (audienceType === "by_program") {
-    const programs = formData.getAll("programs") as string[];
-    targetAudience = { programs };
-  } else if (audienceType === "by_year") {
-    const years = (formData.getAll("years") as string[]).map(Number);
-    targetAudience = { year_levels: years };
-  } else if (audienceType === "by_program_year") {
-    const programs = formData.getAll("programs") as string[];
-    const years = (formData.getAll("years") as string[]).map(Number);
-    targetAudience = { programs, year_levels: years };
-  }
+  const targetAudience = parseAudience(formData);
 
   const { error } = await supabase.from("broadcasts").insert({
     sender_id: user.id,
@@ -48,37 +29,20 @@ export async function createBroadcast(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/dashboard/broadcasts");
+  revalidatePath("/dashboard");
 }
 
 export async function updateBroadcast(id: string, formData: FormData) {
-  const supabase = await createClient();
+  const { supabase } = await requireAdmin();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (!id || typeof id !== "string") throw new Error("Invalid broadcast ID");
 
-  if (!user) throw new Error("Not authenticated");
-
-  const title = formData.get("title") as string;
-  const body = formData.get("body") as string;
-  const tier = formData.get("tier") as string;
-  const channel = formData.get("channel") as string;
+  const title = validateString(formData, "title", { maxLength: 200 });
+  const body = validateString(formData, "body", { maxLength: 5000 });
+  const tier = validateString(formData, "tier", { allowedValues: BROADCAST_TIERS });
+  const channel = validateString(formData, "channel", { allowedValues: BROADCAST_CHANNELS });
   const isPinned = formData.get("is_pinned") === "true";
-  const audienceType = formData.get("audience_type") as string;
-
-  let targetAudience: Record<string, unknown> = { all: true };
-
-  if (audienceType === "by_program") {
-    const programs = formData.getAll("programs") as string[];
-    targetAudience = { programs };
-  } else if (audienceType === "by_year") {
-    const years = (formData.getAll("years") as string[]).map(Number);
-    targetAudience = { year_levels: years };
-  } else if (audienceType === "by_program_year") {
-    const programs = formData.getAll("programs") as string[];
-    const years = (formData.getAll("years") as string[]).map(Number);
-    targetAudience = { programs, year_levels: years };
-  }
+  const targetAudience = parseAudience(formData);
 
   const { error } = await supabase
     .from("broadcasts")
@@ -95,16 +59,13 @@ export async function updateBroadcast(id: string, formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/dashboard/broadcasts");
+  revalidatePath("/dashboard");
 }
 
 export async function deleteBroadcast(id: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireAdmin();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("Not authenticated");
+  if (!id || typeof id !== "string") throw new Error("Invalid broadcast ID");
 
   const { error } = await supabase
     .from("broadcasts")
@@ -114,4 +75,5 @@ export async function deleteBroadcast(id: string) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/dashboard/broadcasts");
+  revalidatePath("/dashboard");
 }
