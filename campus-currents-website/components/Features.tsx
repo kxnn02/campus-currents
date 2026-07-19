@@ -1,56 +1,59 @@
 const features = [
   {
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
       </svg>
     ),
     title: "Instant Alerts",
     description: "Push notifications delivered in seconds. Emergency alerts override silent mode so you never miss critical safety information.",
-    accent: "from-red-500 to-orange-500",
-    bgAccent: "bg-red-500/10",
+    color: "text-red-600",
+    bg: "bg-red-50",
+    border: "border-red-100",
   },
   {
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
         <path d="M12 6v6l4 2" />
       </svg>
     ),
     title: "Class Suspension Hub",
-    description: "Know instantly whether classes are ON, SUSPENDED, or under monitoring. See source, reason, scope, and duration at a glance.",
-    accent: "from-amber-500 to-yellow-500",
-    bgAccent: "bg-amber-500/10",
+    description: "Know instantly whether classes are ON, SUSPENDED, or under monitoring — with source, reason, and duration at a glance.",
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+    border: "border-amber-100",
   },
   {
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="4" width="18" height="18" rx="2" />
         <path d="M16 2v4M8 2v4M3 10h18" />
-        <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
       </svg>
     ),
     title: "School Calendar",
-    description: "Interactive monthly calendar with color-coded events. Tap any date to see announcements, suspensions, and events at a glance.",
-    accent: "from-indigo-500 to-purple-500",
-    bgAccent: "bg-indigo-500/10",
+    description: "Interactive monthly calendar with color-coded events. Tap any date to see announcements, suspensions, and events.",
+    color: "text-indigo-600",
+    bg: "bg-indigo-50",
+    border: "border-indigo-100",
   },
   {
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
         <path d="M9 12l2 2 4-4" />
       </svg>
     ),
     title: "Emergency Response",
-    description: "Full-screen emergency overlay with I'm Safe and Need Help buttons. Security team sees your response in real-time.",
-    accent: "from-red-600 to-red-500",
-    bgAccent: "bg-red-600/10",
+    description: "Full-screen emergency overlay with I'm Safe and Need Help buttons. Security sees your response in real-time.",
+    color: "text-red-600",
+    bg: "bg-red-50",
+    border: "border-red-100",
   },
   {
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -59,58 +62,59 @@ const features = [
     ),
     title: "Targeted Broadcasts",
     description: "Receive only what's relevant to you — filtered by program, year level, and department. No noise, just what matters.",
-    accent: "from-teal-500 to-emerald-500",
-    bgAccent: "bg-teal-500/10",
+    color: "text-teal-600",
+    bg: "bg-teal-50",
+    border: "border-teal-100",
   },
   {
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M5 12h14M12 5l7 7-7 7" />
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
       </svg>
     ),
     title: "Real-time Updates",
     description: "Live WebSocket connection keeps your feed, status, and alerts updated instantly — no manual refresh needed.",
-    accent: "from-blue-500 to-cyan-500",
-    bgAccent: "bg-blue-500/10",
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    border: "border-blue-100",
   },
 ];
 
 export default function Features() {
   return (
-    <section id="features" className="relative py-24 md:py-32 noise-bg">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-warm-950 via-warm-950/95 to-warm-950" />
+    <section id="features" className="relative py-24 md:py-32">
+      {/* Subtle background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-warm-100 to-warm-50" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6">
         {/* Section header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs font-semibold text-brand-amber uppercase tracking-widest">
+          <span className="text-xs font-semibold text-brand-red uppercase tracking-widest">
             Features
           </span>
-          <h2 className="mt-4 text-3xl md:text-4xl font-bold tracking-tight">
-            Everything you need to{" "}
-            <span className="text-brand-amber">stay connected</span>
+          <h2 className="mt-4 text-3xl md:text-4xl font-bold tracking-tight text-warm-950">
+            Everything you need to stay connected
           </h2>
-          <p className="mt-4 text-white/50 text-lg">
+          <p className="mt-4 text-text-brown text-lg">
             Designed for the unique needs of SSC-R Manila students — from
             weather suspensions to campus emergencies.
           </p>
         </div>
 
         {/* Features grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {features.map((feature, i) => (
             <div
               key={i}
-              className="group relative p-6 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-300"
+              className={`group relative p-6 rounded-2xl bg-white border ${feature.border} shadow-sm hover:shadow-md transition-all duration-300`}
             >
               <div
-                className={`w-12 h-12 rounded-xl ${feature.bgAccent} flex items-center justify-center mb-4`}
+                className={`w-11 h-11 rounded-xl ${feature.bg} flex items-center justify-center mb-4`}
               >
-                <div className="text-white/90">{feature.icon}</div>
+                <div className={feature.color}>{feature.icon}</div>
               </div>
-              <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-              <p className="text-sm text-white/50 leading-relaxed">
+              <h3 className="text-base font-semibold text-warm-950 mb-2">{feature.title}</h3>
+              <p className="text-sm text-text-muted leading-relaxed">
                 {feature.description}
               </p>
             </div>

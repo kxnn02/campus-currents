@@ -1,19 +1,30 @@
 @import "tailwindcss";
 
 @theme {
+  /* Brand colors from Figma */
   --color-brand-red: #AF101A;
   --color-brand-red-dark: #8B0D15;
+  --color-brand-red-light: #FEF2F2;
   --color-brand-amber: #F89C00;
   --color-brand-amber-light: #FFBA42;
+  --color-brand-amber-bg: #FFFBEB;
+
+  /* Warm palette from Figma */
   --color-warm-50: #FDFCFB;
-  --color-warm-100: #F5F0EF;
-  --color-warm-200: #E4BEBA;
-  --color-warm-800: #3D2420;
-  --color-warm-900: #1A1C1C;
-  --color-warm-950: #0F0F0F;
+  --color-warm-100: #F9F9F9;
+  --color-warm-150: #F5F0EF;
+  --color-warm-200: #F0DDD9;
+  --color-warm-300: #E4BEBA;
+  --color-warm-400: #D4A8A3;
+  --color-warm-800: #5B403D;
+  --color-warm-900: #3D2420;
+  --color-warm-950: #1A1C1C;
+
+  /* Text */
   --color-text-dark: #1A1C1C;
   --color-text-brown: #5B403D;
   --color-text-muted: #8B7370;
+
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -26,44 +37,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Subtle noise texture for backgrounds */
-.noise-bg {
-  position: relative;
-}
-.noise-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  pointer-events: none;
-}
-
-/* Glow effect for hero elements */
-.glow-amber {
-  box-shadow: 0 0 60px rgba(248, 156, 0, 0.15), 0 0 120px rgba(248, 156, 0, 0.05);
-}
-
-.glow-red {
-  box-shadow: 0 0 60px rgba(175, 16, 26, 0.12), 0 0 120px rgba(175, 16, 26, 0.04);
-}
-
-/* Animated gradient border */
-@keyframes gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-.animated-border {
-  background: linear-gradient(135deg, #AF101A, #F89C00, #AF101A);
-  background-size: 200% 200%;
-  animation: gradient-shift 4s ease infinite;
-}
-
 /* Floating animation for phone mockup */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-12px); }
+  50% { transform: translateY(-10px); }
 }
 
 .float-animation {
@@ -74,7 +51,7 @@ body {
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -91,3 +68,10 @@ body {
 .animate-delay-300 { animation-delay: 0.3s; opacity: 0; }
 .animate-delay-400 { animation-delay: 0.4s; opacity: 0; }
 .animate-delay-500 { animation-delay: 0.5s; opacity: 0; }
+
+/* Warm atmospheric blobs like Figma */
+.warm-blob {
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+}
