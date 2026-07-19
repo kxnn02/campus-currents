@@ -4,6 +4,7 @@ import { useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { theme, useThemeColors } from '@/constants/Theme';
 import { signOut } from '@/lib/auth';
 import { useProfile } from '@/lib/profile';
@@ -183,6 +184,11 @@ export default function ProfileScreen() {
             destructive
           />
         </View>
+
+        {/* App Version */}
+        <Text style={[styles.versionText, { color: colors.textTertiary }]}>
+          CampusCurrents v{Constants.expoConfig?.version ?? '1.0.0'}
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -237,6 +243,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     paddingBottom: 96,
+  },
+  versionText: {
+    ...theme.typography.caption,
+    textAlign: 'center',
+    marginTop: theme.spacing.xl,
   },
   // Header Card
   headerCard: {

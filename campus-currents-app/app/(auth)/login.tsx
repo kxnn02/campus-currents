@@ -72,11 +72,9 @@ export default function LoginScreen() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={[styles.footerLink, { color: colors.textSecondary }]}>Privacy Policy</Text>
-          <Text style={[styles.footerDivider, { color: colors.border }]}>·</Text>
-          <Text style={[styles.footerLink, { color: colors.textSecondary }]}>Terms of Service</Text>
-          <Text style={[styles.footerDivider, { color: colors.border }]}>·</Text>
-          <Text style={[styles.footerLink, { color: colors.textSecondary }]}>IT Support</Text>
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+            San Sebastian College–Recoletos Manila
+          </Text>
         </View>
       </View>
     </SafeAreaView>
@@ -180,13 +178,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 32,
   },
-  footerLink: {
+  footerText: {
     fontSize: 12,
     fontWeight: '500',
     color: '#5B403D',
-  },
-  footerDivider: {
-    fontSize: 12,
-    color: '#E4BEBA',
   },
 });

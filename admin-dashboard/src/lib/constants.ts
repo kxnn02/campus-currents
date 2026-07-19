@@ -17,7 +17,7 @@ export const PROGRAMS = [
   "OTHER",
 ] as const;
 
-export const YEAR_LEVELS = ["1", "2", "3", "4"] as const;
+export const YEAR_LEVELS = ["1", "2", "3", "4", "5"] as const;
 
 export const BROADCAST_TIERS = ["routine", "important", "emergency"] as const;
 
