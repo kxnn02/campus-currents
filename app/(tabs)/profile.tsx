@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   },
   // Header Card
   headerCard: {
-    borderRadius: theme.radius['2xl'],
+    borderRadius: 8,
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: theme.spacing['2xl'],
@@ -275,12 +275,13 @@ const styles = StyleSheet.create({
   // Section headers
   sectionHeader: {
     ...theme.typography.overline,
+    letterSpacing: 0.6,
     marginBottom: theme.spacing.sm,
     marginLeft: theme.spacing.xs,
   },
   // Section card
   sectionCard: {
-    borderRadius: theme.radius['2xl'],
+    borderRadius: 8,
     borderWidth: 1,
     paddingVertical: theme.spacing.xs,
     marginBottom: theme.spacing['2xl'],
@@ -294,9 +295,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
   },
   infoIconBg: {
-    width: 36,
-    height: 36,
-    borderRadius: theme.radius.md,
+    width: 40,
+    height: 40,
+    borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },

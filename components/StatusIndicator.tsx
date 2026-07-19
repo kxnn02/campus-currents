@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
 import { theme, useThemeColors } from '@/constants/Theme';
 
 type StatusState = 'on' | 'suspended' | 'monitoring';
@@ -8,6 +8,14 @@ interface StatusIndicatorProps {
   status: StatusState;
   lastChecked: Date;
 }
+
+// Responsive sizing: shrink on smaller screens
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const IS_SMALL_SCREEN = SCREEN_HEIGHT < 700;
+const GLOW_SIZE = IS_SMALL_SCREEN ? 180 : 240;
+const INNER_GLOW_SIZE = IS_SMALL_SCREEN ? 164 : 220;
+const CIRCLE_SIZE = IS_SMALL_SCREEN ? 150 : theme.layout.statusCircleSize;
+const ICON_SIZE = IS_SMALL_SCREEN ? 48 : 64;
 
 function formatLastCheckedTime(date: Date): string {
   return date.toLocaleTimeString('en-US', {
@@ -139,36 +147,37 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: theme.spacing['3xl'],
+    paddingVertical: IS_SMALL_SCREEN ? theme.spacing['2xl'] : theme.spacing['3xl'],
   },
   glowRing: {
-    width: 240,
-    height: 240,
-    borderRadius: 120,
+    width: GLOW_SIZE,
+    height: GLOW_SIZE,
+    borderRadius: GLOW_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   innerGlow: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
+    width: INNER_GLOW_SIZE,
+    height: INNER_GLOW_SIZE,
+    borderRadius: INNER_GLOW_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   circle: {
-    width: theme.layout.statusCircleSize,
-    height: theme.layout.statusCircleSize,
-    borderRadius: theme.layout.statusCircleSize / 2,
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    borderRadius: CIRCLE_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   icon: {
-    fontSize: 64,
+    fontSize: ICON_SIZE,
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
   statusText: {
     ...theme.typography.display,
+    fontSize: IS_SMALL_SCREEN ? 22 : 28,
     marginTop: theme.spacing.xl,
     textAlign: 'center',
     letterSpacing: 1,

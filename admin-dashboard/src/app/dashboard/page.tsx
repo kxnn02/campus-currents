@@ -180,6 +180,9 @@ export default async function DashboardPage() {
               {recentBroadcasts && recentBroadcasts.length > 0 ? (
                 recentBroadcasts.map((broadcast) => {
                   const bStats = statsMap[broadcast.id] || { delivered: 0, read: 0 };
+                  const total = studentCount ?? 1;
+                  const deliveredPct = total > 0 ? Math.round((bStats.delivered / total) * 100) : 0;
+                  const readPct = total > 0 ? Math.round((bStats.read / total) * 100) : 0;
                   return (
                     <TableRow key={broadcast.id}>
                       <TableCell className="font-medium max-w-[200px] truncate">
@@ -203,8 +206,30 @@ export default async function DashboardPage() {
                           ? new Date(broadcast.sent_at).toLocaleDateString()
                           : "—"}
                       </TableCell>
-                      <TableCell className="text-center">{bStats.delivered}</TableCell>
-                      <TableCell className="text-center">{bStats.read}</TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-sm font-medium">{bStats.delivered}/{total}</span>
+                          <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-[#16A34A] rounded-full transition-all"
+                              style={{ width: `${deliveredPct}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">{deliveredPct}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-sm font-medium">{bStats.read}/{total}</span>
+                          <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-[#3B82F6] rounded-full transition-all"
+                              style={{ width: `${readPct}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">{readPct}%</span>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   );
                 })

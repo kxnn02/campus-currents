@@ -66,7 +66,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    borderRadius: theme.radius['2xl'],
+    borderRadius: 8,
     borderWidth: 1,
     overflow: 'hidden',
     marginVertical: theme.spacing.xs + 2,
