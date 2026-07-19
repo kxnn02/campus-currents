@@ -1,7 +1,26 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# ===================
+# Root-level ignores
+# ===================
 
-# dependencies
+# Dependencies
 node_modules/
+
+# OS
+.DS_Store
+*.pem
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# AI assistants
+.claude/
+CLAUDE.md
+AGENTS.md
+
+# ===================
+# Mobile App (campus-currents-app/)
+# ===================
 
 # Expo
 .expo/
@@ -26,36 +45,32 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
-# macOS
-.DS_Store
-*.pem
-
-# local env files
-.env*.local
-
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
+# Generated native folders
+/campus-currents-app/ios
+/campus-currents-app/android
 
 # Environment variables
 .env
 .env.local
 .env.production
+.env*.local
 
 # Firebase (iOS only — google-services.json is safe for Android/Expo)
 GoogleService-Info.plist
 
-# Editor
-.vscode/
-.idea/
-
-# Claude/AI
-.claude/
-CLAUDE.md
-AGENTS.md
-
-# Team credentials — never commit (share via Messenger GC only)
+# Team credentials
 CREDENTIALS-FOR-TEAM.md
+
+# ===================
+# Admin Dashboard (admin-dashboard/)
+# ===================
+admin-dashboard/.next/
+
+# ===================
+# Website (campus-currents-website/)
+# ===================
+campus-currents-website/.next/
+campus-currents-website/out/
