@@ -81,8 +81,8 @@ export default async function EmergencyPage() {
         .eq("acknowledgment_type", "need_help");
 
       const needHelpStudents = (helpStudents ?? [])
-        .map((row: any) => row.profiles)
-        .filter(Boolean);
+        .map((row: Record<string, unknown>) => row.profiles)
+        .filter(Boolean) as { id: string; first_name: string; last_name: string; program: string; year_level: number | null; section: string | null; phone_number: string | null; }[];
 
       accountabilityMap[broadcastId] = {
         counters: { reached, safe, needHelp, noResponse, notReached },
