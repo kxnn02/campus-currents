@@ -18,6 +18,9 @@ node_modules/
 CLAUDE.md
 AGENTS.md
 
+# Planning scratch files
+.scratch/
+
 # ===================
 # Mobile App (campus-currents-app/)
 # ===================
