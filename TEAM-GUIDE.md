@@ -238,9 +238,11 @@ Login (Google SSO) → Profile Completion → Main App (4 tabs)
 - Pinned announcements appear at the top
 
 ### Tab 2: Status 🏫
-- Shows if classes are ON or SUSPENDED right now
-- Large green circle = classes are on
-- Large red circle = classes are suspended
+- Shows class suspension status with **three states**:
+  - 🟢 Large green circle = "CLASSES ARE ON" (no active suspensions for your level)
+  - 🔴 Large red circle = "CLASSES SUSPENDED" (suspended today)
+  - 🟡 Large yellow circle = "CLASSES SUSPENDED TOMORROW" (declared for an upcoming date)
+- Only shows suspensions **relevant to your educational level** (e.g., college students won't see K-12-only suspensions)
 - When suspended, shows details: source, reason, scope, duration
 - Shows recent suspension history at the bottom
 
@@ -256,7 +258,7 @@ Login (Google SSO) → Profile Completion → Main App (4 tabs)
 ### Tab 4: Profile 👤
 - Shows your academic info (program, year, student ID)
 - Edit Profile — update your name, program, year level, phone
-- Notification Preferences — toggle routine channel notifications
+- Notification Preferences — toggle routine channel notifications (General / Events / Academic). Emergency and Important alerts CANNOT be muted. Preferences are synced to the server and enforced at push delivery.
 - Sign Out
 
 ### Emergency Alert 🚨
@@ -289,6 +291,7 @@ Login (Google SSO) → Profile Completion → Main App (4 tabs)
   - Audience: All Students, or target by Program/Year Level
   - Pin option (pinned broadcasts stay at top of feed)
   - Live notification preview shows how it'll look on phone
+  - **Confirmation modal** before sending: "This will notify approximately X students. Confirm?"
 - Edit or Delete existing broadcasts from the actions menu (⋯)
 - Click a broadcast title to see **real-time delivery stats**
 
@@ -296,9 +299,11 @@ Login (Google SSO) → Profile Completion → Main App (4 tabs)
 - View all declared suspensions (active and lifted)
 - **Declare Suspension** button:
   - Pick a template: Manila LGU, PAGASA Weather, DepEd Order, or School Decision
-  - Set the date (defaults to today)
+  - Set the date (defaults to today, can be future)
   - Choose source, reason, scope, and duration
-  - This automatically creates a broadcast notification for students
+  - Optional: custom message override (replaces auto-generated template)
+  - Scope is automatically mapped to audience targeting (e.g., `k12_only` only notifies K-12 students, NOT college)
+  - Auto-generates a human-readable broadcast with source attribution, scope, and safety reminder
 - **Lift** button to end an active suspension
 
 ### Calendar/Events Page
@@ -313,14 +318,23 @@ Login (Google SSO) → Profile Completion → Main App (4 tabs)
 
 ### Emergency Page
 - Shows active emergencies (if any) with a pulsing "ACTIVE" badge
+- **Real-time accountability dashboard** when emergency is active:
+  - Live counters: Reached / Safe / Need Help / No Response / Not Reached
+  - Progress bar showing % of students who have responded
+  - **"Need Help" student list** with name, program, year, section, phone number (for security follow-up)
+  - Elapsed timer showing how long the alert has been active
+  - Counters update in real-time as students respond (Supabase Realtime)
 - **Trigger Emergency** button:
   1. Select type (Active Threat, Fire, Earthquake, Flooding)
   2. Enter title and instructions
   3. Click Continue
-  4. Enter any 4+ character PIN (speed bump, not a real password)
+  4. Enter your **PIN** (validated against your stored PIN hash — not just any string)
   5. Wait 5 seconds, then confirm
   6. ALL students receive a full-screen red alert on their phones
+  7. System prevents triggering a second emergency while one is active
 - **Mark as Resolved** button sends "ALL CLEAR" to all students
+- **Mark as False Alarm** button sends "ALERT CANCELLED — False alarm" (distinct from resolved)
+- Shows "Triggered by: [admin name]" and timestamp on each emergency card
 
 ### Students Page
 - View all registered students
@@ -328,7 +342,8 @@ Login (Google SSO) → Profile Completion → Main App (4 tabs)
 - Filter by program or year level
 
 ### Analytics Page
-- Broadcast delivery metrics: delivered count, read count, acknowledged count per broadcast
+- Broadcast delivery metrics: delivered count (verified via Expo receipts), read count, acknowledged count per broadcast
+- Delivery percentages use "students with push tokens" as denominator (honest metrics)
 - Total student count
 
 ### History Page
@@ -350,11 +365,13 @@ campus-currents/                   ← GitHub repo root
 │   │   ├── broadcast-detail.tsx   ← Full announcement view
 │   │   ├── event-detail.tsx       ← Full event view
 │   │   └── ...
+│   ├── __tests__/                 ← Unit tests (vitest + fast-check)
 │   ├── components/                ← Reusable UI pieces (cards, buttons, etc.)
 │   ├── lib/                       ← Data fetching, business logic
 │   ├── constants/                 ← Colors, theme, design tokens
 │   ├── types/                     ← TypeScript type definitions
 │   ├── assets/                    ← Images, fonts, icons
+│   ├── vitest.config.ts           ← Test configuration
 │   ├── .env                       ← Database connection (DO NOT SHARE PUBLICLY)
 │   ├── app.json                   ← App configuration (name, icons, etc.)
 │   └── package.json               ← Dependencies list
@@ -362,13 +379,19 @@ campus-currents/                   ← GitHub repo root
 ├── admin-dashboard/               ← Admin web app
 │   ├── src/app/                   ← Web pages
 │   │   ├── login/                 ← Admin login
-│   │   └── dashboard/             ← All admin pages
+│   │   └── dashboard/             ← All admin pages (broadcasts, suspensions, emergency, calendar, analytics, etc.)
 │   ├── src/components/            ← Reusable web UI pieces
-│   ├── src/lib/                   ← Database client
+│   ├── src/lib/                   ← Database client, server utilities, constants
 │   ├── .env.local                 ← Database connection
 │   └── package.json               ← Dependencies list
 │
-├── campus-currents-website/       ← Landing page (coming soon)
+├── campus-currents-website/       ← Landing page website
+│
+├── supabase/                      ← Database & backend
+│   ├── migrations/                ← Version-controlled schema (36 SQL files)
+│   └── functions/                 ← Edge Functions source
+│       └── check-push-receipts/   ← Scheduled receipt verification
+│
 └── README.md                      ← Project overview
 ```
 
@@ -416,12 +439,18 @@ campus-currents/                   ← GitHub repo root
 - Mobile app uses **Expo Router** (file-based routing — each file in `campus-currents-app/app/` is a screen)
 - Admin dashboard uses **Next.js App Router** (same concept — each folder in `admin-dashboard/src/app/` is a page)
 - Database is **Supabase** — you can view/edit data at https://supabase.com/dashboard
+- Database schema is version-controlled in `supabase/migrations/` — **do not make schema changes directly in the dashboard without also creating a migration file**
 - UI styling: Mobile uses React Native `StyleSheet`, Admin uses Tailwind CSS
+- Edge Functions (push notifications, receipt checking) are deployed to Supabase. Source code is in `supabase/functions/`
+- Run `npm test` in `campus-currents-app/` to run unit tests before pushing
 
 ### For Testing
-- To test as a **student**: Use the mobile app, sign in with a Google account
-- To test as an **admin**: Use the web dashboard at localhost:3000
+- To test as a **student**: Use the mobile app, sign in with a Google account (@sscrmnl.edu.ph)
+- To test as an **admin**: Use the web dashboard at localhost:3000 with your individual admin account
 - You can have both running at the same time to see real-time updates (e.g., send a broadcast from admin → see it appear on mobile feed)
+- **Test push delivery end-to-end:** Send a broadcast from admin dashboard → verify your phone receives the push (even with app closed)
+- **Test emergency accountability:** Trigger emergency → watch counters update live on dashboard as team members tap "I'm Safe" on their phones
+- **Test scoped suspensions:** Declare a suspension with scope "college_only" → verify senior high students do NOT receive the push
 
 ### Git Workflow
 ```bash
@@ -448,10 +477,12 @@ git push
 | Run mobile app | `cd campus-currents-app && npx expo start` |
 | Run mobile (tunnel mode) | `cd campus-currents-app && npx expo start --tunnel` |
 | Run mobile (dev client) | `cd campus-currents-app && npx expo start --dev-client` |
+| Run unit tests | `cd campus-currents-app && npm test` |
 | Run admin dashboard | `cd admin-dashboard && npm run dev` |
 | Clear cache | `cd campus-currents-app && npx expo start --clear` |
 | Check Node version | `node --version` |
 | Pull latest code | `git pull` |
+| Build Android APK | `cd campus-currents-app && npx eas build --platform android --profile development` |
 
 ---
 
@@ -466,4 +497,4 @@ git push
 
 ---
 
-*Last updated: July 2026*
+*Last updated: July 21, 2026*
