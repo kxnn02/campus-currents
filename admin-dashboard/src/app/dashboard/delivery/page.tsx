@@ -16,7 +16,8 @@ export default async function DeliveryMonitorPage() {
   const { count: totalStudents } = await supabase
     .from("profiles")
     .select("*", { count: "exact", head: true })
-    .eq("role", "student");
+    .eq("role", "student")
+    .not("fcm_token", "is", null);
 
   let deliveredCount = 0;
   let readCount = 0;
@@ -89,7 +90,7 @@ export default async function DeliveryMonitorPage() {
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-[#141B2B]">{deliveredCount.toLocaleString()}/{total.toLocaleString()}</p>
-            <p className="text-xs text-[#444653]">students reached</p>
+            <p className="text-xs text-[#444653]">students reachable via push</p>
           </div>
         </div>
 

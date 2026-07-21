@@ -15,13 +15,13 @@ import ErrorState from '@/components/ErrorState';
 import { useNetworkContext } from '@/lib/network';
 import { useProfile } from '@/lib/profile';
 import {
-  useTodaySuspensions,
+  useActiveSuspensions,
   formatSuspensionSource,
   formatSuspensionReason,
   formatSuspensionDuration,
 } from '@/lib/suspensions';
 import { supabase } from '@/lib/supabase';
-import { Profile, ClassSuspension, SuspensionScope } from '@/types/database';
+import { ClassSuspension, SuspensionScope } from '@/types/database';
 
 /** Two minutes in milliseconds — threshold for stale data warning */
 const STALE_THRESHOLD_MS = 2 * 60 * 1000;
@@ -51,14 +51,14 @@ export default function StatusScreen() {
   // Get profile from shared context
   const { profile, isLoading: profileLoading } = useProfile();
 
-  // Fetch suspensions once profile is available
+  // Fetch active suspensions (today + upcoming) once profile is available
   const {
-    data: suspensions,
+    data: activeSuspensions,
     isLoading: suspensionsLoading,
     isError,
     refetch,
     dataUpdatedAt,
-  } = useTodaySuspensions(
+  } = useActiveSuspensions(
     profile ?? { level: null, program: null },
     { enabled: !!profile }
   );
@@ -94,7 +94,7 @@ export default function StatusScreen() {
   const showStaleWarning = isDataStale && isOffline;
 
   // Loading state: waiting for profile or suspensions initial load
-  const isLoading = profileLoading || (suspensionsLoading && !suspensions);
+  const isLoading = profileLoading || (suspensionsLoading && !activeSuspensions);
 
   if (isLoading) {
     return (
@@ -107,7 +107,7 @@ export default function StatusScreen() {
   }
 
   // Error state: query failed and no cached data
-  if (isError && !suspensions) {
+  if (isError && !activeSuspensions) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
         <ErrorState
@@ -118,13 +118,31 @@ export default function StatusScreen() {
     );
   }
 
-  const isSuspended = (suspensions?.length ?? 0) > 0;
+  const todaySuspensions = activeSuspensions?.todaySuspensions ?? [];
+  const upcomingSuspensions = activeSuspensions?.upcomingSuspensions ?? [];
+  const isSuspendedToday = todaySuspensions.length > 0;
+  const hasUpcoming = upcomingSuspensions.length > 0;
   const lastChecked = dataUpdatedAt ? new Date(dataUpdatedAt) : new Date();
-  const primarySuspension = suspensions?.[0] ?? null;
-  const otherSuspensions = suspensions?.slice(1) ?? [];
 
-  // Derive status for the indicator
-  const indicatorStatus = isSuspended ? 'suspended' : 'on';
+  // Derive three-state indicator: red (suspended today) → yellow (upcoming) → green (clear)
+  const indicatorStatus = isSuspendedToday
+    ? 'suspended'
+    : hasUpcoming
+    ? 'monitoring'
+    : 'on';
+
+  // Primary suspension to show details for (today takes priority, otherwise first upcoming)
+  const primarySuspension = isSuspendedToday
+    ? todaySuspensions[0]
+    : hasUpcoming
+    ? upcomingSuspensions[0]
+    : null;
+  const otherTodaySuspensions = todaySuspensions.slice(1);
+
+  // Format the upcoming suspension date for the indicator
+  const upcomingDate = hasUpcoming
+    ? new Date(upcomingSuspensions[0].suspension_date + 'T00:00:00')
+    : null;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
@@ -150,11 +168,29 @@ export default function StatusScreen() {
         )}
 
         {/* Status Indicator */}
-        <StatusIndicator status={indicatorStatus} lastChecked={lastChecked} />
+        <StatusIndicator
+          status={indicatorStatus}
+          lastChecked={lastChecked}
+          upcomingDate={upcomingDate ?? undefined}
+        />
 
         {/* Suspension details — Bento grid style (matching Figma) */}
-        {isSuspended && primarySuspension && (
+        {primarySuspension && (
           <View style={styles.bentoGrid}>
+            {/* Show date prominently for upcoming suspensions */}
+            {!isSuspendedToday && hasUpcoming && (
+              <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Date</Text>
+                <Text style={[styles.bentoValue, { color: colors.text }]}>
+                  {new Date(primarySuspension.suspension_date + 'T00:00:00').toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    timeZone: 'Asia/Manila',
+                  })}
+                </Text>
+              </View>
+            )}
             <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Source</Text>
               <Text style={[styles.bentoValue, { color: colors.text }]}>
@@ -182,13 +218,13 @@ export default function StatusScreen() {
           </View>
         )}
 
-        {/* Other active suspensions */}
-        {otherSuspensions.length > 0 && (
+        {/* Other active suspensions today */}
+        {otherTodaySuspensions.length > 0 && (
           <View style={styles.otherSection}>
             <Text style={[styles.otherTitle, { color: colors.textSecondary }]}>
               Other active suspensions
             </Text>
-            {otherSuspensions.map((suspension) => (
+            {otherTodaySuspensions.map((suspension) => (
               <OtherSuspensionCard
                 key={suspension.id}
                 suspension={suspension}
@@ -198,8 +234,42 @@ export default function StatusScreen() {
           </View>
         )}
 
+        {/* Upcoming suspensions listed when today is already suspended */}
+        {isSuspendedToday && upcomingSuspensions.length > 0 && (
+          <View style={styles.otherSection}>
+            <Text style={[styles.otherTitle, { color: colors.textSecondary }]}>
+              Upcoming suspensions
+            </Text>
+            {upcomingSuspensions.map((suspension) => (
+              <OtherSuspensionCard
+                key={suspension.id}
+                suspension={suspension}
+                colors={colors}
+                showDate
+              />
+            ))}
+          </View>
+        )}
+
+        {/* Additional upcoming suspensions when primary is monitoring */}
+        {!isSuspendedToday && upcomingSuspensions.length > 1 && (
+          <View style={styles.otherSection}>
+            <Text style={[styles.otherTitle, { color: colors.textSecondary }]}>
+              Other upcoming suspensions
+            </Text>
+            {upcomingSuspensions.slice(1).map((suspension) => (
+              <OtherSuspensionCard
+                key={suspension.id}
+                suspension={suspension}
+                colors={colors}
+                showDate
+              />
+            ))}
+          </View>
+        )}
+
         {/* Info text when classes are on */}
-        {!isSuspended && (
+        {indicatorStatus === 'on' && (
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             You'll be notified immediately if this changes.
           </Text>
@@ -239,12 +309,24 @@ export default function StatusScreen() {
 function OtherSuspensionCard({
   suspension,
   colors,
+  showDate,
 }: {
   suspension: ClassSuspension;
   colors: Record<string, string>;
+  showDate?: boolean;
 }) {
   return (
     <View style={[styles.otherCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      {showDate && (
+        <Text style={[styles.otherCardDate, { color: colors.tint }]}>
+          {new Date(suspension.suspension_date + 'T00:00:00').toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            timeZone: 'Asia/Manila',
+          })}
+        </Text>
+      )}
       <Text style={[styles.otherCardSource, { color: colors.text }]}>
         {formatSuspensionSource(suspension.source)}
       </Text>
@@ -326,6 +408,11 @@ const styles = StyleSheet.create({
   },
   otherCardSource: {
     ...theme.typography.label,
+    marginBottom: theme.spacing.xs,
+  },
+  otherCardDate: {
+    ...theme.typography.caption,
+    fontWeight: '600',
     marginBottom: theme.spacing.xs,
   },
   otherCardDetail: {

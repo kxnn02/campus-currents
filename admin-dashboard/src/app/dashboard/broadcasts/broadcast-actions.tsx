@@ -65,7 +65,6 @@ export function BroadcastActions({ broadcast }: { broadcast: Broadcast }) {
       setEditOpen(false);
     } catch (error) {
       toast.error("Failed to update broadcast");
-      console.error("Failed to update broadcast:", error);
     } finally {
       setLoading(false);
     }
@@ -78,7 +77,6 @@ export function BroadcastActions({ broadcast }: { broadcast: Broadcast }) {
       toast.success("Broadcast deleted");
     } catch (error) {
       toast.error("Failed to delete broadcast");
-      console.error("Failed to delete broadcast:", error);
     }
   }
 

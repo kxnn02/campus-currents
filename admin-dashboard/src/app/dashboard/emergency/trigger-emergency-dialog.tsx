@@ -67,6 +67,8 @@ export function TriggerEmergencyDialog() {
     if (!pendingFormData || pin.length < 4) return;
     setLoading(true);
     try {
+      // Append PIN to the FormData before sending
+      pendingFormData.set("pin", pin);
       await triggerEmergency(pendingFormData);
       toast.success("Emergency alert triggered — all students notified");
       setOpen(false);
@@ -74,8 +76,8 @@ export function TriggerEmergencyDialog() {
       setPendingFormData(null);
       setPin("");
     } catch (error) {
-      toast.error("Failed to trigger emergency");
-      console.error("Failed to trigger emergency:", error);
+      const message = error instanceof Error ? error.message : "Failed to trigger emergency";
+      toast.error(message);
     } finally {
       setLoading(false);
     }

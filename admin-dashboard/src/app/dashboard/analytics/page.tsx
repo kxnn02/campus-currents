@@ -25,10 +25,14 @@ export default async function AnalyticsPage() {
     return <div className="text-destructive">Error loading analytics: {broadcastError.message}</div>;
   }
 
-  // Get delivery receipts grouped by broadcast
-  const { data: receipts } = await supabase
-    .from("delivery_receipts")
-    .select("broadcast_id, delivered_at, read_at, acknowledged_at");
+  // Get delivery receipts only for the displayed broadcasts
+  const broadcastIds = broadcasts?.map((b) => b.id) ?? [];
+  const { data: receipts } = broadcastIds.length > 0
+    ? await supabase
+        .from("delivery_receipts")
+        .select("broadcast_id, delivered_at, read_at, acknowledged_at")
+        .in("broadcast_id", broadcastIds)
+    : { data: [] };
 
   // Aggregate stats per broadcast
   const statsMap: Record<string, { delivered: number; read: number; acknowledged: number }> = {};
@@ -45,11 +49,12 @@ export default async function AnalyticsPage() {
     }
   }
 
-  // Get total students for context
+  // Get students who can receive push notifications (honest denominator)
   const { count: totalStudents } = await supabase
     .from("profiles")
     .select("*", { count: "exact", head: true })
-    .eq("role", "student");
+    .eq("role", "student")
+    .not("fcm_token", "is", null);
 
   return (
     <div className="space-y-6">
@@ -63,11 +68,11 @@ export default async function AnalyticsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+            <CardTitle className="text-sm font-medium">Reachable Students</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalStudents ?? 0}</div>
-            <CardDescription>Registered student accounts</CardDescription>
+            <CardDescription>Students with push notifications enabled</CardDescription>
           </CardContent>
         </Card>
         <Card>

@@ -7,6 +7,8 @@ type StatusState = 'on' | 'suspended' | 'monitoring';
 interface StatusIndicatorProps {
   status: StatusState;
   lastChecked: Date;
+  /** The date of the upcoming suspension — used for monitoring state text */
+  upcomingDate?: Date;
 }
 
 // Responsive sizing: shrink on smaller screens
@@ -31,7 +33,7 @@ function formatLastCheckedTime(date: Date): string {
  * Uses pulsing glow animation to communicate live status at a glance.
  * Designed as the hero element with strong visual hierarchy.
  */
-export default function StatusIndicator({ status, lastChecked }: StatusIndicatorProps) {
+export default function StatusIndicator({ status, lastChecked, upcomingDate }: StatusIndicatorProps) {
   const colors = useThemeColors();
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0.15)).current;
@@ -43,21 +45,45 @@ export default function StatusIndicator({ status, lastChecked }: StatusIndicator
       ? theme.colors.status.monitoring
       : theme.colors.status.on;
 
+  // Determine monitoring text: "TOMORROW" if it's the next day, otherwise show the date
+  const monitoringText = (() => {
+    if (status !== 'monitoring' || !upcomingDate) return 'MONITORING';
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const isNextDay =
+      upcomingDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }) ===
+      tomorrow.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    return isNextDay ? 'CLASSES SUSPENDED TOMORROW' : 'SUSPENSION DECLARED';
+  })();
+
   const statusText =
     status === 'suspended'
       ? 'CLASSES SUSPENDED'
       : status === 'monitoring'
-      ? 'MONITORING'
+      ? monitoringText
       : 'CLASSES ARE ON';
 
   const statusEmoji =
     status === 'suspended' ? '🚫' : status === 'monitoring' ? '⚠️' : '✓';
 
+  // Monitoring subtext includes the actual date
+  const monitoringSubtext = (() => {
+    if (status !== 'monitoring' || !upcomingDate) return '';
+    const dateStr = upcomingDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'Asia/Manila',
+    });
+    return `A suspension has been declared for ${dateStr}. Stay home.`;
+  })();
+
   const statusSubtext =
     status === 'suspended'
       ? 'Stay safe. Check details below.'
       : status === 'monitoring'
-      ? "No suspension yet. We'll notify you immediately."
+      ? monitoringSubtext
       : "You're all set for today.";
 
   // Subtle pulse animation for the glow ring — communicates "alive" status

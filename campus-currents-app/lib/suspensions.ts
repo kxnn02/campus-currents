@@ -134,14 +134,59 @@ function getTodayManila(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
 }
 
+/** Result shape returned by useActiveSuspensions */
+export interface ActiveSuspensionsResult {
+  todaySuspensions: ClassSuspension[];
+  upcomingSuspensions: ClassSuspension[];
+}
+
 /**
- * Fetches today's active class suspensions that apply to the given student profile.
+ * Fetches all active class suspensions from today onwards that apply to the given student profile.
  *
- * - Queries `class_suspensions` where `suspension_date = today (Asia/Manila)` AND `status = 'active'`
+ * - Queries `class_suspensions` where `suspension_date >= today (Asia/Manila)` AND `status = 'active'`
  * - Applies client-side filtering via `suspensionAppliesToStudent` using the student's level and program
  * - Derives level from program via `deriveLevelFromProgram` when profile.level is null
+ * - Partitions results into `todaySuspensions` (date == today) and `upcomingSuspensions` (date > today)
  *
  * Uses staleTime of 30 seconds per configuration.
+ */
+export function useActiveSuspensions(
+  profile: { level: Level | null; program: Program | null },
+  options?: { enabled?: boolean }
+) {
+  const level = profile.level ?? (profile.program ? deriveLevelFromProgram(profile.program) : null);
+  const enabled = options?.enabled ?? true;
+
+  return useQuery<ActiveSuspensionsResult>({
+    queryKey: queryKeys.suspensions.active(),
+    queryFn: async () => {
+      const today = getTodayManila();
+
+      const { data, error } = await supabase
+        .from('class_suspensions')
+        .select('*')
+        .gte('suspension_date', today)
+        .eq('status', 'active')
+        .order('suspension_date', { ascending: true });
+
+      if (error) throw error;
+
+      const applicable = (data as ClassSuspension[]).filter((suspension) =>
+        suspensionAppliesToStudent(suspension, { level, program: profile.program })
+      );
+
+      const todaySuspensions = applicable.filter((s) => s.suspension_date === today);
+      const upcomingSuspensions = applicable.filter((s) => s.suspension_date > today);
+
+      return { todaySuspensions, upcomingSuspensions };
+    },
+    staleTime: staleTimeConfig.suspensions,
+    enabled,
+  });
+}
+
+/**
+ * @deprecated Use `useActiveSuspensions` instead. Kept for backward compatibility.
  */
 export function useTodaySuspensions(
   profile: { level: Level | null; program: Program | null },

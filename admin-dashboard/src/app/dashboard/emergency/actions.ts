@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { compare } from "bcryptjs";
 import { requireAdmin, validateString } from "@/lib/server-utils";
 import { EMERGENCY_TYPES } from "@/lib/constants";
 
@@ -16,6 +17,24 @@ export async function triggerEmergency(formData: FormData) {
   const emergencyType = validateString(formData, "emergency_type", { allowedValues: EMERGENCY_TYPES });
   const title = validateString(formData, "title", { minLength: 3, maxLength: 200 });
   const instructions = validateString(formData, "instructions", { minLength: 10, maxLength: 2000 });
+  const pin = validateString(formData, "pin", { minLength: 4, maxLength: 6 });
+
+  // Fetch admin's pin_hash from profiles
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("pin_hash")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile?.pin_hash) {
+    throw new Error("PIN not configured for this account");
+  }
+
+  // Validate PIN against stored hash
+  const pinValid = await compare(pin, profile.pin_hash);
+  if (!pinValid) {
+    throw new Error("Invalid PIN");
+  }
 
   // Create the emergency broadcast
   const { data: broadcast, error: broadcastError } = await supabase
@@ -58,6 +77,25 @@ export async function resolveEmergency(id: string) {
     .from("active_emergencies")
     .update({
       status: "resolved",
+      resolved_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/dashboard/emergency");
+  revalidatePath("/dashboard");
+}
+
+export async function resolveAsFalseAlarm(id: string) {
+  const { supabase } = await requireAdmin();
+
+  if (!id || typeof id !== "string") throw new Error("Invalid emergency ID");
+
+  const { error } = await supabase
+    .from("active_emergencies")
+    .update({
+      status: "false_alarm",
       resolved_at: new Date().toISOString(),
     })
     .eq("id", id);

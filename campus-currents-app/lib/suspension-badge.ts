@@ -2,9 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
 /**
- * Lightweight hook to check if there's any active suspension today.
- * Used by the tab bar to show a red dot badge on the Status tab.
- * Does NOT filter by student's program/level — just indicates "something is suspended."
+ * Lightweight hook to check if there's any active suspension today or upcoming.
+ * Used by the tab bar to show a badge on the Status tab.
+ * Does NOT filter by student's program/level — just indicates "something is active."
  */
 export function useSuspensionBadge() {
   const { data } = useQuery({
@@ -14,7 +14,7 @@ export function useSuspensionBadge() {
       const { count, error } = await supabase
         .from('class_suspensions')
         .select('*', { count: 'exact', head: true })
-        .eq('suspension_date', today)
+        .gte('suspension_date', today)
         .eq('status', 'active');
 
       if (error) return false;
