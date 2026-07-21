@@ -5,6 +5,12 @@ export type UserRole = 'student' | 'admin' | 'super_admin';
 export type Level = 'grade_school' | 'junior_high' | 'senior_high' | 'college' | 'law' | 'eteeap';
 export type Program = 'BSIT' | 'BSBA' | 'BSA' | 'BSED' | 'BEED' | 'AB_PSYCH' | 'AB_COMM' | 'JD' | 'ETEEAP' | 'STEM' | 'ABM' | 'HUMSS' | 'GAS' | 'TVL' | 'OTHER';
 
+export interface NotificationPreferences {
+  general: boolean;
+  event: boolean;
+  academic: boolean;
+}
+
 export interface Profile {
   id: string;
   email: string;
@@ -22,6 +28,7 @@ export interface Profile {
   can_send_emergency: boolean;
   pin_hash: string | null;
   avatar_url: string | null;
+  notification_preferences: NotificationPreferences | null;
   school_id: string;
   created_at: string;
   updated_at: string;
