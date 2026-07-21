@@ -18,6 +18,7 @@ import { deriveLevelFromProgram } from '@/lib/suspensions';
 import FormField from '@/components/FormField';
 import LoadingButton from '@/components/LoadingButton';
 import { Profile, Program } from '@/types/database';
+import { theme, useThemeColors } from '@/constants/Theme';
 
 const PROGRAMS: { label: string; value: Program }[] = [
   { label: 'BSIT', value: 'BSIT' },
@@ -47,6 +48,7 @@ const YEAR_LEVELS = [
 
 export default function ProfileEditScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
 
   // Loading states
   const [fetchingProfile, setFetchingProfile] = useState(true);
@@ -176,8 +178,8 @@ export default function ProfileEditScreen() {
     return (
       <>
         <Stack.Screen options={{ title: 'Edit Profile' }} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#AF101A" />
+        <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.tint} />
         </View>
       </>
     );
@@ -187,7 +189,7 @@ export default function ProfileEditScreen() {
     <>
       <Stack.Screen options={{ title: 'Edit Profile' }} />
       <KeyboardAvoidingView
-        style={styles.flex}
+        style={[styles.flex, { backgroundColor: colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
@@ -235,88 +237,94 @@ export default function ProfileEditScreen() {
 
           {/* Program Picker */}
           <View style={styles.field}>
-            <Text style={styles.label}>Program</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Program</Text>
             <Pressable
               style={[
                 styles.pickerButton,
-                errors.program ? styles.pickerError : null,
+                { borderColor: errors.program ? colors.error : colors.border, backgroundColor: colors.surface },
               ]}
               onPress={() => setShowProgramPicker(!showProgramPicker)}
               accessibilityLabel="Select Program"
               accessibilityRole="button"
             >
-              <Text style={[styles.pickerText, !program && styles.pickerPlaceholder]}>
+              <Text style={[styles.pickerText, { color: program ? colors.text : colors.textTertiary }]}>
                 {program ? PROGRAMS.find((p) => p.value === program)?.label : 'Select program'}
               </Text>
             </Pressable>
             {showProgramPicker && (
-              <View style={styles.pickerOptions}>
+              <View style={[styles.pickerOptions, { borderColor: colors.border, backgroundColor: colors.surface }]}>
                 {PROGRAMS.map((p) => (
                   <Pressable
                     key={p.value}
                     style={[
                       styles.pickerOption,
-                      program === p.value && styles.pickerOptionSelected,
+                      program === p.value && { backgroundColor: colors.primaryBg },
                     ]}
                     onPress={() => {
                       setProgram(p.value);
                       setShowProgramPicker(false);
                       if (errors.program) setErrors((prev) => ({ ...prev, program: '' }));
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={p.label}
                   >
-                    <Text style={styles.pickerOptionText}>{p.label}</Text>
+                    <Text style={[styles.pickerOptionText, { color: colors.text }]}>{p.label}</Text>
+                    {program === p.value && <Text style={{ color: colors.tint }}>✓</Text>}
                   </Pressable>
                 ))}
               </View>
             )}
-            {errors.program ? <Text style={styles.errorText}>{errors.program}</Text> : null}
+            {errors.program ? <Text style={[styles.errorText, { color: colors.error }]}>{errors.program}</Text> : null}
           </View>
 
           {/* Year Level Picker */}
           <View style={styles.field}>
-            <Text style={styles.label}>Year Level</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Year Level</Text>
             <Pressable
               style={[
                 styles.pickerButton,
-                errors.year_level ? styles.pickerError : null,
+                { borderColor: errors.year_level ? colors.error : colors.border, backgroundColor: colors.surface },
               ]}
               onPress={() => setShowYearPicker(!showYearPicker)}
               accessibilityLabel="Select Year Level"
               accessibilityRole="button"
             >
-              <Text style={[styles.pickerText, !yearLevel && styles.pickerPlaceholder]}>
+              <Text style={[styles.pickerText, { color: yearLevel ? colors.text : colors.textTertiary }]}>
                 {yearLevel ? YEAR_LEVELS.find((y) => y.value === yearLevel)?.label : 'Select year level'}
               </Text>
             </Pressable>
             {showYearPicker && (
-              <View style={styles.pickerOptions}>
+              <View style={[styles.pickerOptions, { borderColor: colors.border, backgroundColor: colors.surface }]}>
                 {YEAR_LEVELS.map((y) => (
                   <Pressable
                     key={y.value}
                     style={[
                       styles.pickerOption,
-                      yearLevel === y.value && styles.pickerOptionSelected,
+                      yearLevel === y.value && { backgroundColor: colors.primaryBg },
                     ]}
                     onPress={() => {
                       setYearLevel(y.value);
                       setShowYearPicker(false);
                       if (errors.year_level) setErrors((prev) => ({ ...prev, year_level: '' }));
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={y.label}
                   >
-                    <Text style={styles.pickerOptionText}>{y.label}</Text>
+                    <Text style={[styles.pickerOptionText, { color: colors.text }]}>{y.label}</Text>
+                    {yearLevel === y.value && <Text style={{ color: colors.tint }}>✓</Text>}
                   </Pressable>
                 ))}
               </View>
             )}
-            {errors.year_level ? <Text style={styles.errorText}>{errors.year_level}</Text> : null}
+            {errors.year_level ? <Text style={[styles.errorText, { color: colors.error }]}>{errors.year_level}</Text> : null}
           </View>
 
           {/* Phone Number */}
           <View style={styles.field}>
-            <Text style={styles.label}>Phone Number</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Phone Number</Text>
             <View style={styles.phoneRow}>
-              <View style={styles.phonePrefix}>
-                <Text style={styles.phonePrefixText}>+63</Text>
+              <View style={[styles.phonePrefix, { borderColor: colors.border, backgroundColor: colors.background }]}>
+                <Text style={[styles.phonePrefixText, { color: colors.text }]}>+63</Text>
               </View>
               <View style={styles.phoneInputWrapper}>
                 <FormField
@@ -351,95 +359,75 @@ export default function ProfileEditScreen() {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: '#F9F9F9',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9F9F9',
   },
   scrollContent: {
-    padding: 24,
-    paddingBottom: 48,
+    padding: theme.spacing['2xl'],
+    paddingBottom: theme.spacing['5xl'],
   },
   field: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
+    ...theme.typography.label,
+    marginBottom: theme.spacing.xs + 2,
   },
   pickerButton: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
     justifyContent: 'center',
   },
-  pickerError: {
-    borderColor: '#DC2626',
-  },
   pickerText: {
-    fontSize: 16,
-    color: '#111827',
-  },
-  pickerPlaceholder: {
-    color: '#9CA3AF',
+    fontSize: 15,
+    fontWeight: '400',
   },
   pickerOptions: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    marginTop: 4,
-    backgroundColor: '#FFFFFF',
+    borderRadius: theme.radius.md,
+    marginTop: theme.spacing.xs,
     maxHeight: 200,
     overflow: 'hidden',
   },
   pickerOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  pickerOptionSelected: {
-    backgroundColor: '#EFF6FF',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm + 2,
   },
   pickerOptionText: {
-    fontSize: 14,
-    color: '#111827',
+    ...theme.typography.body,
   },
   errorText: {
-    fontSize: 12,
-    color: '#DC2626',
-    marginTop: 4,
+    ...theme.typography.caption,
+    marginTop: theme.spacing.xs,
   },
   phoneRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
+    gap: theme.spacing.sm,
   },
   phonePrefix: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    backgroundColor: '#F3F4F6',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
     justifyContent: 'center',
-    marginTop: 0,
   },
   phonePrefixText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#374151',
   },
   phoneInputWrapper: {
     flex: 1,
   },
   saveContainer: {
-    marginTop: 16,
+    marginTop: theme.spacing.lg,
   },
 });
