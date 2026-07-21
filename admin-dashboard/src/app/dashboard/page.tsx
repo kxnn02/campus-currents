@@ -119,136 +119,137 @@ export default async function DashboardPage() {
     <div className="space-y-6">
 
       {/* ─── EMERGENCY BANNER ─── */}
-      {/* Only shown when there's an unresolved emergency. Demands immediate attention. */}
       {hasActiveEmergency && (
         <Link href="/dashboard/emergency" className="block">
-          <div className="flex items-center gap-3 rounded-lg border border-[#DC2626]/30 bg-[#FFDAD6] px-5 py-3 shadow-sm">
-            <AlertTriangle className="h-5 w-5 text-[#DC2626] animate-pulse shrink-0" />
+          <div className="emergency-glow flex items-center gap-3 rounded-xl border-2 border-[#BA1A1A]/40 bg-gradient-to-r from-[#BA1A1A]/[0.08] to-[#FFDAD6] px-5 py-4 transition-all duration-200 hover:border-[#BA1A1A]/60">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#BA1A1A]/10">
+              <AlertTriangle className="h-5 w-5 text-[#BA1A1A] emergency-pulse" />
+            </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-[#93000A]">
+              <p className="text-sm font-bold text-[#BA1A1A]">
                 {emergencyCount} active emergency alert{(emergencyCount ?? 0) > 1 ? "s" : ""} — requires your attention
               </p>
+              <p className="text-xs text-[#5B403D] mt-0.5">Click to manage emergency response</p>
             </div>
-            <span className="text-xs font-semibold text-[#93000A] underline">Manage →</span>
+            <span className="text-xs font-bold text-[#BA1A1A] bg-[#BA1A1A]/10 px-3 py-1.5 rounded-md">Manage →</span>
           </div>
         </Link>
       )}
 
       {/* ─── QUICK ACTIONS ─── */}
-      {/* The 3 primary admin workflows. Each card is a shortcut to the most common task. */}
-      {/* Color-coded by domain: Blue = communication, Red = safety/disruption, Green = planning */}
       <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
         <Link href="/dashboard/broadcasts" className="block group">
-          <div className="relative overflow-hidden rounded-lg bg-[#1E40AF] p-6 shadow-sm transition-all duration-200 group-hover:shadow-md group-hover:scale-[1.01]">
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#AF101A] to-[#8B0D15] p-6 shadow-lg shadow-[#AF101A]/15 transition-all duration-200 group-hover:shadow-xl group-hover:shadow-[#AF101A]/20 group-hover:scale-[1.02] active:scale-[0.98]">
             <div className="relative z-10 flex flex-col gap-2">
-              <Megaphone className="h-5 w-5 text-white/80" />
-              <h3 className="text-xl font-semibold text-white">New Broadcast</h3>
-              <p className="text-sm text-white/90">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
+                <Megaphone className="h-[18px] w-[18px] text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mt-1">New Broadcast</h3>
+              <p className="text-sm text-white/80 leading-relaxed">
                 Reach {studentCount?.toLocaleString() ?? 0} students via push, SMS, and feed.
               </p>
             </div>
-            <Send className="absolute bottom-[-8px] right-[-8px] h-20 w-20 text-white/10 rotate-[-15deg]" />
+            <Send className="absolute bottom-[-12px] right-[-12px] h-24 w-24 text-white/[0.07] rotate-[-15deg]" />
           </div>
         </Link>
         <Link href="/dashboard/suspensions" className="block group">
-          <div className="relative overflow-hidden rounded-lg bg-[#DC2626] p-6 shadow-sm transition-all duration-200 group-hover:shadow-md group-hover:scale-[1.01]">
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#F89C00] to-[#E08900] p-6 shadow-lg shadow-[#F89C00]/15 transition-all duration-200 group-hover:shadow-xl group-hover:shadow-[#F89C00]/20 group-hover:scale-[1.02] active:scale-[0.98]">
             <div className="relative z-10 flex flex-col gap-2">
-              <CloudOff className="h-5 w-5 text-white/80" />
-              <h3 className="text-xl font-semibold text-white">Post Suspension</h3>
-              <p className="text-sm text-white/90">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
+                <CloudOff className="h-[18px] w-[18px] text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mt-1">Post Suspension</h3>
+              <p className="text-sm text-white/85 leading-relaxed">
                 {hasActiveSuspension
                   ? `${suspensionCount} suspension${(suspensionCount ?? 0) > 1 ? "s" : ""} active now. Manage or post new.`
                   : "Declare class suspension and auto-notify all students."}
               </p>
             </div>
-            <AlertTriangle className="absolute bottom-[-8px] right-[-8px] h-24 w-24 text-white/10" />
+            <CloudOff className="absolute bottom-[-10px] right-[-10px] h-24 w-24 text-white/[0.08]" />
           </div>
         </Link>
         <Link href="/dashboard/calendar" className="block group">
-          <div className="relative overflow-hidden rounded-lg bg-[#16A34A] p-6 shadow-sm transition-all duration-200 group-hover:shadow-md group-hover:scale-[1.01]">
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#16A34A] to-[#128A3E] p-6 shadow-lg shadow-[#16A34A]/15 transition-all duration-200 group-hover:shadow-xl group-hover:shadow-[#16A34A]/20 group-hover:scale-[1.02] active:scale-[0.98]">
             <div className="relative z-10 flex flex-col gap-2">
-              <CalendarDays className="h-5 w-5 text-white/80" />
-              <h3 className="text-xl font-semibold text-white">New Event</h3>
-              <p className="text-sm text-white/90">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
+                <CalendarDays className="h-[18px] w-[18px] text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mt-1">New Event</h3>
+              <p className="text-sm text-white/85 leading-relaxed">
                 {(eventCount ?? 0) > 0
                   ? `${eventCount} upcoming event${(eventCount ?? 0) > 1 ? "s" : ""} scheduled. Add another.`
                   : "Schedule campus activities, deadlines, and reminders."}
               </p>
             </div>
-            <CalendarDays className="absolute bottom-[-8px] right-[-8px] h-[90px] w-[90px] text-white/10" />
+            <CalendarDays className="absolute bottom-[-10px] right-[-10px] h-24 w-24 text-white/[0.08]" />
           </div>
         </Link>
       </div>
 
       {/* ─── KEY METRICS ─── */}
-      {/* Answers 3 questions an admin checks every time they open the dashboard: */}
-      {/* 1. How big is my audience? 2. Are classes running? 3. How active are we today? */}
       <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-        <div className="flex items-center gap-4 rounded border border-[#C4C5D5] bg-white p-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F1F3FF]">
-            <Users className="h-5 w-5 text-[#1E40AF]" />
+        <div className="flex items-center gap-4 rounded-xl border border-[#F0DDD9] bg-white p-5 card-hover">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#AF101A]/[0.08]">
+            <Users className="h-5 w-5 text-[#AF101A]" />
           </div>
           <div>
-            <p className="text-xs text-[#444653]">Audience Reach</p>
-            <p className="text-xl font-semibold text-[#141B2B]">{studentCount?.toLocaleString() ?? 0}</p>
-            <p className="text-[10px] text-[#444653]">students with push enabled</p>
+            <p className="text-xs font-medium text-[#5B403D]">Audience Reach</p>
+            <p className="text-2xl font-bold text-[#1A1C1C] tabular-nums">{studentCount?.toLocaleString() ?? 0}</p>
+            <p className="text-[11px] text-[#5B403D]">students with push enabled</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 rounded border border-[#C4C5D5] bg-white p-4">
-          <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${hasActiveSuspension ? "bg-[#FFDAD6]" : "bg-[#F1F3FF]"}`}>
-            <Radio className={`h-5 w-5 ${hasActiveSuspension ? "text-[#DC2626]" : "text-[#1E40AF]"}`} />
+        <div className="flex items-center gap-4 rounded-xl border border-[#F0DDD9] bg-white p-5 card-hover">
+          <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${hasActiveSuspension ? "bg-[#F89C00]/10" : "bg-[#16A34A]/10"}`}>
+            <Radio className={`h-5 w-5 ${hasActiveSuspension ? "text-[#F89C00]" : "text-[#16A34A]"}`} />
           </div>
           <div>
-            <p className="text-xs text-[#444653]">Class Operations</p>
+            <p className="text-xs font-medium text-[#5B403D]">Class Operations</p>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-semibold text-[#141B2B]">
+              <span className={`text-lg font-bold ${hasActiveSuspension ? "text-[#F89C00]" : "text-[#16A34A]"}`}>
                 {hasActiveSuspension ? "SUSPENDED" : "RUNNING"}
               </span>
             </div>
-            <p className="text-[10px] text-[#444653]">
+            <p className="text-[11px] text-[#5B403D]">
               {hasActiveSuspension
                 ? `${suspensionCount} active suspension${(suspensionCount ?? 0) > 1 ? "s" : ""}`
                 : "all levels operational"}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-4 rounded border border-[#C4C5D5] bg-white p-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F1F3FF]">
-            <Send className="h-5 w-5 text-[#1E40AF]" />
+        <div className="flex items-center gap-4 rounded-xl border border-[#F0DDD9] bg-white p-5 card-hover">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#5E67C2]/10">
+            <Send className="h-5 w-5 text-[#5E67C2]" />
           </div>
           <div>
-            <p className="text-xs text-[#444653]">Today&apos;s Activity</p>
-            <p className="text-xl font-semibold text-[#141B2B]">{broadcastsTodayCount ?? 0}</p>
-            <p className="text-[10px] text-[#444653]">
-              broadcast{(broadcastsTodayCount ?? 0) !== 1 ? "s" : ""} sent today · {broadcastCount ?? 0} total all time
+            <p className="text-xs font-medium text-[#5B403D]">Today&apos;s Activity</p>
+            <p className="text-2xl font-bold text-[#1A1C1C] tabular-nums">{broadcastsTodayCount ?? 0}</p>
+            <p className="text-[11px] text-[#5B403D]">
+              broadcast{(broadcastsTodayCount ?? 0) !== 1 ? "s" : ""} sent today · {broadcastCount ?? 0} total
             </p>
           </div>
         </div>
       </div>
 
       {/* ─── RECENT BROADCASTS ─── */}
-      {/* The accountability table. Shows the last 5 broadcasts with delivery metrics. */}
-      {/* Purpose: confirm broadcasts are landing (delivered %) and being read (read %). */}
-      {/* A low read % means students are ignoring messages — a signal to adjust tier or content. */}
-      <div className="overflow-hidden rounded-lg border border-[#C4C5D5] bg-white">
-        <div className="flex items-center justify-between border-b border-[#C4C5D5] px-4 py-4">
+      <div className="overflow-hidden rounded-xl border border-[#F0DDD9] bg-white shadow-sm">
+        <div className="flex items-center justify-between px-5 py-4">
           <div>
-            <h3 className="text-base font-semibold text-[#141B2B]">Recent Broadcasts</h3>
-            <p className="text-xs text-[#444653] mt-0.5">Delivery and engagement tracking</p>
+            <h3 className="text-base font-semibold text-[#1A1C1C]">Recent Broadcasts</h3>
+            <p className="text-xs text-[#5B403D] mt-0.5">Delivery and engagement tracking</p>
           </div>
-          <Link href="/dashboard/history" className="text-sm font-semibold text-[#8E0002] hover:underline">
-            View All
+          <Link href="/dashboard/history" className="text-xs font-bold text-[#AF101A] hover:text-[#8B0D15] transition-colors px-3 py-1.5 rounded-md hover:bg-[#AF101A]/[0.06]">
+            View All →
           </Link>
         </div>
 
         <div className="w-full overflow-x-auto">
-          <div className="grid grid-cols-[120px_1fr_140px_100px_100px_60px] min-w-[640px] bg-[#FFF1F1] border-b border-[#C4C5D5]">
-            <div className="px-4 py-2 text-sm font-semibold text-[#444653]">Tier</div>
-            <div className="px-4 py-2 text-sm font-semibold text-[#444653]">Title</div>
-            <div className="px-4 py-2 text-sm font-semibold text-[#444653]">Sent</div>
-            <div className="px-4 py-2 text-sm font-semibold text-[#444653]">Delivered</div>
-            <div className="px-4 py-2 text-sm font-semibold text-[#444653]">Read</div>
-            <div className="px-4 py-2 text-sm font-semibold text-[#444653]">View</div>
+          <div className="grid grid-cols-[100px_1fr_130px_90px_90px_50px] min-w-[640px] border-y border-[#F0DDD9] bg-[#FDF5F3]">
+            <div className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Tier</div>
+            <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Title</div>
+            <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Sent</div>
+            <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Delivered</div>
+            <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Read</div>
+            <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]"></div>
           </div>
 
           {recentBroadcasts && recentBroadcasts.length > 0 ? (
@@ -262,23 +263,23 @@ export default async function DashboardPage() {
               return (
                 <div
                   key={broadcast.id}
-                  className="relative grid grid-cols-[120px_1fr_140px_100px_100px_60px] min-w-[640px] items-center border-b border-[#C4C5D5] last:border-b-0"
+                  className="relative grid grid-cols-[100px_1fr_130px_90px_90px_50px] min-w-[640px] items-center border-b border-[#F0DDD9] last:border-b-0 warm-table-row"
                 >
-                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${tier.border}`} />
+                  <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${tier.border} rounded-r`} />
 
-                  <div className="px-4 py-4 pl-6">
-                    <span className={`inline-block rounded-sm px-2 py-1 text-xs font-bold uppercase ${tier.bg} ${tier.text}`}>
+                  <div className="px-5 py-3.5">
+                    <span className={`inline-block rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${tier.bg} ${tier.text}`}>
                       {tier.label}
                     </span>
                   </div>
 
-                  <div className="px-4 py-4">
-                    <span className="text-sm font-semibold text-[#141B2B] truncate block">
+                  <div className="px-4 py-3.5">
+                    <span className="text-sm font-medium text-[#1A1C1C] truncate block">
                       {broadcast.title}
                     </span>
                   </div>
 
-                  <div className="px-4 py-4 text-sm text-[#444653]">
+                  <div className="px-4 py-3.5 text-xs text-[#5B403D] tabular-nums">
                     {broadcast.sent_at
                       ? new Date(broadcast.sent_at).toLocaleDateString("en-US", {
                           month: "short",
@@ -289,33 +290,35 @@ export default async function DashboardPage() {
                       : "—"}
                   </div>
 
-                  <div className="px-4 py-4">
-                    <span className="text-sm text-[#141B2B]">{bStats.delivered.toLocaleString()} </span>
-                    <span className="text-[10px] font-bold text-[#16A34A]">{deliveredPct}%</span>
+                  <div className="px-4 py-3.5 tabular-nums">
+                    <span className="text-sm font-medium text-[#1A1C1C]">{bStats.delivered.toLocaleString()}</span>
+                    <span className="text-[10px] font-bold text-[#16A34A] ml-1">{deliveredPct}%</span>
                   </div>
 
-                  <div className="px-4 py-4">
-                    <span className="text-sm text-[#141B2B]">{bStats.read.toLocaleString()} </span>
-                    <span className="text-[10px] font-bold text-[#0058BE]">{readPct}%</span>
+                  <div className="px-4 py-3.5 tabular-nums">
+                    <span className="text-sm font-medium text-[#1A1C1C]">{bStats.read.toLocaleString()}</span>
+                    <span className="text-[10px] font-bold text-[#5E67C2] ml-1">{readPct}%</span>
                   </div>
 
-                  <div className="px-4 py-4">
+                  <div className="px-4 py-3.5">
                     <Link
                       href={`/dashboard/broadcasts/${broadcast.id}`}
-                      className="rounded p-1 hover:bg-[#FFF1F1] transition-colors inline-flex"
+                      className="rounded-md p-1.5 hover:bg-[#FFF1ED] transition-colors inline-flex"
                       title="View delivery details"
                     >
-                      <ExternalLink className="h-4 w-4 text-[#8E0002]" />
+                      <ExternalLink className="h-3.5 w-3.5 text-[#AF101A]" />
                     </Link>
                   </div>
                 </div>
               );
             })
           ) : (
-            <div className="py-12 text-center">
-              <Megaphone className="h-8 w-8 mx-auto text-[#C4C5D5] mb-2" />
-              <p className="text-sm font-medium text-[#141B2B]">No broadcasts yet</p>
-              <p className="text-xs text-[#444653] mt-1">
+            <div className="py-14 text-center">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#FDF5F3] mb-3">
+                <Megaphone className="h-5 w-5 text-[#E4BEBA]" />
+              </div>
+              <p className="text-sm font-medium text-[#1A1C1C]">No broadcasts yet</p>
+              <p className="text-xs text-[#5B403D] mt-1">
                 Send your first broadcast to start tracking delivery metrics.
               </p>
             </div>
@@ -324,57 +327,57 @@ export default async function DashboardPage() {
       </div>
 
       {/* ─── BOTTOM SECTION ─── */}
-      {/* Left: System health — answers "Can I send messages right now?" */}
-      {/* Right: Engagement trend — answers "Are students actually reading our broadcasts?" */}
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-        {/* System Health — confirms all notification channels are functional */}
-        <div className="rounded-lg border border-[#C4C5D5] bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-2">
-            <Shield className="h-5 w-5 text-[#141B2B]" />
-            <h3 className="text-base font-semibold text-[#141B2B]">Notification Channels</h3>
+      <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
+        {/* System Health */}
+        <div className="rounded-xl border border-[#F0DDD9] bg-white p-6 shadow-sm">
+          <div className="mb-5 flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1A1C1C]">
+              <Shield className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-[#1A1C1C]">Notification Channels</h3>
+              <p className="text-[11px] text-[#5B403D]">All must be active for emergency delivery</p>
+            </div>
           </div>
-          <p className="text-xs text-[#444653] mb-3">
-            All channels must be active to guarantee message delivery during emergencies.
-          </p>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between border-b border-dashed border-[#C4C5D5] py-2">
-              <span className="text-sm text-[#141B2B]">SMS Gateway</span>
+          <div className="space-y-0">
+            <div className="flex items-center justify-between border-b border-[#F0DDD9] py-3">
+              <span className="text-sm text-[#1A1C1C]">SMS Gateway</span>
               <div className="flex items-center gap-1.5">
                 <div className="h-2 w-2 rounded-full bg-[#16A34A]" />
-                <span className="text-sm font-semibold text-[#16A34A]">Active</span>
+                <span className="text-xs font-semibold text-[#16A34A]">Active</span>
               </div>
             </div>
-            <div className="flex items-center justify-between border-b border-dashed border-[#C4C5D5] py-2">
-              <span className="text-sm text-[#141B2B]">Push Notifications</span>
+            <div className="flex items-center justify-between border-b border-[#F0DDD9] py-3">
+              <span className="text-sm text-[#1A1C1C]">Push Notifications</span>
               <div className="flex items-center gap-1.5">
                 <div className="h-2 w-2 rounded-full bg-[#16A34A]" />
-                <span className="text-sm font-semibold text-[#16A34A]">Active</span>
+                <span className="text-xs font-semibold text-[#16A34A]">Active</span>
               </div>
             </div>
-            <div className="flex items-center justify-between border-b border-dashed border-[#C4C5D5] py-2">
-              <span className="text-sm text-[#141B2B]">In-App Feed</span>
+            <div className="flex items-center justify-between border-b border-[#F0DDD9] py-3">
+              <span className="text-sm text-[#1A1C1C]">In-App Feed</span>
               <div className="flex items-center gap-1.5">
                 <div className="h-2 w-2 rounded-full bg-[#16A34A]" />
-                <span className="text-sm font-semibold text-[#16A34A]">Active</span>
+                <span className="text-xs font-semibold text-[#16A34A]">Active</span>
               </div>
             </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-[#141B2B]">Campus Status</span>
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-[#1A1C1C]">Campus Status</span>
               <div className="flex items-center gap-1.5">
                 {hasActiveEmergency ? (
                   <>
-                    <div className="h-2 w-2 rounded-full bg-[#DC2626] animate-pulse" />
-                    <span className="text-sm font-semibold text-[#DC2626]">Emergency Active</span>
+                    <div className="h-2 w-2 rounded-full bg-[#BA1A1A] emergency-pulse" />
+                    <span className="text-xs font-bold text-[#BA1A1A]">Emergency Active</span>
                   </>
                 ) : hasActiveSuspension ? (
                   <>
-                    <div className="h-2 w-2 rounded-full bg-[#F59E0B]" />
-                    <span className="text-sm font-semibold text-[#F59E0B]">Classes Suspended</span>
+                    <div className="h-2 w-2 rounded-full bg-[#F89C00]" />
+                    <span className="text-xs font-bold text-[#F89C00]">Classes Suspended</span>
                   </>
                 ) : (
                   <>
                     <div className="h-2 w-2 rounded-full bg-[#16A34A]" />
-                    <span className="text-sm font-semibold text-[#16A34A]">Normal Operations</span>
+                    <span className="text-xs font-semibold text-[#16A34A]">Normal Operations</span>
                   </>
                 )}
               </div>
@@ -382,38 +385,41 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Engagement Trend — shows if students are reading broadcasts */}
-        {/* If bars are consistently low, admins know to: adjust tier, shorten messages, or check timing */}
-        <div className="rounded-lg border border-[#C4C5D5] bg-[#FFF1F1] p-6 overflow-hidden">
-          <h3 className="text-base font-semibold text-[#141B2B]">Student Engagement</h3>
-          <p className="text-xs text-[#444653] mt-0.5 mb-4">
-            Broadcast reads per day — indicates whether students are engaging with messages.
-          </p>
+        {/* Engagement Trend */}
+        <div className="rounded-xl border border-[#F0DDD9] bg-white p-6 shadow-sm">
+          <div className="mb-5">
+            <h3 className="text-sm font-semibold text-[#1A1C1C]">Student Engagement</h3>
+            <p className="text-[11px] text-[#5B403D] mt-0.5">
+              Broadcast reads per day — indicates student responsiveness
+            </p>
+          </div>
           <div
-            className="flex items-end justify-between gap-2 h-[120px]"
+            className="flex items-end justify-between gap-3 h-[130px]"
             role="img"
             aria-label={`Bar chart showing read engagement over last 5 days. Total: ${last5Days.reduce((sum, d) => sum + d.readCount, 0)} reads.`}
           >
             {last5Days.map((day, i) => {
-              const pct = Math.max(8, Math.round((day.readCount / maxRead) * 100));
-              const opacity = 0.3 + (i / 4) * 0.7;
+              const pct = Math.max(10, Math.round((day.readCount / maxRead) * 100));
               return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-[10px] font-semibold text-[#444653]">{day.readCount}</span>
+                <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-[#5B403D] tabular-nums">{day.readCount}</span>
                   <div
-                    className="w-full max-w-[48px] rounded-t transition-all"
-                    style={{ height: `${pct}%`, backgroundColor: `rgba(141, 21, 21, ${opacity})` }}
+                    className="w-full max-w-[44px] rounded-t-md transition-all duration-300"
+                    style={{
+                      height: `${pct}%`,
+                      backgroundColor: i === 4 ? "#AF101A" : "#E4BEBA",
+                    }}
                   />
-                  <span className="text-[10px] text-[#444653]">{day.label}</span>
+                  <span className="text-[10px] font-medium text-[#5B403D]">{day.label}</span>
                 </div>
               );
             })}
           </div>
-          <div className="mt-3 pt-3 border-t border-[#C4C5D5]/50 flex items-center justify-between">
-            <span className="text-xs text-[#444653]">
-              Total reads this week: <span className="font-semibold text-[#141B2B]">{last5Days.reduce((sum, d) => sum + d.readCount, 0).toLocaleString()}</span>
+          <div className="mt-4 pt-3 border-t border-[#F0DDD9] flex items-center justify-between">
+            <span className="text-xs text-[#5B403D]">
+              Total reads this week: <span className="font-bold text-[#1A1C1C] tabular-nums">{last5Days.reduce((sum, d) => sum + d.readCount, 0).toLocaleString()}</span>
             </span>
-            <Link href="/dashboard/analytics" className="text-xs font-semibold text-[#8E0002] hover:underline">
+            <Link href="/dashboard/analytics" className="text-xs font-bold text-[#AF101A] hover:text-[#8B0D15] transition-colors">
               Full Analytics →
             </Link>
           </div>

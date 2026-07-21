@@ -25,7 +25,11 @@ export default function LoginPage() {
         });
 
       if (signInError) {
-        setError(signInError.message);
+        const msg =
+          signInError.message ||
+          (signInError as unknown as Record<string, unknown>).error_description ||
+          "Invalid email or password. Please try again.";
+        setError(String(msg));
         setLoading(false);
         return;
       }
@@ -37,8 +41,16 @@ export default function LoginPage() {
           .eq("id", data.user.id)
           .maybeSingle();
 
-        if (profileError || !profile) {
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
           setError("Unable to verify your account. Please contact support.");
+          await supabase.auth.signOut();
+          setLoading(false);
+          return;
+        }
+
+        if (!profile) {
+          setError("No profile found for this account. Please contact support to complete account setup.");
           await supabase.auth.signOut();
           setLoading(false);
           return;
@@ -56,48 +68,57 @@ export default function LoginPage() {
         router.push("/dashboard");
         router.refresh();
       }
-    } catch {
+    } catch (err) {
+      console.error("Login error:", err);
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 bg-background">
-      <div className="w-full max-w-sm">
+    <div className="flex min-h-screen items-center justify-center px-4 bg-[#F9F9F9] relative overflow-hidden">
+      {/* Subtle brand background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[40%] -right-[20%] w-[600px] h-[600px] rounded-full bg-[#AF101A]/[0.03] blur-3xl" />
+        <div className="absolute -bottom-[30%] -left-[15%] w-[500px] h-[500px] rounded-full bg-[#F89C00]/[0.03] blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-sm relative z-10">
         {/* Brand header */}
         <div className="text-center mb-8">
-          <img
-            src="/logo.png"
-            alt="CampusCurrents"
-            className="h-14 w-14 rounded-xl mx-auto mb-4"
-          />
-          <h1 className="text-2xl font-bold tracking-tight">Campus Currents</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-md shadow-[#AF101A]/[0.08] border border-[#F0DDD9] mb-5">
+            <img
+              src="/logo.png"
+              alt="CampusCurrents"
+              className="h-10 w-10 object-contain"
+            />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-[#1A1C1C]">Campus Currents</h1>
+          <p className="text-sm text-[#5B403D] mt-1.5 font-medium">
             Admin Dashboard
           </p>
         </div>
 
         {/* Login card */}
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <form onSubmit={handleLogin} className="space-y-4">
+        <div className="rounded-2xl border border-[#F0DDD9] bg-white p-7 shadow-lg shadow-[#AF101A]/[0.04]">
+          <form onSubmit={handleLogin} className="space-y-5">
             {error && (
-              <div id="login-error" role="alert" className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+              <div id="login-error" role="alert" className="rounded-lg bg-[#BA1A1A]/[0.06] border border-[#BA1A1A]/15 p-3.5 text-sm text-[#BA1A1A] font-medium">
                 {error}
               </div>
             )}
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium"
+                className="block text-sm font-semibold text-[#1A1C1C]"
               >
                 Email
               </label>
               <input
                 id="email"
                 type="email"
-                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+                className="w-full rounded-xl border border-[#E4BEBA] bg-[#F9F9F9] px-4 py-3 text-sm text-[#1A1C1C] placeholder:text-[#5B403D]/50 focus:border-[#AF101A] focus:outline-none focus:ring-2 focus:ring-[#AF101A]/15 focus:bg-white transition-all duration-200"
                 placeholder="admin@sscrmnl.edu.ph"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -106,11 +127,11 @@ export default function LoginPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium"
+                  className="block text-sm font-semibold text-[#1A1C1C]"
                 >
                   Password
                 </label>
@@ -131,7 +152,7 @@ export default function LoginPage() {
                       alert("Password reset email sent. Check your inbox.");
                     }
                   }}
-                  className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+                  className="text-xs text-[#AF101A] hover:text-[#8B0D15] font-semibold transition-colors"
                 >
                   Forgot password?
                 </button>
@@ -139,7 +160,7 @@ export default function LoginPage() {
               <input
                 id="password"
                 type="password"
-                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+                className="w-full rounded-xl border border-[#E4BEBA] bg-[#F9F9F9] px-4 py-3 text-sm text-[#1A1C1C] placeholder:text-[#5B403D]/50 focus:border-[#AF101A] focus:outline-none focus:ring-2 focus:ring-[#AF101A]/15 focus:bg-white transition-all duration-200"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -149,14 +170,14 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              className="w-full rounded-xl bg-[#AF101A] px-4 py-3 text-sm font-bold text-white hover:bg-[#8B0D15] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md shadow-[#AF101A]/20 hover:shadow-lg hover:shadow-[#AF101A]/25 active:scale-[0.98]"
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-4">
+        <p className="text-center text-xs text-[#5B403D] mt-6 font-medium">
           San Sebastian College – Recoletos, Manila
         </p>
       </div>

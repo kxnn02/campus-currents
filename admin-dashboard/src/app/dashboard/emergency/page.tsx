@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, User, Clock } from "lucide-react";
+import { AlertTriangle, User, Clock, ShieldCheck } from "lucide-react";
 import { TriggerEmergencyDialog } from "./trigger-emergency-dialog";
 import { ResolveEmergencyButton } from "./resolve-emergency-button";
 import { EmergencyAccountability } from "./emergency-accountability";
@@ -26,14 +26,14 @@ export default async function EmergencyPage() {
   // Fetch active emergencies with broadcast and sender profile
   const { data: activeEmergencies, error } = await supabase
     .from("active_emergencies")
-    .select("*, broadcasts(*, sender:profiles!sender_id(full_name))")
+    .select("*, broadcasts(*, sender:profiles!sender_id(first_name, last_name))")
     .eq("status", "active")
     .order("created_at", { ascending: false });
 
   // Fetch resolved and false_alarm emergencies
   const { data: pastEmergencies } = await supabase
     .from("active_emergencies")
-    .select("*, broadcasts(*, sender:profiles!sender_id(full_name))")
+    .select("*, broadcasts(*, sender:profiles!sender_id(first_name, last_name))")
     .in("status", ["resolved", "false_alarm"])
     .order("resolved_at", { ascending: false })
     .limit(10);
@@ -96,12 +96,14 @@ export default async function EmergencyPage() {
     return <div className="text-destructive">Error loading emergencies: {error.message}</div>;
   }
 
+  const hasActive = activeEmergencies && activeEmergencies.length > 0;
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-[#1A1C1C]">Emergency Management</h2>
-          <p className="text-[#444653] mt-1">
+          <p className="text-[#5B403D] mt-1">
             Trigger and manage campus-wide emergency alerts.
           </p>
         </div>
@@ -109,39 +111,50 @@ export default async function EmergencyPage() {
       </div>
 
       {/* Active Emergencies */}
-      {activeEmergencies && activeEmergencies.length > 0 ? (
+      {hasActive ? (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-destructive flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 animate-pulse" />
-            Active Emergencies
-          </h3>
+          {/* Dramatic section header when emergency is active */}
+          <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-[#BA1A1A] to-[#AF101A] px-5 py-3.5 shadow-lg shadow-[#BA1A1A]/20 emergency-glow">
+            <AlertTriangle className="h-5 w-5 text-white emergency-pulse" />
+            <h3 className="text-base font-bold text-white">
+              {activeEmergencies.length} Active Emergenc{activeEmergencies.length > 1 ? "ies" : "y"}
+            </h3>
+            <Badge className="ml-auto bg-white/20 text-white border-white/30 hover:bg-white/30 emergency-pulse text-xs font-bold">
+              LIVE
+            </Badge>
+          </div>
+
           {activeEmergencies.map((emergency) => (
-            <Card key={emergency.id} className="border-destructive/50 bg-destructive/[0.03] shadow-sm">
-              <CardHeader className="pb-3">
+            <Card key={emergency.id} className="border-2 border-[#BA1A1A]/30 bg-gradient-to-br from-white to-[#FFF8F7] shadow-md shadow-[#BA1A1A]/[0.06] overflow-hidden">
+              {/* Red top accent bar */}
+              <div className="h-1 w-full bg-gradient-to-r from-[#BA1A1A] to-[#AF101A]" />
+              <CardHeader className="pb-3 pt-5">
                 <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">
+                  <div className="space-y-1.5">
+                    <CardTitle className="text-lg text-[#1A1C1C]">
                       {emergency.broadcasts?.title || "Emergency"}
                     </CardTitle>
                     <CardDescription className="flex items-center gap-2 flex-wrap">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-destructive/10 text-destructive px-2 py-0.5 rounded-md">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-[#BA1A1A]/10 text-[#BA1A1A] px-2.5 py-1 rounded-md uppercase tracking-wide">
                         {emergency.emergency_type?.replace(/_/g, " ")}
                       </span>
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 text-xs text-[#5B403D]">
                         <User className="h-3 w-3" />
-                        Triggered by: {emergency.broadcasts?.sender?.full_name || "Unknown"}
+                        {[emergency.broadcasts?.sender?.first_name, emergency.broadcasts?.sender?.last_name].filter(Boolean).join(" ") || "Unknown"}
                       </span>
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 text-xs text-[#5B403D]">
                         <Clock className="h-3 w-3" />
                         Started: {formatRelativeTime(emergency.created_at)}
                       </span>
                     </CardDescription>
                   </div>
-                  <Badge variant="destructive" className="animate-pulse">ACTIVE</Badge>
+                  <Badge className="bg-[#BA1A1A] text-white border-[#BA1A1A] hover:bg-[#BA1A1A] emergency-pulse font-bold shadow-md shadow-[#BA1A1A]/30">
+                    ACTIVE
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">{emergency.broadcasts?.body}</p>
+                <p className="text-sm text-[#5B403D] leading-relaxed">{emergency.broadcasts?.body}</p>
                 <ResolveEmergencyButton id={emergency.id} />
                 {accountabilityMap[emergency.broadcast_id] && (
                   <EmergencyAccountability
@@ -157,35 +170,38 @@ export default async function EmergencyPage() {
           ))}
         </div>
       ) : (
-        <Card className="shadow-sm">
-          <CardContent className="py-12 text-center">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-50 mb-3">
-              <AlertTriangle className="h-6 w-6 text-green-600" />
+        /* Calm state when no emergencies — reassuring, professional */
+        <Card className="border border-[#F0DDD9] shadow-sm">
+          <CardContent className="py-14 text-center">
+            <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#16A34A]/10 mb-4">
+              <ShieldCheck className="h-7 w-7 text-[#16A34A]" />
             </div>
-            <p className="text-sm font-medium text-foreground">Campus is safe</p>
-            <p className="text-xs text-muted-foreground mt-1">No active emergencies at this time.</p>
+            <p className="text-base font-semibold text-[#1A1C1C]">Campus is safe</p>
+            <p className="text-sm text-[#5B403D] mt-1.5 max-w-sm mx-auto">
+              No active emergencies at this time. Use the button above to trigger an alert if needed.
+            </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Past Emergencies (Resolved + False Alarm) */}
+      {/* Past Emergencies */}
       {pastEmergencies && pastEmergencies.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Recent Past Emergencies</h3>
+          <h3 className="text-base font-semibold text-[#1A1C1C]">Recent Past Emergencies</h3>
           <div className="space-y-3">
             {pastEmergencies.map((emergency) => (
-              <Card key={emergency.id} className="shadow-sm">
+              <Card key={emergency.id} className="border border-[#F0DDD9] shadow-sm">
                 <CardHeader className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <CardTitle className="text-base">
+                      <CardTitle className="text-sm font-semibold text-[#1A1C1C]">
                         {emergency.broadcasts?.title || "Emergency"}
                       </CardTitle>
-                      <CardDescription className="flex items-center gap-2 flex-wrap text-xs">
-                        <span>{emergency.emergency_type?.replace(/_/g, " ")}</span>
+                      <CardDescription className="flex items-center gap-2 flex-wrap text-xs text-[#5B403D]">
+                        <span className="capitalize">{emergency.emergency_type?.replace(/_/g, " ")}</span>
                         <span className="inline-flex items-center gap-1">
                           <User className="h-3 w-3" />
-                          {emergency.broadcasts?.sender?.full_name || "Unknown"}
+                          {[emergency.broadcasts?.sender?.first_name, emergency.broadcasts?.sender?.last_name].filter(Boolean).join(" ") || "Unknown"}
                         </span>
                         <span>·</span>
                         <span>
@@ -197,11 +213,11 @@ export default async function EmergencyPage() {
                       </CardDescription>
                     </div>
                     {emergency.status === "false_alarm" ? (
-                      <Badge className="bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100">
+                      <Badge className="bg-[#F89C00]/10 text-[#F89C00] border-[#F89C00]/20 hover:bg-[#F89C00]/15 font-semibold">
                         False Alarm
                       </Badge>
                     ) : (
-                      <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100">
+                      <Badge className="bg-[#16A34A]/10 text-[#16A34A] border-[#16A34A]/20 hover:bg-[#16A34A]/15 font-semibold">
                         Resolved
                       </Badge>
                     )}

@@ -49,73 +49,88 @@
 }
 
 :root {
-  /* CampusCurrents Brand — Light Mode (from Figma) */
-  --background: oklch(0.98 0.005 20);          /* #F9F9F9 warm white */
-  --foreground: oklch(0.15 0.01 250);          /* #1A1C1C near-black */
-  --card: oklch(1 0 0);                         /* #FFFFFF */
-  --card-foreground: oklch(0.15 0.01 250);     /* #1A1C1C */
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.01 250);
-  --primary: oklch(0.4 0.18 25);               /* #8E0002 - Maroon brand */
-  --primary-foreground: oklch(0.99 0.002 20);  /* White/near-white */
-  --secondary: oklch(0.97 0.01 20);            /* #FFF1F1 light pink */
-  --secondary-foreground: oklch(0.15 0.01 250);
-  --muted: oklch(0.97 0.01 20);               /* #FFF1F1 */
-  --muted-foreground: oklch(0.4 0.02 260);    /* #444653 dark blue-gray */
-  --accent: oklch(0.97 0.01 20);
-  --accent-foreground: oklch(0.15 0.01 250);
-  --destructive: oklch(0.55 0.22 25);           /* #DC2626 bright red (Figma) */
-  --border: oklch(0.83 0.02 280);             /* #C4C5D5 lavender-gray */
-  --input: oklch(0.83 0.02 280);
-  --ring: oklch(0.4 0.18 25);                 /* Maroon brand for focus */
-  --chart-1: oklch(0.4 0.18 25);              /* Maroon */
-  --chart-2: oklch(0.5 0.2 25);              /* Red - Emergency */
-  --chart-3: oklch(0.75 0.17 75);            /* Amber - Important */
-  --chart-4: oklch(0.6 0.17 145);            /* Green - Success */
-  --chart-5: oklch(0.5 0.15 280);            /* Indigo - Routine */
-  --radius: 0.5rem;
-  --sidebar: oklch(0.97 0.015 20);           /* #FFF1F1 light pink bg */
-  --sidebar-foreground: oklch(0.35 0.02 260); /* #444653 */
-  --sidebar-primary: oklch(0.4 0.18 25);     /* #8E0002 maroon */
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.42 0.15 25);     /* #8D1515 active nav bg */
-  --sidebar-accent-foreground: oklch(1 0 0); /* White text on active */
-  --sidebar-border: oklch(0.83 0.02 280);    /* #C4C5D5 */
-  --sidebar-ring: oklch(0.4 0.18 25);
+  /* ─── CampusCurrents SSC-R Manila Brand Palette ─── */
+  /* Warm palette — matches the mobile app's visual identity */
+
+  --background: #F9F9F9;                       /* warm off-white */
+  --foreground: #1A1C1C;                       /* near-black text */
+
+  --card: #FFFFFF;                             /* pure white surface */
+  --card-foreground: #1A1C1C;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1C1C;
+
+  --primary: #AF101A;                          /* SSC-R red — headers, CTAs, brand accent */
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #FFF8F7;                        /* warm blush — subtle backgrounds */
+  --secondary-foreground: #1A1C1C;
+
+  --muted: #FDF5F3;                            /* warm cream — muted surfaces */
+  --muted-foreground: #5B403D;                 /* warm brown — secondary text */
+
+  --accent: #FFF1ED;                           /* warm peach tint — hover/active bg */
+  --accent-foreground: #1A1C1C;
+
+  --destructive: #BA1A1A;                      /* emergency red */
+
+  --border: #E4BEBA;                           /* pinkish-tan border — NOT cool gray */
+  --input: #E4BEBA;
+  --ring: #AF101A;                             /* brand red focus ring */
+
+  /* Chart colors — using tier/brand colors */
+  --chart-1: #AF101A;                          /* Brand red */
+  --chart-2: #BA1A1A;                          /* Emergency */
+  --chart-3: #F89C00;                          /* Important/amber */
+  --chart-4: #16A34A;                          /* Success green */
+  --chart-5: #5E67C2;                          /* Routine indigo */
+
+  --radius: 0.625rem;
+
+  /* ─── Sidebar ─── */
+  --sidebar: #1A1C1C;                          /* dark near-black sidebar */
+  --sidebar-foreground: #F0DDD9;              /* warm light text */
+  --sidebar-primary: #AF101A;                  /* brand red */
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #AF101A;                   /* active state = brand red */
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #3D2E2C;                   /* warm dark border */
+  --sidebar-ring: #AF101A;
 }
 
 .dark {
-  --background: oklch(0.15 0.01 20);          /* Dark warm bg */
-  --foreground: oklch(0.97 0.005 20);         /* Light text */
-  --card: oklch(0.2 0.01 20);                 /* Dark card */
-  --card-foreground: oklch(0.97 0.005 20);
-  --popover: oklch(0.2 0.01 20);
-  --popover-foreground: oklch(0.97 0.005 20);
-  --primary: oklch(0.65 0.15 25);             /* Lighter maroon for dark */
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.25 0.01 20);
-  --secondary-foreground: oklch(0.97 0.005 20);
-  --muted: oklch(0.25 0.01 20);
-  --muted-foreground: oklch(0.7 0.01 260);
-  --accent: oklch(0.25 0.01 20);
-  --accent-foreground: oklch(0.97 0.005 20);
-  --destructive: oklch(0.6 0.2 25);
-  --border: oklch(0.3 0.01 20);
-  --input: oklch(0.3 0.01 20);
-  --ring: oklch(0.65 0.15 25);
-  --chart-1: oklch(0.65 0.15 25);
-  --chart-2: oklch(0.6 0.2 25);
-  --chart-3: oklch(0.75 0.17 75);
-  --chart-4: oklch(0.6 0.17 145);
-  --chart-5: oklch(0.65 0.13 280);
-  --sidebar: oklch(0.2 0.015 20);
-  --sidebar-foreground: oklch(0.97 0.005 20);
-  --sidebar-primary: oklch(0.65 0.15 25);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.3 0.02 20);
-  --sidebar-accent-foreground: oklch(0.97 0.005 20);
-  --sidebar-border: oklch(0.3 0.01 20);
-  --sidebar-ring: oklch(0.65 0.15 25);
+  --background: #1A1C1C;
+  --foreground: #F9F9F9;
+  --card: #2A2220;
+  --card-foreground: #F9F9F9;
+  --popover: #2A2220;
+  --popover-foreground: #F9F9F9;
+  --primary: #FF6B6B;
+  --primary-foreground: #1A1C1C;
+  --secondary: #2A2220;
+  --secondary-foreground: #F9F9F9;
+  --muted: #2A2220;
+  --muted-foreground: #C4A9A5;
+  --accent: #3D2E2C;
+  --accent-foreground: #F9F9F9;
+  --destructive: #FF6B6B;
+  --border: #3D2E2C;
+  --input: #3D2E2C;
+  --ring: #FF6B6B;
+  --chart-1: #FF6B6B;
+  --chart-2: #FF8A8A;
+  --chart-3: #F89C00;
+  --chart-4: #4ADE80;
+  --chart-5: #818CF8;
+  --sidebar: #151313;
+  --sidebar-foreground: #F0DDD9;
+  --sidebar-primary: #FF6B6B;
+  --sidebar-primary-foreground: #1A1C1C;
+  --sidebar-accent: #3D2E2C;
+  --sidebar-accent-foreground: #F9F9F9;
+  --sidebar-border: #3D2E2C;
+  --sidebar-ring: #FF6B6B;
 }
 
 @layer base {
@@ -124,8 +139,51 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
   html {
-    @apply font-sans;
+    @apply font-sans scroll-smooth;
+  }
+
+  /* Tabular numbers for data-heavy interfaces */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ─── Premium Table Styles ─── */
+@layer components {
+  /* Warm row hover for all tables */
+  .warm-table-row {
+    @apply transition-colors duration-150;
+  }
+  .warm-table-row:hover {
+    background-color: #FFF8F7;
+  }
+
+  /* Emergency pulse animation — dramatic but not distracting */
+  @keyframes emergency-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  .emergency-pulse {
+    animation: emergency-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes emergency-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(186, 26, 26, 0.3); }
+    50% { box-shadow: 0 0 20px 4px rgba(186, 26, 26, 0.15); }
+  }
+  .emergency-glow {
+    animation: emergency-glow 2s ease-in-out infinite;
+  }
+
+  /* Smooth card hover lift */
+  .card-hover {
+    @apply transition-all duration-200 ease-out;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -4px rgba(90, 45, 40, 0.08), 0 4px 8px -2px rgba(90, 45, 40, 0.04);
   }
 }

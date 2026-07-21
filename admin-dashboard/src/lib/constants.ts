@@ -60,8 +60,9 @@ export const EVENT_CATEGORIES = [
 ] as const;
 
 // Tier visual config — shared between dashboard, broadcasts, history pages
+// Uses SSC-R brand palette: Emergency #BA1A1A, Important #F89C00, Routine #5E67C2
 export const TIER_CONFIG: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  emergency: { bg: "bg-[#FFDAD6]", text: "text-[#93000A]", border: "bg-[#DC2626]", label: "URGENT" },
-  important: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]", border: "bg-[#F59E0B]", label: "IMPORTANT" },
-  routine: { bg: "bg-[#DDE1FF]", text: "text-[#173BAB]", border: "bg-[#00288E]", label: "REGULAR" },
+  emergency: { bg: "bg-[#BA1A1A]/10", text: "text-[#BA1A1A]", border: "bg-[#BA1A1A]", label: "URGENT" },
+  important: { bg: "bg-[#F89C00]/10", text: "text-[#92400E]", border: "bg-[#F89C00]", label: "IMPORTANT" },
+  routine: { bg: "bg-[#5E67C2]/10", text: "text-[#3B41A0]", border: "bg-[#5E67C2]", label: "REGULAR" },
 };
