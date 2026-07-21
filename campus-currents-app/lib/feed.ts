@@ -82,37 +82,31 @@ export function formatRelativeTime(sentAt: string): string {
 const PAGE_SIZE = 20;
 
 /**
- * Fetches paginated broadcast feed with client-side audience filtering.
- * Uses range-based pagination (20 per page), ordered by sent_at desc.
- * Filters out deleted broadcasts server-side and applies audience targeting client-side.
+ * Fetches paginated broadcast feed using the server-side `get_broadcasts_for_student` RPC.
+ * The RPC handles audience filtering in SQL, ensuring each page returns exactly `page_size`
+ * matching broadcasts (no sparse pages from client-side filtering).
  */
 export function useBroadcastFeed(profile: Profile | null) {
   return useInfiniteQuery({
     queryKey: ['broadcasts', 'feed'],
     queryFn: async ({ pageParam = 0 }) => {
-      const from = pageParam * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
+      const offset = pageParam * PAGE_SIZE;
 
-      const { data, error } = await supabase
-        .from('broadcasts')
-        .select('*')
-        .eq('is_deleted', false)
-        .order('sent_at', { ascending: false })
-        .range(from, to);
+      const { data, error } = await supabase.rpc('get_broadcasts_for_student', {
+        p_program: profile?.program ?? '',
+        p_level: profile?.level ?? '',
+        p_year_level: profile?.year_level ?? 0,
+        p_page_size: PAGE_SIZE,
+        p_offset: offset,
+      });
 
       if (error) throw error;
 
-      // Apply client-side audience filtering
-      const filtered = (data ?? []).filter((broadcast) =>
-        matchesTargetAudience(broadcast.target_audience, {
-          program: profile?.program ?? null,
-          year_level: profile?.year_level ?? null,
-        })
-      );
+      const broadcasts = (data ?? []) as Broadcast[];
 
       return {
-        broadcasts: filtered,
-        nextPage: (data ?? []).length === PAGE_SIZE ? pageParam + 1 : undefined,
+        broadcasts,
+        nextPage: broadcasts.length === PAGE_SIZE ? pageParam + 1 : undefined,
       };
     },
     initialPageParam: 0,
