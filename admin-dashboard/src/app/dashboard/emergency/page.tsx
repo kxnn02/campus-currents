@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, User, Clock } from "lucide-react";
 import { TriggerEmergencyDialog } from "./trigger-emergency-dialog";
 import { ResolveEmergencyButton } from "./resolve-emergency-button";
+import { EmergencyAccountability } from "./emergency-accountability";
 
 function formatRelativeTime(date: string): string {
   const now = new Date();
@@ -36,6 +37,60 @@ export default async function EmergencyPage() {
     .in("status", ["resolved", "false_alarm"])
     .order("resolved_at", { ascending: false })
     .limit(10);
+
+  // Accountability data for each active emergency
+  const accountabilityMap: Record<string, {
+    counters: { reached: number; safe: number; needHelp: number; noResponse: number; notReached: number };
+    needHelpStudents: Array<{ id: string; first_name: string; last_name: string; program: string; year_level: number | null; section: string | null; phone_number: string | null }>;
+    totalStudentsWithTokens: number;
+  }> = {};
+
+  if (activeEmergencies && activeEmergencies.length > 0) {
+    // Count students with push tokens (denominator)
+    const { count: tokenCount } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .not("fcm_token", "is", null)
+      .eq("role", "student");
+
+    const totalStudentsWithTokens = tokenCount ?? 0;
+
+    for (const emergency of activeEmergencies) {
+      const broadcastId = emergency.broadcast_id;
+
+      // Fetch delivery receipts for this broadcast
+      const { data: receipts } = await supabase
+        .from("delivery_receipts")
+        .select("id, student_id, delivered_at, acknowledged_at, acknowledgment_type")
+        .eq("broadcast_id", broadcastId);
+
+      const allReceipts = receipts ?? [];
+      const reached = allReceipts.filter((r) => r.delivered_at !== null).length;
+      const safe = allReceipts.filter((r) => r.acknowledgment_type === "safe").length;
+      const needHelp = allReceipts.filter((r) => r.acknowledgment_type === "need_help").length;
+      const noResponse = reached - safe - needHelp;
+      const notReached = allReceipts.filter((r) => r.delivered_at === null).length;
+
+      // Fetch need_help student profiles
+      const { data: helpStudents } = await supabase
+        .from("delivery_receipts")
+        .select(
+          "student_id, profiles!student_id(id, first_name, last_name, program, year_level, section, phone_number)"
+        )
+        .eq("broadcast_id", broadcastId)
+        .eq("acknowledgment_type", "need_help");
+
+      const needHelpStudents = (helpStudents ?? [])
+        .map((row: any) => row.profiles)
+        .filter(Boolean);
+
+      accountabilityMap[broadcastId] = {
+        counters: { reached, safe, needHelp, noResponse, notReached },
+        needHelpStudents,
+        totalStudentsWithTokens,
+      };
+    }
+  }
 
   if (error) {
     return <div className="text-destructive">Error loading emergencies: {error.message}</div>;
@@ -85,9 +140,18 @@ export default async function EmergencyPage() {
                   <Badge variant="destructive" className="animate-pulse">ACTIVE</Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">{emergency.broadcasts?.body}</p>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">{emergency.broadcasts?.body}</p>
                 <ResolveEmergencyButton id={emergency.id} />
+                {accountabilityMap[emergency.broadcast_id] && (
+                  <EmergencyAccountability
+                    broadcastId={emergency.broadcast_id}
+                    totalStudentsWithTokens={accountabilityMap[emergency.broadcast_id].totalStudentsWithTokens}
+                    initialCounters={accountabilityMap[emergency.broadcast_id].counters}
+                    initialNeedHelpStudents={accountabilityMap[emergency.broadcast_id].needHelpStudents}
+                    startedAt={emergency.created_at}
+                  />
+                )}
               </CardContent>
             </Card>
           ))}
