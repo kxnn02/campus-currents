@@ -47,7 +47,8 @@ export default async function DashboardPage() {
     supabase
       .from("profiles")
       .select("*", { count: "exact", head: true })
-      .eq("role", "student"),
+      .eq("role", "student")
+      .not("fcm_token", "is", null),
     supabase
       .from("broadcasts")
       .select("*", { count: "exact", head: true })
@@ -190,7 +191,7 @@ export default async function DashboardPage() {
           <div>
             <p className="text-xs text-[#444653]">Audience Reach</p>
             <p className="text-xl font-semibold text-[#141B2B]">{studentCount?.toLocaleString() ?? 0}</p>
-            <p className="text-[10px] text-[#444653]">registered students</p>
+            <p className="text-[10px] text-[#444653]">students with push enabled</p>
           </div>
         </div>
         <div className="flex items-center gap-4 rounded border border-[#C4C5D5] bg-white p-4">
