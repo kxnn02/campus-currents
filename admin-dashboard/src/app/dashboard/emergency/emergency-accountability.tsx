@@ -14,15 +14,6 @@ import {
 
 // ------- Types -------
 
-interface DeliveryReceipt {
-  id: string;
-  student_id: string;
-  broadcast_id: string;
-  delivered_at: string | null;
-  acknowledged_at: string | null;
-  acknowledgment_type: "safe" | "need_help" | null;
-}
-
 interface NeedHelpStudent {
   id: string;
   first_name: string;
@@ -111,8 +102,8 @@ export function EmergencyAccountability({
 
     if (helpStudents) {
       const students: NeedHelpStudent[] = helpStudents
-        .map((row: any) => row.profiles)
-        .filter(Boolean);
+        .map((row: Record<string, unknown>) => row.profiles)
+        .filter(Boolean) as NeedHelpStudent[];
       setNeedHelpStudents(students);
     }
   }, [broadcastId]);
