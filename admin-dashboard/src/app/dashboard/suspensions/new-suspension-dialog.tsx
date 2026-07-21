@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import { createSuspension } from "./actions";
 import { PROGRAMS } from "@/lib/constants";
@@ -52,7 +53,6 @@ export function NewSuspensionDialog() {
       setReason("weather_typhoon");
     } catch (error) {
       toast.error("Failed to declare suspension");
-      console.error("Failed to create suspension:", error);
     } finally {
       setLoading(false);
     }
@@ -194,6 +194,19 @@ export function NewSuspensionDialog() {
                 <SelectItem value="pm_only">PM Only</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="custom_message">Custom Message (optional)</Label>
+            <Textarea
+              id="custom_message"
+              name="custom_message"
+              placeholder="Leave blank to use the auto-generated message template. If provided, this will be used as the broadcast body instead."
+              className="min-h-24"
+            />
+            <p className="text-xs text-muted-foreground">
+              If left empty, a human-readable message will be generated based on the source, scope, and reason.
+            </p>
           </div>
 
           <div className="flex justify-end gap-2">

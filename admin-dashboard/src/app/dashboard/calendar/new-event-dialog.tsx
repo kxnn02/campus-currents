@@ -40,7 +40,6 @@ export function NewEventDialog() {
       setAudienceType("all");
     } catch (error) {
       toast.error("Failed to create event");
-      console.error("Failed to create event:", error);
     } finally {
       setLoading(false);
     }

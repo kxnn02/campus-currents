@@ -28,6 +28,7 @@ export const queryKeys = {
   },
   suspensions: {
     today: () => ['suspensions', 'today'] as const,
+    active: () => ['suspensions', 'active'] as const,
   },
   calendar: {
     month: (year: number, month: number) => ['calendar', year, month] as const,

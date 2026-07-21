@@ -16,7 +16,6 @@ export function LiftSuspensionButton({ id }: { id: string }) {
       toast.success("Suspension lifted");
     } catch (error) {
       toast.error("Failed to lift suspension");
-      console.error("Failed to lift suspension:", error);
     } finally {
       setLoading(false);
     }

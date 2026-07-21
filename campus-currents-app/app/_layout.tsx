@@ -113,10 +113,15 @@ function RootLayoutNav() {
       // User is signed in — check if profile exists before redirecting to tabs
       checkProfileAndRedirect();
     } else if (!session && !inAuthGroup) {
+      // During an active emergency that hasn't been acknowledged, suppress auth redirect
+      // so unauthenticated students can still see the emergency overlay
+      if (activeEmergency?.status === 'active' && !hasAcknowledged) {
+        return;
+      }
       // User is not signed in but trying to access protected screen — redirect to login
       router.replace('/(auth)/login' as never);
     }
-  }, [session, initialized, segments]);
+  }, [session, initialized, segments, activeEmergency, hasAcknowledged]);
 
   // Register push notifications when user is authenticated
   useEffect(() => {
