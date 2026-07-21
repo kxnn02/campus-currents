@@ -10,8 +10,9 @@ import {
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { theme, useThemeColors } from '@/constants/Theme';
 import { useEventDetail, getCategoryColor } from '@/lib/calendar';
+import { useProfile } from '@/lib/profile';
 import ErrorState from '@/components/ErrorState';
-import { EventCategory } from '@/types/database';
+import { EventCategory, Program } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 
 function getCategoryLabel(category: EventCategory): string {
@@ -79,9 +80,26 @@ function getStorageUrl(attachmentUrl: string): string {
   return data.publicUrl;
 }
 
+/**
+ * If target_audience has a `programs` array and the student's program is NOT in it,
+ * returns a formatted string like "For BSIT, BSBA". Otherwise returns null.
+ */
+function getTargetProgramsLabel(
+  targetAudience: Record<string, unknown>,
+  studentProgram: Program | null
+): string | null {
+  if (targetAudience.all === true) return null;
+  const programs = targetAudience.programs;
+  if (!Array.isArray(programs) || programs.length === 0) return null;
+  // If student's program IS in the list, no need for the label
+  if (studentProgram && programs.includes(studentProgram)) return null;
+  return `For ${(programs as string[]).join(', ')}`;
+}
+
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useThemeColors();
+  const { profile } = useProfile();
   const { data: event, isLoading, isError, refetch } = useEventDetail(id ?? '');
   const [imageError, setImageError] = useState(false);
 
@@ -108,6 +126,7 @@ export default function EventDetailScreen() {
   }
 
   const categoryColor = getCategoryColor(event.category);
+  const programsLabel = getTargetProgramsLabel(event.target_audience, profile?.program ?? null);
 
   return (
     <>
@@ -141,6 +160,15 @@ export default function EventDetailScreen() {
               {getCategoryLabel(event.category)}
             </Text>
           </View>
+
+          {/* Target programs chip (informational — event is still visible) */}
+          {programsLabel && (
+            <View style={[styles.programsChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.programsChipText, { color: colors.textSecondary }]}>
+                {programsLabel}
+              </Text>
+            </View>
+          )}
 
           {/* Title */}
           <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
@@ -238,6 +266,18 @@ const styles = StyleSheet.create({
   categoryText: {
     ...theme.typography.caption,
     fontWeight: '600',
+  },
+  programsChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs + 2,
+    borderRadius: theme.radius['2xl'],
+    borderWidth: 1,
+    marginBottom: theme.spacing.md,
+  },
+  programsChipText: {
+    ...theme.typography.caption,
+    fontWeight: '500',
   },
   title: {
     ...theme.typography.h1,
