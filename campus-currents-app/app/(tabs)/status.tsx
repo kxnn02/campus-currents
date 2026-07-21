@@ -124,24 +124,26 @@ export default function StatusScreen() {
   const hasUpcoming = upcomingSuspensions.length > 0;
   const lastChecked = dataUpdatedAt ? new Date(dataUpdatedAt) : new Date();
 
-  // Derive three-state indicator: red (suspended today) → yellow (upcoming) → green (clear)
+  // Determine if the nearest upcoming suspension is TOMORROW (actionable tonight)
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  const tomorrow = new Date(Date.now() + 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  const isSuspendedTomorrow = upcomingSuspensions.some((s) => s.suspension_date === tomorrow);
+
+  // Hero indicator: red (today) → yellow (ONLY if tomorrow) → green (clear today)
+  // Suspensions further than tomorrow do NOT change the hero — they appear as cards below
   const indicatorStatus = isSuspendedToday
     ? 'suspended'
-    : hasUpcoming
+    : isSuspendedTomorrow
     ? 'monitoring'
     : 'on';
 
-  // Primary suspension to show details for (today takes priority, otherwise first upcoming)
-  const primarySuspension = isSuspendedToday
-    ? todaySuspensions[0]
-    : hasUpcoming
-    ? upcomingSuspensions[0]
-    : null;
+  // Primary suspension details: today's suspension (if any)
+  const primarySuspension = isSuspendedToday ? todaySuspensions[0] : null;
   const otherTodaySuspensions = todaySuspensions.slice(1);
 
-  // Format the upcoming suspension date for the indicator
-  const upcomingDate = hasUpcoming
-    ? new Date(upcomingSuspensions[0].suspension_date + 'T00:00:00')
+  // Format the upcoming suspension date for the indicator (only tomorrow)
+  const upcomingDate = isSuspendedTomorrow
+    ? new Date(tomorrow + 'T00:00:00')
     : null;
 
   return (
@@ -174,23 +176,9 @@ export default function StatusScreen() {
           upcomingDate={upcomingDate ?? undefined}
         />
 
-        {/* Suspension details — Bento grid style (matching Figma) */}
-        {primarySuspension && (
+        {/* Today's suspension details — Bento grid */}
+        {isSuspendedToday && primarySuspension && (
           <View style={styles.bentoGrid}>
-            {/* Show date prominently for upcoming suspensions */}
-            {!isSuspendedToday && hasUpcoming && (
-              <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Date</Text>
-                <Text style={[styles.bentoValue, { color: colors.text }]}>
-                  {new Date(primarySuspension.suspension_date + 'T00:00:00').toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                    timeZone: 'Asia/Manila',
-                  })}
-                </Text>
-              </View>
-            )}
             <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Source</Text>
               <Text style={[styles.bentoValue, { color: colors.text }]}>
@@ -222,7 +210,7 @@ export default function StatusScreen() {
         {otherTodaySuspensions.length > 0 && (
           <View style={styles.otherSection}>
             <Text style={[styles.otherTitle, { color: colors.textSecondary }]}>
-              Other active suspensions
+              Other active suspensions today
             </Text>
             {otherTodaySuspensions.map((suspension) => (
               <OtherSuspensionCard
@@ -234,37 +222,49 @@ export default function StatusScreen() {
           </View>
         )}
 
-        {/* Upcoming suspensions listed when today is already suspended */}
-        {isSuspendedToday && upcomingSuspensions.length > 0 && (
-          <View style={styles.otherSection}>
-            <Text style={[styles.otherTitle, { color: colors.textSecondary }]}>
-              Upcoming suspensions
+        {/* Upcoming suspensions — alert-style cards below the hero */}
+        {upcomingSuspensions.length > 0 && (
+          <View style={styles.upcomingSection}>
+            <Text style={[styles.upcomingSectionTitle, { color: colors.textSecondary }]}>
+              ⚠️  HEADS UP
             </Text>
-            {upcomingSuspensions.map((suspension) => (
-              <OtherSuspensionCard
-                key={suspension.id}
-                suspension={suspension}
-                colors={colors}
-                showDate
-              />
-            ))}
-          </View>
-        )}
-
-        {/* Additional upcoming suspensions when primary is monitoring */}
-        {!isSuspendedToday && upcomingSuspensions.length > 1 && (
-          <View style={styles.otherSection}>
-            <Text style={[styles.otherTitle, { color: colors.textSecondary }]}>
-              Other upcoming suspensions
-            </Text>
-            {upcomingSuspensions.slice(1).map((suspension) => (
-              <OtherSuspensionCard
-                key={suspension.id}
-                suspension={suspension}
-                colors={colors}
-                showDate
-              />
-            ))}
+            {upcomingSuspensions.map((suspension) => {
+              const suspDate = new Date(suspension.suspension_date + 'T00:00:00');
+              const daysAway = Math.ceil((suspDate.getTime() - new Date(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }) + 'T00:00:00').getTime()) / 86400000);
+              const isTomorrow = suspension.suspension_date === new Date(Date.now() + 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+              return (
+                <View
+                  key={suspension.id}
+                  style={[
+                    styles.upcomingCard,
+                    {
+                      backgroundColor: isTomorrow ? '#FEF3C7' : colors.surface,
+                      borderColor: isTomorrow ? '#F59E0B' : colors.border,
+                    },
+                  ]}
+                >
+                  <View style={[styles.upcomingStripe, { backgroundColor: isTomorrow ? '#F59E0B' : '#D97706' }]} />
+                  <View style={styles.upcomingContent}>
+                    <View style={styles.upcomingHeader}>
+                      <Text style={[styles.upcomingDate, { color: isTomorrow ? '#92400E' : colors.text }]}>
+                        {suspDate.toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          month: 'short',
+                          day: 'numeric',
+                          timeZone: 'Asia/Manila',
+                        })}
+                      </Text>
+                      <Text style={[styles.upcomingBadge, { color: isTomorrow ? '#92400E' : colors.textSecondary }]}>
+                        {isTomorrow ? 'Tomorrow' : `In ${daysAway} days`}
+                      </Text>
+                    </View>
+                    <Text style={[styles.upcomingDetails, { color: isTomorrow ? '#78350F' : colors.textSecondary }]}>
+                      {formatSuspensionSource(suspension.source)} · {formatSuspensionReason(suspension.reason)} · {formatSuspensionDuration(suspension.duration)}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
           </View>
         )}
 
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 28,
   },
-  // Other suspensions
+  // Other suspensions (today)
   otherSection: {
     width: '100%',
     marginTop: theme.spacing['2xl'],
@@ -417,6 +417,50 @@ const styles = StyleSheet.create({
   },
   otherCardDetail: {
     ...theme.typography.bodySmall,
+  },
+  // Upcoming suspensions section
+  upcomingSection: {
+    width: '100%',
+    marginTop: theme.spacing['2xl'],
+  },
+  upcomingSectionTitle: {
+    ...theme.typography.overline,
+    marginBottom: theme.spacing.md,
+    letterSpacing: 1,
+  },
+  upcomingCard: {
+    flexDirection: 'row' as const,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    overflow: 'hidden' as const,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.sm,
+  },
+  upcomingStripe: {
+    width: 5,
+  },
+  upcomingContent: {
+    flex: 1,
+    paddingVertical: theme.spacing.md + 2,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  upcomingHeader: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+    marginBottom: theme.spacing.xs,
+  },
+  upcomingDate: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+  },
+  upcomingBadge: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+  },
+  upcomingDetails: {
+    ...theme.typography.bodySmall,
+    lineHeight: 18,
   },
   infoText: {
     ...theme.typography.body,
