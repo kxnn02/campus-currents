@@ -1,63 +1,117 @@
-import { StyleSheet, View, Text, Switch, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, Switch, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme, useThemeColors } from '@/constants/Theme';
+import { supabase } from '@/lib/supabase';
+import { useProfile } from '@/lib/profile';
+import type { NotificationPreferences } from '@/types/database';
 
 const STORAGE_KEY = '@campus_currents:notification_preferences';
 
-interface NotificationPreferences {
-  school_events: boolean;
-  org_announcements: boolean;
-  seminars_workshops: boolean;
-  career_job_postings: boolean;
-  facilities_notices: boolean;
-}
-
 const DEFAULT_PREFERENCES: NotificationPreferences = {
-  school_events: true,
-  org_announcements: true,
-  seminars_workshops: true,
-  career_job_postings: true,
-  facilities_notices: true,
+  general: true,
+  event: true,
+  academic: true,
 };
 
 const CHANNEL_LABELS: Record<keyof NotificationPreferences, string> = {
-  school_events: 'School Events',
-  org_announcements: 'Org Announcements',
-  seminars_workshops: 'Seminars & Workshops',
-  career_job_postings: 'Career & Job Postings',
-  facilities_notices: 'Facilities Notices',
+  general: 'General Announcements',
+  event: 'Events & Activities',
+  academic: 'Academic Updates',
 };
+
+const CHANNEL_KEYS: Array<keyof NotificationPreferences> = ['general', 'event', 'academic'];
 
 export default function NotificationPreferencesScreen() {
   const colors = useThemeColors();
+  const { profile } = useProfile();
   const [preferences, setPreferences] = useState<NotificationPreferences>(DEFAULT_PREFERENCES);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setSyncing] = useState(false);
 
   useEffect(() => {
     loadPreferences();
-  }, []);
+  }, [profile]);
 
+  /**
+   * Load preferences on mount:
+   * 1. Try fetching from profiles.notification_preferences via Supabase
+   * 2. Fall back to AsyncStorage if fetch fails
+   * 3. Fall back to defaults if neither has data
+   */
   async function loadPreferences() {
+    setIsLoading(true);
     try {
+      if (profile?.id) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('notification_preferences')
+          .eq('id', profile.id)
+          .maybeSingle();
+
+        if (!error && data?.notification_preferences) {
+          const serverPrefs = data.notification_preferences as NotificationPreferences;
+          const merged = { ...DEFAULT_PREFERENCES, ...serverPrefs };
+          setPreferences(merged);
+          // Update local cache with server truth
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Fallback: read from AsyncStorage
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
-        setPreferences(JSON.parse(stored));
+        const parsed = JSON.parse(stored) as Partial<NotificationPreferences>;
+        // Migrate old keys: if stored data has old keys, start fresh with defaults
+        if ('school_events' in parsed || 'org_announcements' in parsed) {
+          setPreferences(DEFAULT_PREFERENCES);
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PREFERENCES));
+        } else {
+          setPreferences({ ...DEFAULT_PREFERENCES, ...parsed });
+        }
       }
     } catch {
       // Silently fail — defaults will be used
+    } finally {
+      setIsLoading(false);
     }
   }
 
-  async function togglePreference(key: keyof NotificationPreferences) {
+  /**
+   * Toggle a preference:
+   * 1. Update state immediately (optimistic)
+   * 2. Write to AsyncStorage (offline cache)
+   * 3. PATCH profiles.notification_preferences via Supabase
+   */
+  const togglePreference = useCallback(async (key: keyof NotificationPreferences) => {
     const updated = { ...preferences, [key]: !preferences[key] };
     setPreferences(updated);
+
+    // Write to AsyncStorage as offline cache
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     } catch {
-      // Silently fail — preference is still updated in memory for current session
+      // Silently fail — preference is still in memory
     }
-  }
+
+    // Sync to server
+    if (profile?.id) {
+      setSyncing(true);
+      try {
+        await supabase
+          .from('profiles')
+          .update({ notification_preferences: updated })
+          .eq('id', profile.id);
+      } catch {
+        // Silently fail — local cache is still correct, will sync next time
+      } finally {
+        setSyncing(false);
+      }
+    }
+  }, [preferences, profile]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
@@ -66,8 +120,7 @@ export default function NotificationPreferencesScreen() {
 
         <View style={[styles.infoBox, { backgroundColor: colors.primaryBg, borderColor: colors.borderLight }]}>
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            Emergency and Important alerts cannot be muted — these keep you safe.
-            Routine channel preferences control which in-app notifications you see.
+            Emergency and Important alerts cannot be muted. These settings control which routine announcements send you push notifications.
           </Text>
         </View>
 
@@ -75,22 +128,32 @@ export default function NotificationPreferencesScreen() {
           Routine Channels
         </Text>
 
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          {(Object.keys(CHANNEL_LABELS) as Array<keyof NotificationPreferences>).map((key, index) => (
-            <View key={key}>
-              {index > 0 && <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />}
-              <View style={styles.row}>
-                <Text style={[styles.label, { color: colors.text }]}>{CHANNEL_LABELS[key]}</Text>
-                <Switch
-                  value={preferences[key]}
-                  onValueChange={() => togglePreference(key)}
-                  trackColor={{ false: colors.border, true: colors.tint }}
-                  thumbColor="#FFFFFF"
-                />
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={colors.tint} />
+          </View>
+        ) : (
+          <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            {CHANNEL_KEYS.map((key, index) => (
+              <View key={key}>
+                {index > 0 && <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />}
+                <View style={styles.row}>
+                  <Text style={[styles.label, { color: colors.text }]}>{CHANNEL_LABELS[key]}</Text>
+                  <Switch
+                    value={preferences[key]}
+                    onValueChange={() => togglePreference(key)}
+                    trackColor={{ false: colors.border, true: colors.tint }}
+                    thumbColor="#FFFFFF"
+                  />
+                </View>
               </View>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        )}
+
+        {isSyncing && (
+          <Text style={[styles.syncText, { color: colors.textSecondary }]}>Saving...</Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -142,5 +205,15 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginHorizontal: theme.spacing.lg,
+  },
+  loadingContainer: {
+    paddingVertical: theme.spacing['2xl'],
+    alignItems: 'center',
+  },
+  syncText: {
+    ...theme.typography.body,
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: theme.spacing.md,
   },
 });
