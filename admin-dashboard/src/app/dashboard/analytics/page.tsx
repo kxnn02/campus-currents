@@ -49,11 +49,12 @@ export default async function AnalyticsPage() {
     }
   }
 
-  // Get total students for context
+  // Get students who can receive push notifications (honest denominator)
   const { count: totalStudents } = await supabase
     .from("profiles")
     .select("*", { count: "exact", head: true })
-    .eq("role", "student");
+    .eq("role", "student")
+    .not("fcm_token", "is", null);
 
   return (
     <div className="space-y-6">
@@ -67,11 +68,11 @@ export default async function AnalyticsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+            <CardTitle className="text-sm font-medium">Reachable Students</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalStudents ?? 0}</div>
-            <CardDescription>Registered student accounts</CardDescription>
+            <CardDescription>Students with push notifications enabled</CardDescription>
           </CardContent>
         </Card>
         <Card>
