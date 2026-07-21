@@ -74,3 +74,8 @@ admin-dashboard/.next/
 # ===================
 campus-currents-website/.next/
 campus-currents-website/out/
+
+# ===================
+# Supabase
+# ===================
+supabase/.temp/
