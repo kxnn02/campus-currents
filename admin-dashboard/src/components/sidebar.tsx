@@ -75,20 +75,20 @@ export function Sidebar({ profile: _profile }: { profile: Profile }) {
   const sidebarContent = (
     <>
       {/* Brand Header */}
-      <div className="px-4 pt-6 pb-9">
-        <div className="flex items-center gap-2 px-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded">
+      <div className="px-5 pt-7 pb-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
             <img
               src="/logo.png"
               alt="CampusCurrents"
-              className="h-10 w-10 object-contain"
+              className="h-8 w-8 object-contain"
             />
           </div>
           <div>
-            <h1 className="text-[20px] font-bold leading-7 text-[#8E0002]">
+            <h1 className="text-[17px] font-bold leading-tight text-white tracking-tight">
               CampusCurrents
             </h1>
-            <p className="text-[12px] font-normal uppercase tracking-[0.6px] text-[#444653]">
+            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#E4BEBA]/70">
               Emergency Systems
             </p>
           </div>
@@ -96,7 +96,7 @@ export function Sidebar({ profile: _profile }: { profile: Profile }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-2 overflow-y-auto">
+      <nav className="flex-1 space-y-0.5 px-3 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -106,13 +106,13 @@ export function Sidebar({ profile: _profile }: { profile: Profile }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-4 rounded px-4 py-2 text-sm font-semibold transition-all duration-150",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150",
                 isActive
-                  ? "bg-[#8D1515] text-white"
-                  : "text-[#444653] hover:bg-[#8D1515]/10 hover:text-[#8D1515]"
+                  ? "bg-[#AF101A] text-white shadow-md shadow-[#AF101A]/20"
+                  : "text-[#F0DDD9]/80 hover:bg-white/[0.06] hover:text-white"
               )}
             >
-              <item.icon className="h-[18px] w-[18px]" />
+              <item.icon className={cn("h-[18px] w-[18px] shrink-0", isActive ? "text-white" : "text-[#E4BEBA]/60")} />
               {item.label}
             </Link>
           );
@@ -120,41 +120,42 @@ export function Sidebar({ profile: _profile }: { profile: Profile }) {
       </nav>
 
       {/* Bottom section */}
-      <div className="border-t border-[#C4C5D5] px-4 pt-4 pb-4">
-        <div className="border-t border-[#C4C5D5] pt-6 space-y-1">
-          {/* Emergency Alert Button */}
-          <button
-            onClick={() => router.push("/dashboard/emergency")}
-            className="w-full rounded bg-[#DC2626] py-4 text-center text-base font-bold text-white shadow-lg transition-colors hover:bg-[#DC2626]/90 flex items-center justify-center gap-2"
-          >
-            <AlertTriangle className="h-[17px] w-[17px]" />
-            Emergency Alert
-          </button>
+      <div className="px-3 pb-5 pt-4">
+        {/* Emergency Alert Button */}
+        <button
+          onClick={() => router.push("/dashboard/emergency")}
+          className="w-full rounded-lg bg-[#BA1A1A] py-3 text-center text-sm font-bold text-white shadow-lg shadow-[#BA1A1A]/25 transition-all duration-200 hover:bg-[#DC2626] hover:shadow-[#DC2626]/30 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+        >
+          <AlertTriangle className="h-4 w-4" />
+          Emergency Alert
+        </button>
 
-          {/* Help & Support links */}
-          <Link
-            href="/dashboard/settings"
-            className="flex items-center gap-4 px-2 pt-7 pb-2 text-base font-normal text-[#444653] hover:text-[#8D1515] transition-colors"
-          >
-            <HelpCircle className="h-5 w-5" />
-            Help Center
-          </Link>
-          <Link
-            href="/dashboard/settings"
-            className="flex items-center gap-4 px-2 py-2 text-base font-normal text-[#444653] hover:text-[#8D1515] transition-colors"
-          >
-            <Headphones className="h-[17px] w-5" />
-            Support
-          </Link>
-        </div>
+        {/* Divider */}
+        <div className="my-4 border-t border-white/[0.08]" />
+
+        {/* Help & Support links */}
+        <Link
+          href="/dashboard/settings"
+          className="flex items-center gap-3 px-3 py-2 text-[13px] font-normal text-[#F0DDD9]/60 hover:text-[#F0DDD9] transition-colors rounded-lg hover:bg-white/[0.04]"
+        >
+          <HelpCircle className="h-4 w-4" />
+          Help Center
+        </Link>
+        <Link
+          href="/dashboard/settings"
+          className="flex items-center gap-3 px-3 py-2 text-[13px] font-normal text-[#F0DDD9]/60 hover:text-[#F0DDD9] transition-colors rounded-lg hover:bg-white/[0.04]"
+        >
+          <Headphones className="h-4 w-4" />
+          Support
+        </Link>
 
         {/* Sign Out */}
-        <div className="pt-8">
+        <div className="mt-4 pt-4 border-t border-white/[0.08]">
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-4 text-sm font-semibold text-[#BA1A1A] hover:text-[#8E0002] transition-colors"
+            className="flex items-center gap-3 px-3 py-2 text-[13px] font-medium text-[#E4BEBA]/70 hover:text-[#FF8A8A] transition-colors rounded-lg hover:bg-white/[0.04] w-full"
           >
-            <LogOut className="h-[18px] w-[18px]" />
+            <LogOut className="h-4 w-4" />
             Sign Out
           </button>
         </div>
@@ -167,16 +168,16 @@ export function Sidebar({ profile: _profile }: { profile: Profile }) {
       {/* Mobile hamburger button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-50 rounded-lg bg-white p-2 shadow-md border border-[#C4C5D5] md:hidden"
+        className="fixed top-4 left-4 z-50 rounded-lg bg-white p-2 shadow-md border border-[#E4BEBA] md:hidden"
         aria-label="Open menu"
       >
-        <Menu className="h-5 w-5 text-[#444653]" />
+        <Menu className="h-5 w-5 text-[#1A1C1C]" />
       </button>
 
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/30 md:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -184,22 +185,22 @@ export function Sidebar({ profile: _profile }: { profile: Profile }) {
       {/* Mobile sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col border-r border-[#C4C5D5] bg-[#FFF1F1] transition-transform duration-200 md:hidden",
+          "fixed inset-y-0 left-0 z-50 flex w-[272px] flex-col bg-[#1A1C1C] transition-transform duration-200 md:hidden",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <button
           onClick={() => setMobileOpen(false)}
-          className="absolute top-4 right-4 rounded-md p-1 hover:bg-[#8D1515]/10"
+          className="absolute top-5 right-4 rounded-md p-1 hover:bg-white/10"
           aria-label="Close menu"
         >
-          <X className="h-5 w-5 text-[#444653]" />
+          <X className="h-5 w-5 text-[#F0DDD9]/70" />
         </button>
         {sidebarContent}
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-[280px] flex-col border-r border-[#C4C5D5] bg-[#FFF1F1]">
+      <aside className="hidden md:flex w-[264px] flex-col bg-[#1A1C1C] shadow-xl shadow-black/10">
         {sidebarContent}
       </aside>
     </>
