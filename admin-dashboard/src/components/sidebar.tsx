@@ -19,6 +19,7 @@ import {
   Users,
   BarChart3,
   MessageSquare,
+  Bug,
   Menu,
   X,
 } from "lucide-react";
@@ -43,6 +44,7 @@ const navItems = [
   { href: "/dashboard/students", label: "Students", icon: Users },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/feedback", label: "Feedback", icon: MessageSquare },
+  { href: "/dashboard/bugs", label: "Bug Reports", icon: Bug },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
