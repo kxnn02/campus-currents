@@ -3,11 +3,13 @@ import { StyleSheet, Platform } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { theme, useThemeColors } from '@/constants/Theme';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useUnreadCount } from '@/lib/feed';
 import { useSuspensionBadge } from '@/lib/suspension-badge';
+import { useRealtimeBroadcasts, useRealtimeSuspensions } from '@/lib/realtime';
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
@@ -22,6 +24,11 @@ export default function TabLayout() {
   const { count } = useUnreadCount();
   const { hasSuspension } = useSuspensionBadge();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+
+  // Wire up realtime subscriptions — live updates while tabs are mounted
+  useRealtimeBroadcasts(queryClient);
+  useRealtimeSuspensions(queryClient);
 
   // Ensure bottom padding respects the device's navigation bar (gesture bar, soft keys)
   // On Android devices without a notch, insets.bottom is 0, so use a minimum padding

@@ -248,7 +248,7 @@ export default async function DashboardPage() {
             <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Title</div>
             <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Sent</div>
             <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Delivered</div>
-            <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Read</div>
+            <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Opened</div>
             <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]"></div>
           </div>
 
@@ -390,13 +390,13 @@ export default async function DashboardPage() {
           <div className="mb-5">
             <h3 className="text-sm font-semibold text-[#1A1C1C]">Student Engagement</h3>
             <p className="text-[11px] text-[#5B403D] mt-0.5">
-              Broadcast reads per day — indicates student responsiveness
+              Broadcasts opened per day — indicates student responsiveness
             </p>
           </div>
           <div
             className="flex items-end justify-between gap-3 h-[130px]"
             role="img"
-            aria-label={`Bar chart showing read engagement over last 5 days. Total: ${last5Days.reduce((sum, d) => sum + d.readCount, 0)} reads.`}
+            aria-label={`Bar chart showing opened engagement over last 5 days. Total: ${last5Days.reduce((sum, d) => sum + d.readCount, 0)} opened.`}
           >
             {last5Days.map((day, i) => {
               const pct = Math.max(10, Math.round((day.readCount / maxRead) * 100));
@@ -417,7 +417,7 @@ export default async function DashboardPage() {
           </div>
           <div className="mt-4 pt-3 border-t border-[#F0DDD9] flex items-center justify-between">
             <span className="text-xs text-[#5B403D]">
-              Total reads this week: <span className="font-bold text-[#1A1C1C] tabular-nums">{last5Days.reduce((sum, d) => sum + d.readCount, 0).toLocaleString()}</span>
+              Total opened this week: <span className="font-bold text-[#1A1C1C] tabular-nums">{last5Days.reduce((sum, d) => sum + d.readCount, 0).toLocaleString()}</span>
             </span>
             <Link href="/dashboard/analytics" className="text-xs font-bold text-[#AF101A] hover:text-[#8B0D15] transition-colors">
               Full Analytics →
