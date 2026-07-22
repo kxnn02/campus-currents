@@ -1,4 +1,4 @@
-# CampusCurrents — Complete Team Guide
+1# CampusCurrents — Complete Team Guide
 
 > This guide covers everything you need to set up the project on your computer, run both apps, test on your phone, and understand how the system works.
 

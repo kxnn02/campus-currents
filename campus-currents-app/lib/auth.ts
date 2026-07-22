@@ -11,8 +11,16 @@ const ALLOWED_DOMAIN = 'sscrmnl.edu.ph';
 const EMERGENCY_ACK_PREFIX = '@campus_currents:emergency_ack_';
 
 /**
+ * Checks if an email belongs to the SSC-R school domain.
+ */
+export function isSchoolEmail(email: string | undefined | null): boolean {
+  return !!email && email.endsWith(`@${ALLOWED_DOMAIN}`);
+}
+
+/**
  * Extract session from the OAuth callback URL.
  * Called when the app receives a deep link after Google OAuth.
+ * Allows ALL Google accounts — domain check is only used for role assignment.
  */
 export async function createSessionFromUrl(url: string) {
   const { params, errorCode } = QueryParams.getQueryParams(url);
@@ -32,18 +40,13 @@ export async function createSessionFromUrl(url: string) {
 
   if (error) throw error;
 
-  const email = data.session?.user?.email;
-  if (email && !email.endsWith(`@${ALLOWED_DOMAIN}`)) {
-    await supabase.auth.signOut();
-    throw new Error('Please use your SSC-R school email (@sscrmnl.edu.ph) to sign in.');
-  }
-
   return data.session;
 }
 
 /**
  * Sign in with Google OAuth via Supabase.
  * Opens the SYSTEM browser (Chrome) for auth — most reliable on Android.
+ * Allows any Google account — SSC-R and non-SSC-R users alike.
  */
 export async function signInWithGoogle() {
   const redirectTo = Linking.createURL('/auth-callback');
@@ -52,9 +55,6 @@ export async function signInWithGoogle() {
     provider: 'google',
     options: {
       redirectTo,
-      queryParams: {
-        hd: ALLOWED_DOMAIN,
-      },
     },
   });
 

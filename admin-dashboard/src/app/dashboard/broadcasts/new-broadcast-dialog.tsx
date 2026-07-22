@@ -195,6 +195,18 @@ export function NewBroadcastDialog() {
               <Label htmlFor="is_pinned">Pin this broadcast</Label>
             </div>
 
+            {/* Image/Poster Upload */}
+            <div className="space-y-2">
+              <Label htmlFor="image">Image / Poster (optional)</Label>
+              <Input
+                id="image"
+                name="image"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+              />
+              <p className="text-xs text-muted-foreground">Max 2MB. Displayed on the announcement card in the student feed.</p>
+            </div>
+
             {/* Push Notification Preview */}
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground uppercase tracking-wider">Notification Preview</Label>
