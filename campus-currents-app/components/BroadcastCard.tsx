@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Broadcast, NotificationTier } from '@/types/database';
 import { formatRelativeTime } from '@/lib/feed';
@@ -26,18 +26,25 @@ const tierLabels: Record<NotificationTier, string> = {
 /**
  * BroadcastCard displays a single broadcast in the feed.
  *
- * Design principles applied (from mobile-app-ui-design skill):
+ * Features:
  * - 4px colored left border for tier visual hierarchy
- * - Title emphasized over tier label (values > labels anti-pattern fix)
- * - Soft shadow matched to surface (not harsh black)
- * - 8-point grid spacing throughout
- * - Pressable with scale feedback for tactile feel (emotional micro-interaction)
+ * - Optional image/poster with responsive 16:9 aspect ratio
+ * - Graceful image loading with placeholder
+ * - Title emphasized over tier label
  * - Clear 3-level text hierarchy: title → body → metadata
+ * - Works on all screen sizes (uses percentage-based image width)
  */
 export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
   const colors = useThemeColors();
+  const { width: screenWidth } = useWindowDimensions();
   const borderColor = tierColors[broadcast.tier] ?? theme.colors.tier.routine;
   const tierLabel = tierLabels[broadcast.tier] ?? 'Routine';
+  const [imageError, setImageError] = useState(false);
+
+  const hasImage = !!broadcast.image_url && !imageError;
+  // Card content width = screen - horizontal margins (16*2) - card padding (20+16) - border (4)
+  const imageWidth = screenWidth - 32 - 36 - 4;
+  const imageHeight = imageWidth * (9 / 16); // 16:9 aspect ratio
 
   return (
     <Pressable
@@ -73,8 +80,8 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
           )}
         </View>
 
-        {/* Title — highest visual weight (values > labels) */}
-        <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+        {/* Title — highest visual weight */}
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
           {broadcast.title}
         </Text>
 
@@ -82,6 +89,19 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
         <Text style={[styles.body, { color: colors.textSecondary }]} numberOfLines={2}>
           {broadcast.body}
         </Text>
+
+        {/* Image/Poster — responsive 16:9 container */}
+        {hasImage && (
+          <View style={[styles.imageContainer, { borderColor: colors.borderLight }]}>
+            <Image
+              source={{ uri: broadcast.image_url! }}
+              style={[styles.image, { width: imageWidth, height: imageHeight }]}
+              resizeMode="cover"
+              onError={() => setImageError(true)}
+              accessibilityLabel={`Image for: ${broadcast.title}`}
+            />
+          </View>
+        )}
 
         {/* Bottom row: timestamp + channel pill */}
         <View style={styles.bottomRow}>
@@ -98,12 +118,13 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 4,
+    borderRadius: 12,
     borderLeftWidth: 4,
     borderLeftColor: theme.colors.tier.routine,
     borderWidth: 1,
     marginHorizontal: theme.spacing.lg,
     marginVertical: theme.spacing.sm + 2,
+    overflow: 'hidden',
     ...theme.shadows.sm,
   },
   cardPressed: {
@@ -120,7 +141,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm + 2,
   },
   tierPill: {
     paddingHorizontal: theme.spacing.sm + 2,
@@ -132,16 +153,28 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   title: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '700',
-    lineHeight: 28,
-    marginBottom: theme.spacing.sm,
+    lineHeight: 24,
+    marginBottom: theme.spacing.xs + 2,
+    letterSpacing: -0.2,
   },
   body: {
-    ...theme.typography.bodyLarge,
-    lineHeight: 24,
-    marginBottom: theme.spacing.lg,
+    ...theme.typography.body,
+    lineHeight: 22,
+    marginBottom: theme.spacing.md,
   },
+  // Image
+  imageContainer: {
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+  },
+  image: {
+    borderRadius: 9,
+  },
+  // Bottom row
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
