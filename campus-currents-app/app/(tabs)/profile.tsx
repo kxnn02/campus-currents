@@ -184,6 +184,13 @@ export default function ProfileScreen() {
           />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
           <MenuRow
+            icon="bug-outline"
+            label="Report a Bug"
+            onPress={() => router.push('/report-bug' as never)}
+            colors={colors}
+          />
+          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <MenuRow
             icon="log-out-outline"
             label="Sign Out"
             onPress={handleSignOut}
