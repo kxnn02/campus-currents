@@ -233,15 +233,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollContent: {
-    paddingBottom: theme.spacing['4xl'],
+    paddingBottom: theme.spacing['5xl'],
   },
   posterImage: {
     width: '100%',
-    height: 220,
+    aspectRatio: 16 / 9,
   },
   posterPlaceholder: {
     width: '100%',
-    height: 220,
+    aspectRatio: 16 / 9,
     justifyContent: 'center',
     alignItems: 'center',
   },

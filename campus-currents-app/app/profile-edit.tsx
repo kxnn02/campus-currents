@@ -3,6 +3,7 @@ import {
   StyleSheet,
   View,
   Text,
+  TextInput,
   Pressable,
   ScrollView,
   Alert,
@@ -379,23 +380,28 @@ export default function ProfileEditScreen() {
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.text }]}>Phone Number</Text>
             <View style={styles.phoneRow}>
-              <View style={[styles.phonePrefix, { borderColor: colors.border, backgroundColor: colors.background }]}>
+              <View style={[styles.phonePrefix, { borderColor: errors.phone_number ? colors.error : colors.border, backgroundColor: colors.background }]}>
                 <Text style={[styles.phonePrefixText, { color: colors.text }]}>+63</Text>
               </View>
               <View style={styles.phoneInputWrapper}>
-                <FormField
-                  label=""
+                <TextInput
+                  style={[
+                    styles.phoneInput,
+                    { borderColor: errors.phone_number ? colors.error : colors.border, backgroundColor: colors.surface, color: colors.text },
+                  ]}
                   value={phoneNumber}
                   onChangeText={(text) => {
                     setPhoneNumber(text);
                     if (errors.phone_number) setErrors((prev) => ({ ...prev, phone_number: '' }));
                   }}
-                  error={errors.phone_number}
                   placeholder="9XXXXXXXXX"
+                  placeholderTextColor={colors.textTertiary}
                   keyboardType="phone-pad"
+                  accessibilityLabel="Phone Number"
                 />
               </View>
             </View>
+            {errors.phone_number ? <Text style={[styles.errorText, { color: colors.error }]}>{errors.phone_number}</Text> : null}
           </View>
           )}
 
@@ -467,14 +473,14 @@ const styles = StyleSheet.create({
   },
   phoneRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: theme.spacing.sm,
   },
   phonePrefix: {
     borderWidth: 1,
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
+    height: 44,
     justifyContent: 'center',
   },
   phonePrefixText: {
@@ -483,6 +489,13 @@ const styles = StyleSheet.create({
   },
   phoneInputWrapper: {
     flex: 1,
+  },
+  phoneInput: {
+    borderWidth: 1,
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    height: 44,
+    fontSize: 15,
   },
   saveContainer: {
     marginTop: theme.spacing.lg,

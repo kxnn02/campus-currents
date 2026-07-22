@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: theme.spacing.xl,
-    paddingBottom: theme.spacing['4xl'],
+    paddingBottom: theme.spacing['5xl'],
   },
   badgeRow: {
     flexDirection: 'row',
