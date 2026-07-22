@@ -18,6 +18,7 @@ import {
   Radio,
   Users,
   BarChart3,
+  MessageSquare,
   Menu,
   X,
 } from "lucide-react";
@@ -41,6 +42,7 @@ const navItems = [
   { href: "/dashboard/delivery", label: "Delivery Monitor", icon: Radio },
   { href: "/dashboard/students", label: "Students", icon: Users },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/dashboard/feedback", label: "Feedback", icon: MessageSquare },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

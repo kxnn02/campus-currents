@@ -59,7 +59,7 @@ export default function LoginScreen() {
           </Pressable>
 
           <Text style={[styles.emailHint, { color: colors.textSecondary }]}>
-            Use your @sscrmnl.edu.ph email
+            SSC-R students use @sscrmnl.edu.ph • Guests use any Google account
           </Text>
 
           {/* Emergency consent notice (matches Figma) */}

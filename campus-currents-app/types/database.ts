@@ -49,6 +49,7 @@ export interface Broadcast {
   target_audience: Record<string, unknown>;
   is_pinned: boolean;
   linked_event_id: string | null;
+  image_url: string | null;
   is_deleted: boolean;
   version: number;
   school_id: string;

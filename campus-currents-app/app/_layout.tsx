@@ -174,20 +174,29 @@ function RootLayoutNav() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, program, year_level')
+        .select('id, program, year_level, first_name')
         .eq('id', session!.user.id)
         .maybeSingle();
 
       if (error || !data) {
         // No profile row at all — redirect to profile completion
         router.replace('/profile-completion' as never);
-      } else if (!data.program || !data.year_level) {
-        // Profile exists but incomplete (missing program/year) — redirect to profile completion
+      } else if (!data.first_name) {
+        // Profile exists but no name set — redirect to profile completion
         router.replace('/profile-completion' as never);
       } else {
-        // Profile exists and is complete — check for active emergency with prior acknowledgment
-        const destination = await getPostLaunchDestination();
-        router.replace(destination as never);
+        // For SSC-R students: require program and year_level
+        // For non-SSC-R users: first_name is sufficient (they won't have program)
+        const email = session!.user.email ?? '';
+        const isSchool = email.endsWith('@sscrmnl.edu.ph');
+
+        if (isSchool && (!data.program || !data.year_level)) {
+          router.replace('/profile-completion' as never);
+        } else {
+          // Profile is complete — check for active emergency with prior acknowledgment
+          const destination = await getPostLaunchDestination();
+          router.replace(destination as never);
+        }
       }
     } catch {
       // On error, redirect to profile completion (safe default)
@@ -241,6 +250,7 @@ function RootLayoutNav() {
         <Stack.Screen name="post-acknowledgment" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="profile-edit" options={{ title: 'Edit Profile' }} />
         <Stack.Screen name="notification-preferences" options={{ title: 'Notifications' }} />
+        <Stack.Screen name="feedback" options={{ title: 'Feedback' }} />
         <Stack.Screen name="broadcast-detail" options={{ title: 'Announcement' }} />
         <Stack.Screen name="event-detail" options={{ headerShown: true }} />
         <Stack.Screen
