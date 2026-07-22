@@ -19,6 +19,7 @@ import { BroadcastCard } from '@/components/BroadcastCard';
 import SkeletonCard from '@/components/SkeletonCard';
 import EmptyState from '@/components/EmptyState';
 import ErrorState from '@/components/ErrorState';
+import { useQueryClient } from '@tanstack/react-query';
 import { useBroadcastFeed, useUnreadCount } from '@/lib/feed';
 import { useProfile } from '@/lib/profile';
 import { Broadcast, NotificationTier } from '@/types/database';
@@ -36,6 +37,7 @@ export default function FeedScreen() {
   const colors = useThemeColors();
   const router = useRouter();
   const navigation = useNavigation();
+  const queryClient = useQueryClient();
 
   // Get profile from shared context
   const { profile, isLoading: profileLoading } = useProfile();
@@ -52,11 +54,11 @@ export default function FeedScreen() {
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       resetUnread();
-      // Refetch feed data on focus to pick up new broadcasts
-      feedQuery.refetch();
+      // Reset feed to fetch fresh data when tab is focused
+      queryClient.invalidateQueries({ queryKey: ['broadcasts', 'feed'] });
     });
     return unsubscribe;
-  }, [navigation, resetUnread, feedQuery]);
+  }, [navigation, resetUnread, queryClient]);
 
   const {
     data,
@@ -92,15 +94,16 @@ export default function FeedScreen() {
     [filteredBroadcasts]
   );
 
-  // Pull-to-refresh handler — triggers hard refetch
+  // Pull-to-refresh handler — resets and refetches from page 0
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await refetch();
+      // Remove existing pages and refetch from scratch
+      await queryClient.resetQueries({ queryKey: ['broadcasts', 'feed'] });
     } finally {
       setIsRefreshing(false);
     }
-  }, [refetch]);
+  }, []);
 
   // Infinite scroll — load next page
   const handleEndReached = useCallback(() => {

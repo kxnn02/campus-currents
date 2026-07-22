@@ -112,6 +112,7 @@ export function useBroadcastFeed(profile: Profile | null) {
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     staleTime: staleTimeConfig.broadcasts,
+    refetchOnMount: 'always',
     enabled: !!profile,
   });
 }
