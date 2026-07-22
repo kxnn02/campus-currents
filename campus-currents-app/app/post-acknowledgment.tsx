@@ -53,6 +53,15 @@ export default function PostAcknowledgmentScreen() {
                 },
               },
             ]);
+          } else if (newRecord.status === 'false_alarm') {
+            Alert.alert('ALERT CANCELLED', 'This was a false alarm. You may resume normal activities.', [
+              {
+                text: 'OK',
+                onPress: () => {
+                  router.replace('/(tabs)' as never);
+                },
+              },
+            ]);
           }
         }
       )

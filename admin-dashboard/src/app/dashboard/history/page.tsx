@@ -134,7 +134,7 @@ export default function HistoryPage() {
               <TableHead className="font-semibold text-[#444653]">Channel</TableHead>
               <TableHead className="font-semibold text-[#444653]">Sent At</TableHead>
               <TableHead className="font-semibold text-[#444653]">Delivered</TableHead>
-              <TableHead className="font-semibold text-[#444653]">Read</TableHead>
+              <TableHead className="font-semibold text-[#444653]">Opened</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

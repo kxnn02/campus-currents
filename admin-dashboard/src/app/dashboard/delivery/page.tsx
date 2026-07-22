@@ -109,7 +109,7 @@ export default async function DeliveryMonitorPage() {
             <p className="text-xl font-bold text-[#141B2B]">{deliveredCount.toLocaleString()}</p>
           </div>
           <div className="text-center border-x border-[#C4C5D5]/50">
-            <p className="text-xs text-[#444653]">Read</p>
+            <p className="text-xs text-[#444653]">Opened</p>
             <p className="text-xl font-bold text-[#141B2B]">{readCount.toLocaleString()}</p>
           </div>
           <div className="text-center">

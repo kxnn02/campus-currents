@@ -7,6 +7,7 @@ import {
   scopeToTargetAudience,
   generateSuspensionBody,
   generateSuspensionTitle,
+  formatScopeNatural,
   type SuspensionScope,
 } from "@/lib/suspension-utils";
 
@@ -82,16 +83,61 @@ export async function createSuspension(formData: FormData) {
 }
 
 export async function liftSuspension(id: string) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
   if (!id || typeof id !== "string") throw new Error("Invalid suspension ID");
 
+  // Fetch the suspension details before lifting — needed for the notification
+  const { data: suspension, error: fetchError } = await supabase
+    .from("class_suspensions")
+    .select("source, reason, scope, scope_detail, duration, suspension_date")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !suspension) throw new Error("Suspension not found");
+
+  // Update the suspension status to lifted
   const { error } = await supabase
     .from("class_suspensions")
     .update({ status: "lifted" })
     .eq("id", id);
 
   if (error) throw new Error(error.message);
+
+  // Send a "Classes Resumed" broadcast so affected students get a push notification
+  const targetAudience = scopeToTargetAudience(
+    suspension.scope as SuspensionScope,
+    suspension.scope_detail as { programs?: string[] } | null
+  );
+
+  const friendlyDate = new Date(suspension.suspension_date + "T00:00:00").toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const scopeLabel = formatScopeNatural(
+    suspension.scope as SuspensionScope,
+    suspension.scope_detail as { programs?: string[] } | null
+  );
+
+  const { error: broadcastError } = await supabase.from("broadcasts").insert({
+    sender_id: user.id,
+    title: `✅ Classes RESUMED — ${friendlyDate}`,
+    body: `The class suspension for ${scopeLabel} on ${friendlyDate} has been LIFTED. Classes will resume as normal. Please proceed to campus as scheduled.`,
+    tier: "important",
+    sub_priority: "urgent",
+    channel: "suspension",
+    is_pinned: false,
+    is_deleted: false,
+    target_audience: targetAudience,
+    sent_at: new Date().toISOString(),
+  });
+
+  if (broadcastError) {
+    console.error("Failed to send classes resumed broadcast:", broadcastError.message);
+    // Don't throw — the suspension is already lifted, the broadcast is supplementary
+  }
 
   revalidatePath("/dashboard/suspensions");
   revalidatePath("/dashboard");

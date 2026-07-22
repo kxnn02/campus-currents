@@ -16,6 +16,7 @@ export async function createEvent(formData: FormData) {
   const location = validateString(formData, "location", { required: false, maxLength: 200 });
   const organizerName = validateString(formData, "organizer_name", { required: false, maxLength: 100 });
   const targetAudience = parseAudience(formData);
+  const notifyStudents = formData.get("notify_students") === "true";
 
   const { data: eventData, error } = await supabase.from("calendar_events").insert({
     title,
@@ -52,6 +53,37 @@ export async function createEvent(formData: FormData) {
       }
     } catch {
       // Upload failed gracefully — event is still created
+    }
+  }
+
+  // Send a notification broadcast if "Notify students" was checked
+  if (notifyStudents && eventData?.id) {
+    const eventDate = new Date(startDate).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const locationText = location ? ` at ${location}` : "";
+    const bodyText = description
+      ? `${description.slice(0, 200)}${description.length > 200 ? "..." : ""}`
+      : `A new event has been scheduled for ${eventDate}${locationText}. Check your calendar for details.`;
+
+    const { error: broadcastError } = await supabase.from("broadcasts").insert({
+      sender_id: user.id,
+      title: `📅 ${title}`,
+      body: bodyText,
+      tier: "routine",
+      channel: "event",
+      is_pinned: false,
+      is_deleted: false,
+      target_audience: targetAudience,
+      linked_event_id: eventData.id,
+      sent_at: new Date().toISOString(),
+    });
+
+    if (broadcastError) {
+      console.error("Failed to send event notification:", broadcastError.message);
     }
   }
 
