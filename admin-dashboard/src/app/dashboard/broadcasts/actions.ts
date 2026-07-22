@@ -118,6 +118,17 @@ export async function updateBroadcast(id: string, formData: FormData) {
     if (image.size > 2 * 1024 * 1024) throw new Error("Image must be under 2MB");
 
     try {
+      // Delete any existing image first (handles different extensions)
+      const { data: existingBroadcast } = await supabase
+        .from("broadcasts")
+        .select("image_url")
+        .eq("id", id)
+        .single();
+      if (existingBroadcast?.image_url) {
+        const oldPath = extractStoragePath(existingBroadcast.image_url, "broadcast-images");
+        if (oldPath) await supabase.storage.from("broadcast-images").remove([oldPath]);
+      }
+
       const ext = image.name.split(".").pop() ?? "jpg";
       const filePath = `${id}.${ext}`;
       const buffer = Buffer.from(await image.arrayBuffer());
