@@ -177,6 +177,13 @@ export default function ProfileScreen() {
           />
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
           <MenuRow
+            icon="chatbubble-ellipses-outline"
+            label="Send Feedback"
+            onPress={() => router.push('/feedback' as never)}
+            colors={colors}
+          />
+          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <MenuRow
             icon="log-out-outline"
             label="Sign Out"
             onPress={handleSignOut}

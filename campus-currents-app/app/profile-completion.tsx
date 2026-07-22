@@ -10,10 +10,11 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { theme, useThemeColors } from '@/constants/Theme';
 import { supabase } from '@/lib/supabase';
+import { isSchoolEmail } from '@/lib/auth';
 import { Program, Level } from '@/types/database';
 import { deriveLevelFromProgram } from '@/lib/suspensions';
 
@@ -54,6 +55,7 @@ function validatePhoneNumber(phone: string): boolean {
 export default function ProfileCompletionScreen() {
   const colors = useThemeColors();
 
+  const [isSchoolUser, setIsSchoolUser] = useState(true);
   const [studentId, setStudentId] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -65,24 +67,50 @@ export default function ProfileCompletionScreen() {
   const [showProgramPicker, setShowProgramPicker] = useState(false);
   const [showYearPicker, setShowYearPicker] = useState(false);
 
+  // Detect whether user has a school email
+  useEffect(() => {
+    async function checkEmail() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        setIsSchoolUser(isSchoolEmail(session.user.email));
+        // Pre-fill name from Google account if available
+        const meta = session.user.user_metadata;
+        if (meta?.full_name) {
+          const parts = (meta.full_name as string).split(' ');
+          if (parts.length >= 2) {
+            setFirstName(parts[0]);
+            setLastName(parts.slice(1).join(' '));
+          } else {
+            setFirstName(meta.full_name as string);
+          }
+        }
+      }
+    }
+    checkEmail();
+  }, []);
+
   function validate(): boolean {
     const newErrors: Record<string, string> = {};
 
-    if (!studentId.trim()) {
-      newErrors.studentId = 'Student ID is required';
-    } else if (!validateStudentId(studentId.trim())) {
-      newErrors.studentId = 'Must be exactly 10 digits (e.g., 2024101291)';
-    }
-
     if (!firstName.trim()) newErrors.firstName = 'First name is required';
     if (!lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!program) newErrors.program = 'Program is required';
-    if (!yearLevel) newErrors.yearLevel = 'Year level is required';
 
-    if (!phoneNumber.trim()) {
-      newErrors.phoneNumber = 'Phone number is required';
-    } else if (!validatePhoneNumber(phoneNumber.trim())) {
-      newErrors.phoneNumber = 'Enter 10 digits after +63';
+    // SSC-R students need full academic details
+    if (isSchoolUser) {
+      if (!studentId.trim()) {
+        newErrors.studentId = 'Student ID is required';
+      } else if (!validateStudentId(studentId.trim())) {
+        newErrors.studentId = 'Must be exactly 10 digits (e.g., 2024101291)';
+      }
+
+      if (!program) newErrors.program = 'Program is required';
+      if (!yearLevel) newErrors.yearLevel = 'Year level is required';
+
+      if (!phoneNumber.trim()) {
+        newErrors.phoneNumber = 'Phone number is required';
+      } else if (!validatePhoneNumber(phoneNumber.trim())) {
+        newErrors.phoneNumber = 'Enter 10 digits after +63';
+      }
     }
 
     setErrors(newErrors);
@@ -101,24 +129,41 @@ export default function ProfileCompletionScreen() {
         return;
       }
 
-      const level = deriveLevelFromProgram(program!);
+      if (isSchoolUser) {
+        // Full student profile
+        const level = deriveLevelFromProgram(program!);
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: session.user.id,
-          email: session.user.email,
-          student_id: studentId.trim(),
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          program: program,
-          level: level,
-          year_level: yearLevel,
-          phone_number: `+63${phoneNumber.trim()}`,
-          role: 'student',
-        });
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({
+            id: session.user.id,
+            email: session.user.email,
+            student_id: studentId.trim(),
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            program: program,
+            level: level,
+            year_level: yearLevel,
+            phone_number: `+63${phoneNumber.trim()}`,
+            role: 'student',
+          });
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Guest/viewer profile — minimal info
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({
+            id: session.user.id,
+            email: session.user.email,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            role: 'student',
+            // program, level, year_level, student_id remain null
+          });
+
+        if (error) throw error;
+      }
 
       // Navigate to main tabs
       router.replace('/(tabs)' as never);
@@ -143,24 +188,37 @@ export default function ProfileCompletionScreen() {
         >
           <Text style={[styles.title, { color: colors.text }]}>Complete Your Profile</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            We need a few details to personalize your experience and target relevant announcements.
+            {isSchoolUser
+              ? 'We need a few details to personalize your experience and target relevant announcements.'
+              : 'Just a quick setup so we know what to call you.'}
           </Text>
 
-          {/* Student ID */}
-          <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.text }]}>Student ID</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.surface, borderColor: errors.studentId ? '#DC2626' : colors.border, color: colors.text }]}
-              placeholder="2024101291"
-              placeholderTextColor={colors.textSecondary}
-              value={studentId}
-              onChangeText={setStudentId}
-              autoCapitalize="none"
-              keyboardType="number-pad"
-              maxLength={10}
-            />
-            {errors.studentId && <Text style={styles.errorText}>{errors.studentId}</Text>}
-          </View>
+          {/* Guest info banner */}
+          {!isSchoolUser && (
+            <View style={[styles.guestBanner, { backgroundColor: '#EEF2FF', borderColor: '#C7D2FE' }]}>
+              <Text style={[styles.guestBannerText, { color: '#4338CA' }]}>
+                👋 Welcome! As a guest viewer, you'll see general campus announcements and emergency alerts.
+              </Text>
+            </View>
+          )}
+
+          {/* Student ID — school users only */}
+          {isSchoolUser && (
+            <View style={styles.field}>
+              <Text style={[styles.label, { color: colors.text }]}>Student ID</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.surface, borderColor: errors.studentId ? '#DC2626' : colors.border, color: colors.text }]}
+                placeholder="2024101291"
+                placeholderTextColor={colors.textSecondary}
+                value={studentId}
+                onChangeText={setStudentId}
+                autoCapitalize="none"
+                keyboardType="number-pad"
+                maxLength={10}
+              />
+              {errors.studentId && <Text style={styles.errorText}>{errors.studentId}</Text>}
+            </View>
+          )}
 
           {/* First Name */}
           <View style={styles.field}>
@@ -188,7 +246,8 @@ export default function ProfileCompletionScreen() {
             {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
           </View>
 
-          {/* Program Picker */}
+          {/* Program Picker — school users only */}
+          {isSchoolUser && (
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.text }]}>Program</Text>
             <Pressable
@@ -224,8 +283,10 @@ export default function ProfileCompletionScreen() {
             )}
             {errors.program && <Text style={styles.errorText}>{errors.program}</Text>}
           </View>
+          )}
 
-          {/* Year Level Picker */}
+          {/* Year Level Picker — school users only */}
+          {isSchoolUser && (
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.text }]}>Year Level</Text>
             <Pressable
@@ -254,8 +315,10 @@ export default function ProfileCompletionScreen() {
             )}
             {errors.yearLevel && <Text style={styles.errorText}>{errors.yearLevel}</Text>}
           </View>
+          )}
 
-          {/* Phone Number */}
+          {/* Phone Number — school users only */}
+          {isSchoolUser && (
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.text }]}>Phone Number</Text>
             <View style={styles.phoneRow}>
@@ -274,6 +337,7 @@ export default function ProfileCompletionScreen() {
             </View>
             {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
           </View>
+          )}
 
           {/* Submit */}
           <Pressable
@@ -297,6 +361,16 @@ const styles = StyleSheet.create({
   scrollContent: { padding: theme.spacing['2xl'], paddingBottom: theme.spacing['5xl'] },
   title: { ...theme.typography.h1, marginBottom: theme.spacing.sm },
   subtitle: { ...theme.typography.body, lineHeight: 20, marginBottom: theme.spacing['2xl'] + 4 },
+  guestBanner: {
+    borderWidth: 1,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md + 2,
+    marginBottom: theme.spacing.lg + 2,
+  },
+  guestBannerText: {
+    ...theme.typography.bodySmall,
+    lineHeight: 20,
+  },
   field: { marginBottom: theme.spacing.lg + 2 },
   label: { ...theme.typography.label, marginBottom: theme.spacing.xs + 2 },
   input: {
