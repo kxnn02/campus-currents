@@ -196,7 +196,9 @@ export function useAuth(): {
     };
   }, [clearEmergencyAckKeys, showSessionExpiredMessage, fetchProfile]);
 
-  const isProfileComplete = profile !== null && profile.program !== null;
+  const isProfileComplete = profile !== null && (
+    profile.program !== null || !profile.email?.endsWith('@sscrmnl.edu.ph')
+  );
 
   return {
     session,

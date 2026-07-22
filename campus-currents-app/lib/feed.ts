@@ -92,6 +92,7 @@ export function useBroadcastFeed(profile: Profile | null) {
     queryFn: async ({ pageParam = 0 }) => {
       const offset = pageParam * PAGE_SIZE;
 
+      // Try the RPC first (server-side audience filtering)
       const { data, error } = await supabase.rpc('get_broadcasts_for_student', {
         p_program: profile?.program ?? '',
         p_level: profile?.level ?? '',
@@ -100,7 +101,38 @@ export function useBroadcastFeed(profile: Profile | null) {
         p_offset: offset,
       });
 
-      if (error) throw error;
+      // If RPC fails, fall back to direct query with client-side filtering
+      if (error) {
+        // Fetch more than needed to account for client-side filtering
+        const fetchSize = PAGE_SIZE * 3;
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('broadcasts')
+          .select('*')
+          .eq('is_deleted', false)
+          .order('sent_at', { ascending: false })
+          .range(offset, offset + fetchSize - 1);
+
+        if (fallbackError) throw fallbackError;
+
+        const filtered = (fallbackData ?? []).filter((b: Record<string, unknown>) => {
+          const audience = b.target_audience as Record<string, unknown> | null;
+          if (!audience) return true;
+          if (audience.all === true) return true;
+          if (!profile?.program && !profile?.level) return audience.all === true;
+          return matchesTargetAudience(audience, {
+            program: profile?.program ?? null,
+            year_level: profile?.year_level ?? null,
+          });
+        }) as Broadcast[];
+
+        // Take only PAGE_SIZE results after filtering
+        const page = filtered.slice(0, PAGE_SIZE);
+
+        return {
+          broadcasts: page,
+          nextPage: page.length === PAGE_SIZE ? pageParam + 1 : undefined,
+        };
+      }
 
       const broadcasts = (data ?? []) as Broadcast[];
 
@@ -112,6 +144,7 @@ export function useBroadcastFeed(profile: Profile | null) {
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     staleTime: staleTimeConfig.broadcasts,
+    refetchOnMount: 'always',
     enabled: !!profile,
   });
 }

@@ -41,9 +41,10 @@ export async function createEvent(formData: FormData) {
     if (poster.size > 5 * 1024 * 1024) throw new Error("Poster file must be under 5MB");
     try {
       const filePath = `${eventData.id}/${poster.name}`;
+      const buffer = Buffer.from(await poster.arrayBuffer());
       const { error: uploadError } = await supabase.storage
         .from("event-posters")
-        .upload(filePath, poster);
+        .upload(filePath, buffer, { contentType: poster.type });
 
       if (!uploadError) {
         await supabase
@@ -129,9 +130,10 @@ export async function updateEvent(id: string, formData: FormData) {
     if (poster.size > 5 * 1024 * 1024) throw new Error("Poster file must be under 5MB");
     try {
       const filePath = `${id}/${poster.name}`;
+      const buffer = Buffer.from(await poster.arrayBuffer());
       const { error: uploadError } = await supabase.storage
         .from("event-posters")
-        .upload(filePath, poster, { upsert: true });
+        .upload(filePath, buffer, { upsert: true, contentType: poster.type });
 
       if (!uploadError) {
         await supabase

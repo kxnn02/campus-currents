@@ -25,7 +25,7 @@
   --color-text-brown: #5B403D;
   --color-text-muted: #8B7370;
 
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
 }
 
 html {
@@ -47,31 +47,56 @@ body {
   animation: float 5s ease-in-out infinite;
 }
 
-/* Fade in animation */
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+/* Disable float on touch devices / reduced motion / small screens */
+@media (hover: none), (prefers-reduced-motion: reduce) {
+  .float-animation {
+    animation: none;
   }
 }
 
-.animate-fade-in-up {
-  animation: fade-in-up 0.6s ease-out forwards;
+@media (max-width: 768px) {
+  .float-animation {
+    animation: none;
+  }
 }
 
-.animate-delay-100 { animation-delay: 0.1s; opacity: 0; }
-.animate-delay-200 { animation-delay: 0.2s; opacity: 0; }
-.animate-delay-300 { animation-delay: 0.3s; opacity: 0; }
-.animate-delay-400 { animation-delay: 0.4s; opacity: 0; }
-.animate-delay-500 { animation-delay: 0.5s; opacity: 0; }
-
-/* Warm atmospheric blobs like Figma */
+/* Warm atmospheric blobs */
 .warm-blob {
   border-radius: 50%;
   filter: blur(80px);
   opacity: 0.4;
+  contain: paint;
+  pointer-events: none;
+}
+
+/* Focus-visible ring for interactive phone buttons */
+.interactive-phone button:focus-visible,
+.interactive-phone a:focus-visible {
+  outline: 2px solid #AF101A;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Hide scrollbar but allow scrolling (for interactive mockup) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* FAQ accordion */
+.faq-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+
+.faq-content.open {
+  grid-template-rows: 1fr;
+}
+
+.faq-content > div {
+  overflow: hidden;
 }

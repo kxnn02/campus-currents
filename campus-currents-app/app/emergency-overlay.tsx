@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEmergency } from '@/lib/emergency';
 import { useBroadcastDetail } from '@/lib/feed';
 import { supabase } from '@/lib/supabase';
@@ -28,6 +29,7 @@ const Haptics: any = null;
  */
 export default function EmergencyOverlayScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { activeEmergency, acknowledge } = useEmergency();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [elapsedText, setElapsedText] = useState('0:00');
@@ -154,8 +156,8 @@ export default function EmergencyOverlayScreen() {
   return (
     <View style={styles.container}>
       {/* Warning badge at top */}
-      <View style={styles.warningBadge}>
-        <Text style={styles.warningBadgeText}>⚠️ EMERGENCY ⚠️</Text>
+      <View style={[styles.warningBadge, { top: insets.top + 12 }]}>
+        <Text style={styles.warningBadgeText}>EMERGENCY</Text>
       </View>
 
       {/* Elapsed Timer */}
@@ -234,7 +236,6 @@ const styles = StyleSheet.create({
   },
   warningBadge: {
     position: 'absolute',
-    top: 60,
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.sm + 2,

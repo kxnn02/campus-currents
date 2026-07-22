@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useBroadcastDetail } from '@/lib/feed';
@@ -131,15 +131,32 @@ export default function BroadcastDetailScreen() {
 function BroadcastDetailImage({ imageUrl }: { imageUrl: string }) {
   const { width: screenWidth } = useWindowDimensions();
   const colors = useThemeColors();
+  const [aspect, setAspect] = useState(16 / 9);
+  const [hasError, setHasError] = useState(false);
   // Content area width = screen - padding (24 * 2)
   const imageWidth = screenWidth - 48;
+
+  useEffect(() => {
+    Image.getSize(
+      imageUrl,
+      (w, h) => {
+        if (w > 0 && h > 0) {
+          setAspect(Math.max(0.5, Math.min(2, w / h)));
+        }
+      },
+      () => setHasError(true)
+    );
+  }, [imageUrl]);
+
+  if (hasError) return null;
 
   return (
     <View style={[styles.detailImageContainer, { borderColor: colors.borderLight }]}>
       <Image
         source={{ uri: imageUrl }}
-        style={{ width: imageWidth, height: imageWidth * (9 / 16), borderRadius: 12 }}
-        resizeMode="cover"
+        style={{ width: imageWidth, height: imageWidth / aspect, borderRadius: 12 }}
+        resizeMode="contain"
+        onError={() => setHasError(true)}
         accessibilityLabel="Broadcast image"
       />
     </View>
@@ -160,7 +177,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: theme.spacing.xl,
-    paddingBottom: theme.spacing['4xl'],
+    paddingBottom: theme.spacing['5xl'],
   },
   badgeRow: {
     flexDirection: 'row',

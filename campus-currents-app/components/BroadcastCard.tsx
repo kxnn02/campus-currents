@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pressable, View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Broadcast, NotificationTier } from '@/types/database';
@@ -28,7 +28,7 @@ const tierLabels: Record<NotificationTier, string> = {
  *
  * Features:
  * - 4px colored left border for tier visual hierarchy
- * - Optional image/poster with responsive 16:9 aspect ratio
+ * - Optional image/poster with adaptive aspect ratio (max 4:3, min 16:9)
  * - Graceful image loading with placeholder
  * - Title emphasized over tier label
  * - Clear 3-level text hierarchy: title → body → metadata
@@ -40,11 +40,29 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
   const borderColor = tierColors[broadcast.tier] ?? theme.colors.tier.routine;
   const tierLabel = tierLabels[broadcast.tier] ?? 'Routine';
   const [imageError, setImageError] = useState(false);
+  const [imageAspect, setImageAspect] = useState(16 / 9); // Default, updated on load
 
   const hasImage = !!broadcast.image_url && !imageError;
   // Card content width = screen - horizontal margins (16*2) - card padding (20+16) - border (4)
   const imageWidth = screenWidth - 32 - 36 - 4;
-  const imageHeight = imageWidth * (9 / 16); // 16:9 aspect ratio
+  const imageHeight = imageWidth / imageAspect;
+
+  // Get natural image dimensions to calculate proper aspect ratio
+  useEffect(() => {
+    if (!broadcast.image_url) return;
+    Image.getSize(
+      broadcast.image_url,
+      (width, height) => {
+        if (width > 0 && height > 0) {
+          // Clamp aspect ratio between 1:1 (square) and 2:1 (wide)
+          const natural = width / height;
+          const clamped = Math.max(1, Math.min(2, natural));
+          setImageAspect(clamped);
+        }
+      },
+      () => setImageError(true)
+    );
+  }, [broadcast.image_url]);
 
   return (
     <Pressable
@@ -90,13 +108,13 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
           {broadcast.body}
         </Text>
 
-        {/* Image/Poster — responsive 16:9 container */}
+        {/* Image/Poster — adaptive aspect ratio container */}
         {hasImage && (
           <View style={[styles.imageContainer, { borderColor: colors.borderLight }]}>
             <Image
               source={{ uri: broadcast.image_url! }}
               style={[styles.image, { width: imageWidth, height: imageHeight }]}
-              resizeMode="cover"
+              resizeMode="contain"
               onError={() => setImageError(true)}
               accessibilityLabel={`Image for: ${broadcast.title}`}
             />

@@ -3,6 +3,7 @@ import {
   StyleSheet,
   View,
   Text,
+  TextInput,
   Pressable,
   ScrollView,
   Alert,
@@ -53,6 +54,7 @@ export default function ProfileEditScreen() {
   // Loading states
   const [fetchingProfile, setFetchingProfile] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isSchoolUser, setIsSchoolUser] = useState(true);
 
   // Non-editable fields (display only)
   const [email, setEmail] = useState('');
@@ -102,6 +104,8 @@ export default function ProfileEditScreen() {
       // Strip +63 prefix for editing
       const rawPhone = profile.phone_number || '';
       setPhoneNumber(rawPhone.startsWith('+63') ? rawPhone.slice(3) : rawPhone);
+      // Detect school vs guest user
+      setIsSchoolUser(profile.email?.endsWith('@sscrmnl.edu.ph') ?? false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load profile';
       Alert.alert('Error', message);
@@ -111,26 +115,72 @@ export default function ProfileEditScreen() {
   }
 
   function handleSave() {
-    // Build validation input — reuse student_id from loaded profile
-    const formData: ProfileCreateInput = {
-      student_id: studentId,
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
-      program: program as Program,
-      year_level: yearLevel ?? 0,
-      section: '',
-      phone_number: phoneNumber.trim(),
-    };
+    if (isSchoolUser) {
+      // Full validation for school users
+      const formData: ProfileCreateInput = {
+        student_id: studentId,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        program: program as Program,
+        year_level: yearLevel ?? 0,
+        section: '',
+        phone_number: phoneNumber.trim(),
+      };
 
-    const result = validateProfileForm(formData);
+      const result = validateProfileForm(formData);
 
-    if (!result.isValid) {
-      setErrors(result.errors);
-      return;
+      if (!result.isValid) {
+        setErrors(result.errors);
+        return;
+      }
+
+      setErrors({});
+      submitChanges(formData);
+    } else {
+      // Guest only needs name
+      const newErrors: Record<string, string> = {};
+      if (!firstName.trim()) newErrors.first_name = 'First name is required';
+      if (!lastName.trim()) newErrors.last_name = 'Last name is required';
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+
+      setErrors({});
+      submitGuestChanges();
     }
+  }
 
-    setErrors({});
-    submitChanges(formData);
+  async function submitGuestChanges() {
+    try {
+      setSaving(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        Alert.alert('Error', 'Session expired. Please sign in again.');
+        router.replace('/(auth)/login' as never);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+        })
+        .eq('id', session.user.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      Alert.alert('Success', 'Profile updated successfully.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch {
+      Alert.alert('Error', 'Failed to save changes — please try again');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function submitChanges(formData: ProfileCreateInput) {
@@ -205,13 +255,15 @@ export default function ProfileEditScreen() {
             editable={false}
             placeholder=""
           />
-          <FormField
-            label="Student ID"
-            value={studentId}
-            onChangeText={() => {}}
-            editable={false}
-            placeholder=""
-          />
+          {isSchoolUser && (
+            <FormField
+              label="Student ID"
+              value={studentId}
+              onChangeText={() => {}}
+              editable={false}
+              placeholder=""
+            />
+          )}
 
           {/* Editable fields */}
           <FormField
@@ -235,7 +287,8 @@ export default function ProfileEditScreen() {
             placeholder="Dela Cruz"
           />
 
-          {/* Program Picker */}
+          {/* Program Picker — school users only */}
+          {isSchoolUser && (
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.text }]}>Program</Text>
             <Pressable
@@ -276,8 +329,10 @@ export default function ProfileEditScreen() {
             )}
             {errors.program ? <Text style={[styles.errorText, { color: colors.error }]}>{errors.program}</Text> : null}
           </View>
+          )}
 
-          {/* Year Level Picker */}
+          {/* Year Level Picker — school users only */}
+          {isSchoolUser && (
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.text }]}>Year Level</Text>
             <Pressable
@@ -318,29 +373,37 @@ export default function ProfileEditScreen() {
             )}
             {errors.year_level ? <Text style={[styles.errorText, { color: colors.error }]}>{errors.year_level}</Text> : null}
           </View>
+          )}
 
-          {/* Phone Number */}
+          {/* Phone Number — school users only */}
+          {isSchoolUser && (
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.text }]}>Phone Number</Text>
             <View style={styles.phoneRow}>
-              <View style={[styles.phonePrefix, { borderColor: colors.border, backgroundColor: colors.background }]}>
+              <View style={[styles.phonePrefix, { borderColor: errors.phone_number ? colors.error : colors.border, backgroundColor: colors.background }]}>
                 <Text style={[styles.phonePrefixText, { color: colors.text }]}>+63</Text>
               </View>
               <View style={styles.phoneInputWrapper}>
-                <FormField
-                  label=""
+                <TextInput
+                  style={[
+                    styles.phoneInput,
+                    { borderColor: errors.phone_number ? colors.error : colors.border, backgroundColor: colors.surface, color: colors.text },
+                  ]}
                   value={phoneNumber}
                   onChangeText={(text) => {
                     setPhoneNumber(text);
                     if (errors.phone_number) setErrors((prev) => ({ ...prev, phone_number: '' }));
                   }}
-                  error={errors.phone_number}
                   placeholder="9XXXXXXXXX"
+                  placeholderTextColor={colors.textTertiary}
                   keyboardType="phone-pad"
+                  accessibilityLabel="Phone Number"
                 />
               </View>
             </View>
+            {errors.phone_number ? <Text style={[styles.errorText, { color: colors.error }]}>{errors.phone_number}</Text> : null}
           </View>
+          )}
 
           {/* Save Button */}
           <View style={styles.saveContainer}>
@@ -410,14 +473,14 @@ const styles = StyleSheet.create({
   },
   phoneRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: theme.spacing.sm,
   },
   phonePrefix: {
     borderWidth: 1,
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
+    height: 44,
     justifyContent: 'center',
   },
   phonePrefixText: {
@@ -426,6 +489,13 @@ const styles = StyleSheet.create({
   },
   phoneInputWrapper: {
     flex: 1,
+  },
+  phoneInput: {
+    borderWidth: 1,
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    height: 44,
+    fontSize: 15,
   },
   saveContainer: {
     marginTop: theme.spacing.lg,
