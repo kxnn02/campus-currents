@@ -37,12 +37,14 @@ interface Broadcast {
   tier: string;
   channel: string;
   is_pinned: boolean;
+  image_url: string | null;
   target_audience: Record<string, unknown> | null;
 }
 
 export function BroadcastActions({ broadcast }: { broadcast: Broadcast }) {
   const [editOpen, setEditOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [removeImage, setRemoveImage] = useState(false);
 
   function getAudienceType(target: Record<string, unknown> | null) {
     if (!target || target.all) return "all";
@@ -60,9 +62,11 @@ export function BroadcastActions({ broadcast }: { broadcast: Broadcast }) {
     setLoading(true);
     try {
       formData.set("audience_type", audienceType);
+      if (removeImage) formData.set("remove_image", "true");
       await updateBroadcast(broadcast.id, formData);
       toast.success("Broadcast updated");
       setEditOpen(false);
+      setRemoveImage(false);
     } catch (error) {
       toast.error("Failed to update broadcast");
     } finally {
@@ -175,6 +179,46 @@ export function BroadcastActions({ broadcast }: { broadcast: Broadcast }) {
                 className="h-4 w-4 rounded border-input"
               />
               <Label htmlFor="edit-is_pinned">Pin this broadcast</Label>
+            </div>
+
+            {/* Image management */}
+            <div className="space-y-2">
+              <Label>Image / Poster</Label>
+              {broadcast.image_url && !removeImage ? (
+                <div className="space-y-2">
+                  <div className="relative rounded-lg overflow-hidden border border-border">
+                    <img
+                      src={broadcast.image_url}
+                      alt="Current broadcast image"
+                      className="w-full h-32 object-cover"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive border-destructive/30"
+                    onClick={() => setRemoveImage(true)}
+                  >
+                    Remove Image
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {removeImage && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Image will be removed on save</span>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setRemoveImage(false)}>Undo</Button>
+                    </div>
+                  )}
+                  <Input
+                    name="image"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                  />
+                  <p className="text-xs text-muted-foreground">Max 2MB. Leave empty to keep current (or upload to replace).</p>
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-2">
               <Button
