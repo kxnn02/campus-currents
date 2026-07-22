@@ -170,6 +170,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: theme.spacing.md,
     borderWidth: 1,
+    backgroundColor: '#F3F4F6', // Light gray placeholder while loading
   },
   image: {
     borderRadius: 9,
