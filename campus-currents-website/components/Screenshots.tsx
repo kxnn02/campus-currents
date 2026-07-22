@@ -1,80 +1,99 @@
-import Animate from "./Animate";
+"use client";
 
-const screens = [
+import { useState, useEffect, useRef } from "react";
+import Animate from "./Animate";
+import InteractivePhone from "./InteractivePhone";
+import PhoneErrorBoundary from "./PhoneErrorBoundary";
+
+const features = [
   {
+    icon: "📋",
     title: "Notification Feed",
-    description: "Filtered announcements with tier-based priority",
-    placeholder: "Feed",
+    description: "Filtered announcements with tier-based priority and pinned posts",
   },
   {
+    icon: "🎓",
     title: "Suspension Status",
-    description: "Real-time class suspension monitoring",
-    placeholder: "Status",
+    description: "Real-time class suspension monitoring with upcoming alerts and history",
   },
   {
-    title: "Emergency Overlay",
-    description: "Full-screen safety response system",
-    placeholder: "Emergency",
-  },
-  {
+    icon: "📅",
     title: "School Calendar",
-    description: "Month view with color-coded events",
-    placeholder: "Calendar",
+    description: "Interactive month view with color-coded events, suspensions, and announcements",
   },
   {
-    title: "Profile",
-    description: "Academic info and notification preferences",
-    placeholder: "Profile",
+    icon: "👤",
+    title: "Profile & Preferences",
+    description: "Academic info, notification settings, and quick access to support",
   },
 ];
 
 export default function Screenshots() {
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  // Lazy-load: only mount InteractivePhone when section is near viewport
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section className="relative py-24 md:py-32 overflow-hidden">
+    <section id="app-preview" className="relative py-24 md:py-32 overflow-hidden" ref={sectionRef}>
       <div className="absolute inset-0 bg-warm-50" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6">
-        <Animate className="max-w-2xl mb-12">
+        <Animate className="max-w-2xl mb-16">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-warm-950">
-            Built for every scenario
+            Explore the app
           </h2>
           <p className="mt-4 text-text-brown text-lg">
             From routine announcements to campus emergencies, every screen
-            is purpose-built.
+            is purpose-built. Try it yourself — tap the tabs below.
           </p>
         </Animate>
 
-        <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-6 px-6 scrollbar-hide">
-          {screens.map((screen, i) => (
-            <Animate key={i} className="snap-center shrink-0 w-[220px] md:w-[260px]" delay={i * 0.1}>
-              <div className="relative w-full aspect-[9/19] rounded-[2rem] border-[6px] border-warm-900 bg-warm-150 shadow-xl overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center px-4">
-                    <div className="w-12 h-12 rounded-xl bg-brand-red/10 border border-brand-red/20 flex items-center justify-center mx-auto mb-3">
-                      <span className="text-brand-red font-bold text-sm">
-                        {screen.placeholder.charAt(0)}
-                      </span>
-                    </div>
-                    <p className="text-xs font-medium text-warm-800">
-                      {screen.placeholder}
-                    </p>
-                    <p className="text-[10px] text-text-muted mt-1">
-                      Screenshot coming soon
-                    </p>
-                  </div>
-                </div>
-              </div>
+        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+          {/* Interactive phone — lazy loaded */}
+          <Animate className="shrink-0" delay={0.1}>
+            {isVisible ? (
+              <PhoneErrorBoundary>
+                <InteractivePhone defaultTab="feed" />
+              </PhoneErrorBoundary>
+            ) : (
+              <div className="w-[280px] md:w-[300px] h-[560px] md:h-[600px] rounded-[3rem] border-[8px] border-warm-900 bg-warm-150 animate-pulse" />
+            )}
+          </Animate>
 
-              <div className="mt-4 text-center">
-                <p className="text-sm font-semibold text-warm-950">
-                  {screen.title}
-                </p>
-                <p className="text-xs text-text-muted mt-1">
-                  {screen.description}
-                </p>
-              </div>
-            </Animate>
-          ))}
+          {/* Feature list */}
+          <div className="flex-1 grid sm:grid-cols-2 gap-6">
+            {features.map((feature, i) => (
+              <Animate key={i} delay={0.1 + i * 0.1}>
+                <div className="p-5 rounded-2xl border border-warm-200 bg-white/60 backdrop-blur-sm">
+                  <span className="text-2xl mb-3 block" aria-hidden="true">{feature.icon}</span>
+                  <p className="text-sm font-semibold text-warm-950">
+                    {feature.title}
+                  </p>
+                  <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              </Animate>
+            ))}
+          </div>
         </div>
       </div>
     </section>

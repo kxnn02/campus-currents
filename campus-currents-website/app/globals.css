@@ -47,11 +47,43 @@ body {
   animation: float 5s ease-in-out infinite;
 }
 
+/* Disable float on touch devices / reduced motion / small screens */
+@media (hover: none), (prefers-reduced-motion: reduce) {
+  .float-animation {
+    animation: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .float-animation {
+    animation: none;
+  }
+}
+
 /* Warm atmospheric blobs */
 .warm-blob {
   border-radius: 50%;
   filter: blur(80px);
   opacity: 0.4;
+  contain: paint;
+  pointer-events: none;
+}
+
+/* Focus-visible ring for interactive phone buttons */
+.interactive-phone button:focus-visible,
+.interactive-phone a:focus-visible {
+  outline: 2px solid #AF101A;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Hide scrollbar but allow scrolling (for interactive mockup) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 /* FAQ accordion */

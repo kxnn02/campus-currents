@@ -32,15 +32,19 @@ const faqs = [
   },
 ];
 
-function FAQItem({ item }: { item: typeof faqs[0] }) {
+function FAQItem({ item, index }: { item: typeof faqs[0]; index: number }) {
   const [isOpen, setIsOpen] = useState(false);
+  const panelId = `faq-panel-${index}`;
+  const buttonId = `faq-button-${index}`;
 
   return (
     <div className="border-b border-warm-200 last:border-0">
       <button
+        id={buttonId}
         className="w-full flex items-center justify-between py-5 text-left group"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
+        aria-controls={panelId}
       >
         <span className="text-sm font-semibold text-warm-950 pr-4 group-hover:text-brand-red transition-colors">
           {item.question}
@@ -53,7 +57,12 @@ function FAQItem({ item }: { item: typeof faqs[0] }) {
           }`}
         />
       </button>
-      <div className={`faq-content ${isOpen ? "open" : ""}`}>
+      <div
+        id={panelId}
+        role="region"
+        aria-labelledby={buttonId}
+        className={`faq-content ${isOpen ? "open" : ""}`}
+      >
         <div>
           <p className="text-sm text-text-muted leading-relaxed pb-5">
             {item.answer}
@@ -79,7 +88,7 @@ export default function FAQ() {
         <Animate y={16}>
           <div className="bg-white rounded-2xl border border-warm-200 shadow-sm px-6">
             {faqs.map((faq, i) => (
-              <FAQItem key={i} item={faq} />
+              <FAQItem key={i} item={faq} index={i} />
             ))}
           </div>
         </Animate>
