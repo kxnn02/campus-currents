@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useBroadcastDetail } from '@/lib/feed';
 import { recordRead } from '@/lib/receipts';
@@ -103,6 +103,11 @@ export default function BroadcastDetailScreen() {
         {/* Body */}
         <Text style={[styles.body, { color: colors.text }]}>{broadcast.body}</Text>
 
+        {/* Image/Poster — full width with proper aspect ratio */}
+        {broadcast.image_url && (
+          <BroadcastDetailImage imageUrl={broadcast.image_url} />
+        )}
+
         {/* View Event Link */}
         {broadcast.linked_event_id && (
           <TouchableOpacity
@@ -115,6 +120,28 @@ export default function BroadcastDetailScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
+    </View>
+  );
+}
+
+/**
+ * Responsive image component that fills the content width
+ * and maintains the natural aspect ratio of the image.
+ */
+function BroadcastDetailImage({ imageUrl }: { imageUrl: string }) {
+  const { width: screenWidth } = useWindowDimensions();
+  const colors = useThemeColors();
+  // Content area width = screen - padding (24 * 2)
+  const imageWidth = screenWidth - 48;
+
+  return (
+    <View style={[styles.detailImageContainer, { borderColor: colors.borderLight }]}>
+      <Image
+        source={{ uri: imageUrl }}
+        style={{ width: imageWidth, height: imageWidth * (9 / 16), borderRadius: 12 }}
+        resizeMode="cover"
+        accessibilityLabel="Broadcast image"
+      />
     </View>
   );
 }
@@ -162,6 +189,12 @@ const styles = StyleSheet.create({
   body: {
     ...theme.typography.bodyLarge,
     lineHeight: 26,
+  },
+  detailImageContainer: {
+    marginTop: theme.spacing.xl,
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
   },
   viewEventButton: {
     marginTop: theme.spacing['2xl'],

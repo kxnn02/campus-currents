@@ -14,7 +14,7 @@ export async function createBroadcast(formData: FormData) {
   const isPinned = formData.get("is_pinned") === "true";
   const targetAudience = parseAudience(formData);
 
-  const { error } = await supabase.from("broadcasts").insert({
+  const { data: broadcast, error } = await supabase.from("broadcasts").insert({
     sender_id: user.id,
     title,
     body,
@@ -24,9 +24,39 @@ export async function createBroadcast(formData: FormData) {
     is_deleted: false,
     target_audience: targetAudience,
     sent_at: new Date().toISOString(),
-  });
+  }).select("id").single();
 
   if (error) throw new Error(error.message);
+
+  // Upload image if provided
+  const image = formData.get("image") as File | null;
+  if (image && image.size > 0 && broadcast?.id) {
+    if (image.size > 2 * 1024 * 1024) throw new Error("Image must be under 2MB");
+
+    try {
+      const ext = image.name.split(".").pop() ?? "jpg";
+      const filePath = `${broadcast.id}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("broadcast-images")
+        .upload(filePath, image, { upsert: true });
+
+      if (!uploadError) {
+        // Get the public URL
+        const { data: urlData } = supabase.storage
+          .from("broadcast-images")
+          .getPublicUrl(filePath);
+
+        if (urlData?.publicUrl) {
+          await supabase
+            .from("broadcasts")
+            .update({ image_url: urlData.publicUrl })
+            .eq("id", broadcast.id);
+        }
+      }
+    } catch {
+      // Upload failed gracefully — broadcast is still sent
+    }
+  }
 
   revalidatePath("/dashboard/broadcasts");
   revalidatePath("/dashboard");
