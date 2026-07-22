@@ -8,6 +8,9 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -19,9 +22,15 @@ import { BroadcastCard } from '@/components/BroadcastCard';
 import SkeletonCard from '@/components/SkeletonCard';
 import EmptyState from '@/components/EmptyState';
 import ErrorState from '@/components/ErrorState';
+import { useQueryClient } from '@tanstack/react-query';
 import { useBroadcastFeed, useUnreadCount } from '@/lib/feed';
 import { useProfile } from '@/lib/profile';
 import { Broadcast, NotificationTier } from '@/types/database';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 type FilterOption = 'all' | NotificationTier;
 
@@ -32,10 +41,14 @@ const FILTER_OPTIONS: { key: FilterOption; label: string; icon: string }[] = [
   { key: 'routine', label: 'Routine', icon: 'notifications' },
 ];
 
+/** Max pinned items shown before auto-collapsing */
+const PINNED_COLLAPSE_THRESHOLD = 2;
+
 export default function FeedScreen() {
   const colors = useThemeColors();
   const router = useRouter();
   const navigation = useNavigation();
+  const queryClient = useQueryClient();
 
   // Get profile from shared context
   const { profile, isLoading: profileLoading } = useProfile();
@@ -46,17 +59,20 @@ export default function FeedScreen() {
   // Filter state
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
 
+  // Pinned section collapsed state
+  const [pinnedExpanded, setPinnedExpanded] = useState(false);
+
   // Feed query — only start when profile is available
   const feedQuery = useBroadcastFeed(profile);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       resetUnread();
-      // Refetch feed data on focus to pick up new broadcasts
-      feedQuery.refetch();
+      // Reset feed to fetch fresh data when tab is focused
+      queryClient.invalidateQueries({ queryKey: ['broadcasts', 'feed'] });
     });
     return unsubscribe;
-  }, [navigation, resetUnread, feedQuery]);
+  }, [navigation, resetUnread, queryClient]);
 
   const {
     data,
@@ -92,15 +108,26 @@ export default function FeedScreen() {
     [filteredBroadcasts]
   );
 
-  // Pull-to-refresh handler — triggers hard refetch
+  // Auto-collapse pinned if above threshold
+  const shouldCollapse = pinnedBroadcasts.length > PINNED_COLLAPSE_THRESHOLD;
+  const visiblePinned = shouldCollapse && !pinnedExpanded
+    ? pinnedBroadcasts.slice(0, PINNED_COLLAPSE_THRESHOLD)
+    : pinnedBroadcasts;
+
+  const togglePinned = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setPinnedExpanded((prev) => !prev);
+  }, []);
+
+  // Pull-to-refresh handler — resets and refetches from page 0
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await refetch();
+      await queryClient.resetQueries({ queryKey: ['broadcasts', 'feed'] });
     } finally {
       setIsRefreshing(false);
     }
-  }, [refetch]);
+  }, [queryClient]);
 
   // Infinite scroll — load next page
   const handleEndReached = useCallback(() => {
@@ -220,10 +247,10 @@ export default function FeedScreen() {
     );
   }
 
-  // Build list data with pinned section header
+  // Build list data with collapsible pinned section
   type ListItem =
     | { type: 'filter-bar' }
-    | { type: 'pinned-header' }
+    | { type: 'pinned-section' }
     | { type: 'broadcast'; broadcast: Broadcast }
     | { type: 'empty-filter' };
 
@@ -233,12 +260,10 @@ export default function FeedScreen() {
   listData.push({ type: 'filter-bar' });
 
   if (filteredBroadcasts.length === 0 && allBroadcasts.length > 0) {
-    // Filter resulted in no items
     listData.push({ type: 'empty-filter' });
   } else {
     if (pinnedBroadcasts.length > 0) {
-      listData.push({ type: 'pinned-header' });
-      pinnedBroadcasts.forEach((b) => listData.push({ type: 'broadcast', broadcast: b }));
+      listData.push({ type: 'pinned-section' });
     }
     regularBroadcasts.forEach((b) => listData.push({ type: 'broadcast', broadcast: b }));
   }
@@ -248,13 +273,62 @@ export default function FeedScreen() {
       return <FilterChips />;
     }
 
-    if (item.type === 'pinned-header') {
+    if (item.type === 'pinned-section') {
+      const hiddenCount = pinnedBroadcasts.length - visiblePinned.length;
       return (
-        <View style={styles.pinnedHeader}>
-          <Ionicons name="pin" size={12} color={colors.textSecondary} />
-          <Text style={[styles.pinnedHeaderText, { color: colors.textSecondary }]}>
-            Pinned
-          </Text>
+        <View style={styles.pinnedSection}>
+          {/* Pinned header with toggle */}
+          <Pressable
+            style={styles.pinnedHeader}
+            onPress={shouldCollapse ? togglePinned : undefined}
+            accessibilityRole={shouldCollapse ? 'button' : 'header'}
+            accessibilityLabel={`Pinned announcements, ${pinnedBroadcasts.length} items${shouldCollapse ? `, tap to ${pinnedExpanded ? 'collapse' : 'expand'}` : ''}`}
+          >
+            <View style={styles.pinnedHeaderLeft}>
+              <Ionicons name="pin" size={12} color={colors.textSecondary} />
+              <Text style={[styles.pinnedHeaderText, { color: colors.textSecondary }]}>
+                Pinned
+              </Text>
+              {pinnedBroadcasts.length > 1 && (
+                <View style={[styles.pinnedCount, { backgroundColor: colors.primaryBg }]}>
+                  <Text style={[styles.pinnedCountText, { color: colors.primary }]}>
+                    {pinnedBroadcasts.length}
+                  </Text>
+                </View>
+              )}
+            </View>
+            {shouldCollapse && (
+              <Ionicons
+                name={pinnedExpanded ? 'chevron-up' : 'chevron-down'}
+                size={16}
+                color={colors.textTertiary}
+              />
+            )}
+          </Pressable>
+
+          {/* Visible pinned cards */}
+          {visiblePinned.map((broadcast) => (
+            <BroadcastCard
+              key={broadcast.id}
+              broadcast={broadcast}
+              onPress={handleCardPress}
+            />
+          ))}
+
+          {/* "Show more" button when collapsed */}
+          {shouldCollapse && !pinnedExpanded && hiddenCount > 0 && (
+            <Pressable
+              style={[styles.showMoreButton, { borderColor: colors.borderLight }]}
+              onPress={togglePinned}
+              accessibilityRole="button"
+              accessibilityLabel={`Show ${hiddenCount} more pinned announcements`}
+            >
+              <Text style={[styles.showMoreText, { color: colors.primary }]}>
+                Show {hiddenCount} more pinned
+              </Text>
+              <Ionicons name="chevron-down" size={14} color={colors.primary} />
+            </Pressable>
+          )}
         </View>
       );
     }
@@ -276,7 +350,7 @@ export default function FeedScreen() {
 
   const keyExtractor = (item: ListItem, index: number) => {
     if (item.type === 'filter-bar') return 'filter-bar';
-    if (item.type === 'pinned-header') return 'pinned-header';
+    if (item.type === 'pinned-section') return 'pinned-section';
     if (item.type === 'empty-filter') return 'empty-filter';
     return item.broadcast.id;
   };
@@ -318,7 +392,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingTop: theme.spacing.lg,
-    paddingBottom: 80, // Account for absolute-positioned tab bar
+    paddingBottom: 80,
   },
   skeletonContainer: {
     flex: 1,
@@ -345,17 +419,52 @@ const styles = StyleSheet.create({
     ...theme.typography.caption,
     fontWeight: '600',
   },
-  // Pinned header
+  // Pinned section
+  pinnedSection: {
+    marginBottom: theme.spacing.sm,
+  },
   pinnedHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
+    justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.xs,
+    paddingBottom: theme.spacing.sm,
+  },
+  pinnedHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
   },
   pinnedHeaderText: {
     ...theme.typography.overline,
+  },
+  pinnedCount: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: theme.radius.full,
+    marginLeft: 4,
+  },
+  pinnedCountText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  // Show more button
+  showMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.xs,
+    paddingVertical: theme.spacing.sm + 2,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  showMoreText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   // Empty filter state
   emptyFilter: {

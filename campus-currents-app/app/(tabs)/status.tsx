@@ -181,25 +181,25 @@ export default function StatusScreen() {
           <View style={styles.bentoGrid}>
             <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Source</Text>
-              <Text style={[styles.bentoValue, { color: colors.text }]}>
+              <Text style={[styles.bentoValue, { color: colors.text }]} numberOfLines={2}>
                 {formatSuspensionSource(primarySuspension.source)}
               </Text>
             </View>
             <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Reason</Text>
-              <Text style={[styles.bentoValue, { color: colors.text }]}>
+              <Text style={[styles.bentoValue, { color: colors.text }]} numberOfLines={2}>
                 {formatSuspensionReason(primarySuspension.reason)}
               </Text>
             </View>
             <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Scope</Text>
-              <Text style={[styles.bentoValue, { color: colors.text }]}>
+              <Text style={[styles.bentoValue, { color: colors.text }]} numberOfLines={2}>
                 {formatSuspensionScope(primarySuspension.scope)}
               </Text>
             </View>
             <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Duration</Text>
-              <Text style={[styles.bentoValue, { color: colors.text }]}>
+              <Text style={[styles.bentoValue, { color: colors.text }]} numberOfLines={2}>
                 {formatSuspensionDuration(primarySuspension.duration)}
               </Text>
             </View>

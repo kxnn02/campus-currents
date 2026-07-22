@@ -1,4 +1,8 @@
+import Image from "next/image";
+
 export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="relative border-t border-warm-200 py-12 bg-white">
       <div className="mx-auto max-w-7xl px-6">
@@ -6,48 +10,70 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <img
+              <Image
                 src="/images/logo.png"
                 alt="CampusCurrents"
-                className="w-8 h-8 rounded-lg"
+                width={32}
+                height={32}
+                className="rounded-lg"
               />
               <span className="font-bold text-warm-950">
                 Campus<span className="text-brand-red">Currents</span>
               </span>
             </div>
             <p className="text-sm text-text-muted max-w-xs">
-              Real-time campus communication for San Sebastian College –
+              Real-time campus communication for San Sebastian College -
               Recoletos, Manila.
             </p>
           </div>
 
           {/* Links */}
-          <div className="flex justify-center gap-8">
-            <a href="#features" className="text-sm text-text-muted hover:text-text-dark transition-colors">
+          <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2" aria-label="Footer navigation">
+            <a
+              href="#features"
+              className="text-sm text-text-muted hover:text-text-dark transition-colors"
+            >
               Features
             </a>
-            <a href="#how-it-works" className="text-sm text-text-muted hover:text-text-dark transition-colors">
+            <a
+              href="#how-it-works"
+              className="text-sm text-text-muted hover:text-text-dark transition-colors"
+            >
               How It Works
             </a>
-            <a href="#download" className="text-sm text-text-muted hover:text-text-dark transition-colors">
-              Download
+            <a
+              href="#team"
+              className="text-sm text-text-muted hover:text-text-dark transition-colors"
+            >
+              Team
             </a>
-          </div>
+            <a
+              href="#faq"
+              className="text-sm text-text-muted hover:text-text-dark transition-colors"
+            >
+              FAQ
+            </a>
+          </nav>
 
           {/* School */}
-          <div className="text-right">
-            <p className="text-xs text-text-muted">
-              A capstone project by
-            </p>
-            <p className="text-sm text-text-brown mt-1">
-              SSC-R Manila — BSIT
-            </p>
+          <div className="text-center md:text-right">
+            <p className="text-xs text-text-muted">A capstone project by</p>
+            <p className="text-sm text-text-brown mt-1">SSC-R Manila - BSIT</p>
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-warm-200 flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Privacy note */}
+        <div className="mt-8 pt-6 border-t border-warm-200">
+          <p className="text-xs text-text-muted text-center max-w-2xl mx-auto leading-relaxed">
+            CampusCurrents collects only your school email, name, program, and
+            year level for targeted notifications. Emergency contact numbers are
+            optional. We do not sell or share personal data with third parties.
+          </p>
+        </div>
+
+        <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-text-muted">
-            © 2026 CampusCurrents. Built with care for Sebastinians.
+            © {currentYear} CampusCurrents. Built with care for Sebastinians.
           </p>
           <p className="text-xs text-text-muted italic">
             &ldquo;Caritas et Scientia&rdquo;

@@ -251,6 +251,7 @@ function RootLayoutNav() {
         <Stack.Screen name="profile-edit" options={{ title: 'Edit Profile' }} />
         <Stack.Screen name="notification-preferences" options={{ title: 'Notifications' }} />
         <Stack.Screen name="feedback" options={{ title: 'Feedback' }} />
+        <Stack.Screen name="report-bug" options={{ title: 'Report Bug' }} />
         <Stack.Screen name="broadcast-detail" options={{ title: 'Announcement' }} />
         <Stack.Screen name="event-detail" options={{ headerShown: true }} />
         <Stack.Screen

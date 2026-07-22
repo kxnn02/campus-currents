@@ -90,11 +90,12 @@ export async function liftSuspension(id: string) {
   // Fetch the suspension details before lifting — needed for the notification
   const { data: suspension, error: fetchError } = await supabase
     .from("class_suspensions")
-    .select("source, reason, scope, scope_detail, duration, suspension_date")
+    .select("source, reason, scope, scope_detail, duration, suspension_date, status")
     .eq("id", id)
     .single();
 
   if (fetchError || !suspension) throw new Error("Suspension not found");
+  if (suspension.status !== "active") throw new Error("Suspension is already lifted");
 
   // Update the suspension status to lifted
   const { error } = await supabase
