@@ -151,6 +151,15 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Deduplicate by push token — prevents duplicate notifications when
+    // multiple profiles share the same device token (e.g., user switches accounts)
+    const seenTokens = new Set<string>();
+    matchingStudents = matchingStudents.filter((student) => {
+      if (seenTokens.has(student.fcm_token)) return false;
+      seenTokens.add(student.fcm_token);
+      return true;
+    });
+
     // Determine notification channel for Android
     const androidChannelId =
       broadcast.tier === "emergency"
