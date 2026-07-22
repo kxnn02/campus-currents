@@ -36,9 +36,13 @@ export async function createBroadcast(formData: FormData) {
     try {
       const ext = image.name.split(".").pop() ?? "jpg";
       const filePath = `${broadcast.id}.${ext}`;
+      const buffer = Buffer.from(await image.arrayBuffer());
       const { error: uploadError } = await supabase.storage
         .from("broadcast-images")
-        .upload(filePath, image, { upsert: true });
+        .upload(filePath, buffer, {
+          upsert: true,
+          contentType: image.type,
+        });
 
       if (!uploadError) {
         // Get the public URL
@@ -116,9 +120,13 @@ export async function updateBroadcast(id: string, formData: FormData) {
     try {
       const ext = image.name.split(".").pop() ?? "jpg";
       const filePath = `${id}.${ext}`;
+      const buffer = Buffer.from(await image.arrayBuffer());
       const { error: uploadError } = await supabase.storage
         .from("broadcast-images")
-        .upload(filePath, image, { upsert: true });
+        .upload(filePath, buffer, {
+          upsert: true,
+          contentType: image.type,
+        });
 
       if (!uploadError) {
         const { data: urlData } = supabase.storage
