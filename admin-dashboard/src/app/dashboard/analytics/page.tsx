@@ -103,7 +103,7 @@ export default async function AnalyticsPage() {
               <TableHead>Tier</TableHead>
               <TableHead>Sent</TableHead>
               <TableHead className="text-center">Delivered</TableHead>
-              <TableHead className="text-center">Read</TableHead>
+              <TableHead className="text-center">Opened</TableHead>
               <TableHead className="text-center">Acknowledged</TableHead>
             </TableRow>
           </TableHeader>

@@ -7,10 +7,12 @@ import {
   ActivityIndicator,
   BackHandler,
   Platform,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEmergency } from '@/lib/emergency';
 import { useBroadcastDetail } from '@/lib/feed';
+import { supabase } from '@/lib/supabase';
 import { theme } from '@/constants/Theme';
 
 // Haptic feedback removed — requires native rebuild to activate.
@@ -69,6 +71,45 @@ export default function EmergencyOverlayScreen() {
       }
     };
   }, [activeEmergency?.created_at]);
+
+  // Realtime listener: if admin resolves/cancels the emergency while student is on this overlay,
+  // dismiss gracefully instead of leaving them stuck on a red screen
+  useEffect(() => {
+    if (!activeEmergency?.id) return;
+
+    const channel = supabase
+      .channel(`overlay-emergency-${activeEmergency.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'active_emergencies',
+          filter: `id=eq.${activeEmergency.id}`,
+        },
+        (payload) => {
+          const newRecord = payload.new as { status?: string };
+          if (newRecord.status === 'resolved') {
+            Alert.alert(
+              'ALL CLEAR',
+              'The emergency has been resolved. It is now safe to move.',
+              [{ text: 'OK', onPress: () => router.replace('/(tabs)' as never) }]
+            );
+          } else if (newRecord.status === 'false_alarm') {
+            Alert.alert(
+              'ALERT CANCELLED',
+              'This was a false alarm. You may resume normal activities.',
+              [{ text: 'OK', onPress: () => router.replace('/(tabs)' as never) }]
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeEmergency?.id, router]);
 
   // Handle "I'm Safe" press
   const handleSafe = useCallback(async () => {

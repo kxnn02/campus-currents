@@ -237,7 +237,7 @@ export default function BroadcastDetailPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Read
+              Opened
             </CardTitle>
           </CardHeader>
           <CardContent>

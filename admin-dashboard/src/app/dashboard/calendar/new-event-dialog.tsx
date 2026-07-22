@@ -132,6 +132,19 @@ export function NewEventDialog() {
               accept="image/*"
             />
           </div>
+          <div className="flex items-center gap-2 rounded-md border border-input p-3 bg-muted/30">
+            <input
+              type="checkbox"
+              id="notify_students"
+              name="notify_students"
+              value="true"
+              className="h-4 w-4 rounded border-input"
+            />
+            <div>
+              <Label htmlFor="notify_students" className="font-medium">Notify students</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">Send a push notification about this event to targeted students</p>
+            </div>
+          </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
