@@ -1,6 +1,8 @@
 import Image from "next/image";
 
 export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="relative border-t border-warm-200 py-12 bg-white">
       <div className="mx-auto max-w-7xl px-6">
@@ -26,7 +28,7 @@ export default function Footer() {
           </div>
 
           {/* Links */}
-          <div className="flex justify-center gap-8">
+          <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2" aria-label="Footer navigation">
             <a
               href="#features"
               className="text-sm text-text-muted hover:text-text-dark transition-colors"
@@ -51,10 +53,10 @@ export default function Footer() {
             >
               FAQ
             </a>
-          </div>
+          </nav>
 
           {/* School */}
-          <div className="text-right">
+          <div className="text-center md:text-right">
             <p className="text-xs text-text-muted">A capstone project by</p>
             <p className="text-sm text-text-brown mt-1">SSC-R Manila - BSIT</p>
           </div>
@@ -71,10 +73,10 @@ export default function Footer() {
 
         <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-text-muted">
-            2026 CampusCurrents. Built with care for Sebastinians.
+            © {currentYear} CampusCurrents. Built with care for Sebastinians.
           </p>
           <p className="text-xs text-text-muted italic">
-            "Caritas et Scientia"
+            &ldquo;Caritas et Scientia&rdquo;
           </p>
         </div>
       </div>

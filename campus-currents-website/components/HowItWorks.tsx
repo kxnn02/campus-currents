@@ -28,8 +28,8 @@ export default function HowItWorks() {
   return (
     <section id="how-it-works" className="relative py-24 md:py-32 overflow-hidden">
       <div className="absolute inset-0 bg-warm-150" />
-      <div className="absolute top-0 right-[-100px] w-[400px] h-[400px] bg-brand-red/5 warm-blob" />
-      <div className="absolute bottom-0 left-[-80px] w-[350px] h-[350px] bg-brand-amber/8 warm-blob" />
+      <div className="absolute top-0 right-[-100px] w-[400px] h-[400px] bg-brand-red/5 warm-blob" aria-hidden="true" />
+      <div className="absolute bottom-0 left-[-80px] w-[350px] h-[350px] bg-brand-amber/8 warm-blob" aria-hidden="true" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6">
         <Animate className="text-center max-w-2xl mx-auto mb-16">
