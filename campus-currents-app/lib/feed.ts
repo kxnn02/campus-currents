@@ -103,12 +103,14 @@ export function useBroadcastFeed(profile: Profile | null) {
 
       // If RPC fails, fall back to direct query with client-side filtering
       if (error) {
+        // Fetch more than needed to account for client-side filtering
+        const fetchSize = PAGE_SIZE * 3;
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('broadcasts')
           .select('*')
           .eq('is_deleted', false)
           .order('sent_at', { ascending: false })
-          .range(offset, offset + PAGE_SIZE - 1);
+          .range(offset, offset + fetchSize - 1);
 
         if (fallbackError) throw fallbackError;
 
@@ -123,9 +125,12 @@ export function useBroadcastFeed(profile: Profile | null) {
           });
         }) as Broadcast[];
 
+        // Take only PAGE_SIZE results after filtering
+        const page = filtered.slice(0, PAGE_SIZE);
+
         return {
-          broadcasts: filtered,
-          nextPage: filtered.length === PAGE_SIZE ? pageParam + 1 : undefined,
+          broadcasts: page,
+          nextPage: page.length === PAGE_SIZE ? pageParam + 1 : undefined,
         };
       }
 

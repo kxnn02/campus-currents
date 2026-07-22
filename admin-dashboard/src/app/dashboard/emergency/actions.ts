@@ -73,14 +73,15 @@ export async function resolveEmergency(id: string) {
 
   if (!id || typeof id !== "string") throw new Error("Invalid emergency ID");
 
-  // Fetch the emergency to get its type for the resolution message
+  // Fetch the emergency — only allow resolving active ones
   const { data: emergency, error: fetchError } = await supabase
     .from("active_emergencies")
-    .select("emergency_type, broadcast_id")
+    .select("emergency_type, broadcast_id, status")
     .eq("id", id)
     .single();
 
   if (fetchError || !emergency) throw new Error("Emergency not found");
+  if (emergency.status !== "active") throw new Error("Emergency is already resolved");
 
   // Update the emergency status
   const { error } = await supabase
@@ -122,14 +123,15 @@ export async function resolveAsFalseAlarm(id: string) {
 
   if (!id || typeof id !== "string") throw new Error("Invalid emergency ID");
 
-  // Fetch the emergency to get its type for the cancellation message
+  // Fetch the emergency — only allow resolving active ones
   const { data: emergency, error: fetchError } = await supabase
     .from("active_emergencies")
-    .select("emergency_type, broadcast_id")
+    .select("emergency_type, broadcast_id, status")
     .eq("id", id)
     .single();
 
   if (fetchError || !emergency) throw new Error("Emergency not found");
+  if (emergency.status !== "active") throw new Error("Emergency is already resolved");
 
   // Update the emergency status
   const { error } = await supabase

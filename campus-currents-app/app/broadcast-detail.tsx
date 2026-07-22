@@ -132,6 +132,7 @@ function BroadcastDetailImage({ imageUrl }: { imageUrl: string }) {
   const { width: screenWidth } = useWindowDimensions();
   const colors = useThemeColors();
   const [aspect, setAspect] = useState(16 / 9);
+  const [hasError, setHasError] = useState(false);
   // Content area width = screen - padding (24 * 2)
   const imageWidth = screenWidth - 48;
 
@@ -143,9 +144,11 @@ function BroadcastDetailImage({ imageUrl }: { imageUrl: string }) {
           setAspect(Math.max(0.5, Math.min(2, w / h)));
         }
       },
-      () => {}
+      () => setHasError(true)
     );
   }, [imageUrl]);
+
+  if (hasError) return null;
 
   return (
     <View style={[styles.detailImageContainer, { borderColor: colors.borderLight }]}>
@@ -153,6 +156,7 @@ function BroadcastDetailImage({ imageUrl }: { imageUrl: string }) {
         source={{ uri: imageUrl }}
         style={{ width: imageWidth, height: imageWidth / aspect, borderRadius: 12 }}
         resizeMode="contain"
+        onError={() => setHasError(true)}
         accessibilityLabel="Broadcast image"
       />
     </View>
