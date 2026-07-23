@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
+import BeforeAfter from "@/components/BeforeAfter";
 import Features from "@/components/Features";
 import Screenshots from "@/components/Screenshots";
 import HowItWorks from "@/components/HowItWorks";
@@ -8,10 +9,14 @@ import Team from "@/components/Team";
 import FAQ from "@/components/FAQ";
 import Download from "@/components/Download";
 import Footer from "@/components/Footer";
+import PageLoader from "@/components/PageLoader";
 
 export default function Home() {
   return (
     <main className="min-h-screen">
+      {/* Branded page load transition */}
+      <PageLoader />
+
       {/* Skip to content link for accessibility */}
       <a
         href="#main-content"
@@ -22,6 +27,7 @@ export default function Home() {
       <Header />
       <div id="main-content">
         <Hero />
+        <BeforeAfter />
         <Features />
         <Screenshots />
         <HowItWorks />

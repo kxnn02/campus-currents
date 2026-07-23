@@ -1,14 +1,15 @@
 import Animate from "./Animate";
 import InteractivePhone from "./InteractivePhone";
 import PhoneErrorBoundary from "./PhoneErrorBoundary";
+import ParallaxBlob from "./ParallaxBlob";
 
 export default function Hero() {
   return (
     <section className="relative min-h-[100dvh] flex items-center overflow-hidden pt-20">
-      {/* Warm atmospheric blobs */}
-      <div className="absolute top-[-100px] left-[-50px] w-[500px] h-[500px] bg-brand-red/8 warm-blob" aria-hidden="true" />
-      <div className="absolute bottom-[-100px] right-[-80px] w-[450px] h-[450px] bg-brand-amber/10 warm-blob" aria-hidden="true" />
-      <div className="absolute top-1/3 right-1/4 w-[300px] h-[300px] bg-warm-200 warm-blob" aria-hidden="true" />
+      {/* Warm atmospheric blobs with parallax */}
+      <ParallaxBlob className="absolute top-[-100px] left-[-50px] w-[500px] h-[500px] bg-brand-red/8 warm-blob" speed={0.3} />
+      <ParallaxBlob className="absolute bottom-[-100px] right-[-80px] w-[450px] h-[450px] bg-brand-amber/10 warm-blob" speed={0.6} />
+      <ParallaxBlob className="absolute top-1/3 right-1/4 w-[300px] h-[300px] bg-warm-200 warm-blob" speed={0.45} />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 py-20 md:py-24 grid lg:grid-cols-2 gap-16 items-center">
         {/* Left: Copy */}
@@ -48,23 +49,6 @@ export default function Hero() {
                 <path d="M6 9l6 6 6-6" />
               </svg>
             </a>
-          </div>
-
-          {/* Social proof — team credibility */}
-          <div className="mt-8 flex items-center gap-3 justify-center lg:justify-start">
-            <div className="flex -space-x-2">
-              {["KF", "CL", "MM", "AB", "JM"].map((initials, i) => (
-                <div
-                  key={i}
-                  className="w-8 h-8 rounded-full bg-warm-150 border-2 border-white flex items-center justify-center"
-                >
-                  <span className="text-[9px] font-bold text-brand-red">{initials}</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-sm text-text-muted">
-              Built by <span className="font-semibold text-text-brown">5 BSIT students</span> for SSC-R Manila
-            </p>
           </div>
         </Animate>
 
