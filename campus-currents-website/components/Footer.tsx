@@ -57,7 +57,7 @@ export default function Footer() {
 
           {/* School */}
           <div className="text-center md:text-right">
-            <p className="text-xs text-text-muted">A capstone project by</p>
+            <p className="text-xs text-text-muted">A Software Engineering project by</p>
             <p className="text-sm text-text-brown mt-1">SSC-R Manila - BSIT</p>
           </div>
         </div>

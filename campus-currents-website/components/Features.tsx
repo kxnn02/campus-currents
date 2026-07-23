@@ -89,19 +89,23 @@ export default function Features() {
             return (
               <Animate key={i} delay={i * 0.08} y={24}>
                 <div
-                  className={`group relative p-6 rounded-2xl bg-white border ${feature.border} shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300`}
+                  className={`group relative p-6 rounded-2xl bg-white border ${feature.border} shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 overflow-hidden`}
                 >
-                  <div
-                    className={`w-11 h-11 rounded-xl ${feature.bg} flex items-center justify-center mb-4`}
-                  >
-                    <Icon size={22} weight="duotone" className={feature.color} />
+                  {/* Subtle gradient accent on hover */}
+                  <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${feature.bg} rounded-2xl`} />
+                  <div className="relative">
+                    <div
+                      className={`w-11 h-11 rounded-xl ${feature.bg} flex items-center justify-center mb-4`}
+                    >
+                      <Icon size={22} weight="duotone" className={feature.color} />
+                    </div>
+                    <h3 className="text-base font-semibold text-warm-950 mb-2">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-text-muted leading-relaxed">
+                      {feature.description}
+                    </p>
                   </div>
-                  <h3 className="text-base font-semibold text-warm-950 mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-text-muted leading-relaxed">
-                    {feature.description}
-                  </p>
                 </div>
               </Animate>
             );
