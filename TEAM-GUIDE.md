@@ -181,7 +181,7 @@ Open http://localhost:3000 in your browser (Chrome recommended).
 
 ### Android — Install the Development Build
 
-**📥 Download the APK:** https://expo.dev/accounts/kxnn02/projects/campus-currents/builds/d46e2360-c0e7-480d-be39-54ff5eb0af3e
+**📥 Download the APK:** https://github.com/kxnn02/campus-currents/releases/download/v1.0.0-beta.1/campus-currents-beta.apk
 
 **Steps:**
 
@@ -497,4 +497,4 @@ git push
 
 ---
 
-*Last updated: July 21, 2026*
+*Last updated: July 23, 2026*
