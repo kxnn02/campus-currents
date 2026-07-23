@@ -12,7 +12,7 @@ const team = [
     name: "Chi Leyco",
     role: "Backend Developer & QA",
     initials: "CL",
-    image: "/images/leyco-projectWriteAllEntrypointsToDisk.jpg",
+    image: "/images/leyco-portrait.jpg",
   },
   {
     name: "Marvin Miranda",
