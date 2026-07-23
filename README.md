@@ -94,13 +94,11 @@ sequenceDiagram
 stateDiagram-v2
     [*] --> Idle: No active emergency
     Idle --> PINValidation: Admin triggers emergency
-    PINValidation --> Countdown: PIN verified (bcrypt)
-    Countdown --> Active: 5-second countdown complete
-    Active --> Monitoring: Students receive full-screen overlay
-    Monitoring --> Monitoring: Real-time accountability updates
-    Note right of Monitoring: Dashboard shows:<br/>✅ Safe | 🆘 Need Help<br/>⏳ No Response | 📵 Not Reached
-    Monitoring --> Resolved: Admin marks "All Clear"
-    Monitoring --> FalseAlarm: Admin marks "False Alarm"
+    PINValidation --> Countdown: PIN verified
+    Countdown --> Active: 5s countdown complete
+    Active --> Monitoring: Students receive overlay
+    Monitoring --> Resolved: Admin marks All Clear
+    Monitoring --> FalseAlarm: Admin marks False Alarm
     Resolved --> [*]
     FalseAlarm --> [*]
 ```
