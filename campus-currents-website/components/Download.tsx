@@ -54,7 +54,7 @@ export default function Download() {
             {/* Download buttons */}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
-                href="https://github.com/kxnn02/campus-currents/releases/download/v1.0.0-beta.1/campus-currents-beta.apk"
+                href="https://drive.google.com/uc?export=download&id=11SW5oN-PzmJ_NAfmFnQSAFma9er1RCkb"
                 rel="noopener noreferrer"
                 className="group flex items-center gap-4 px-8 py-4 bg-brand-red rounded-2xl hover:bg-brand-red-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md"
               >
