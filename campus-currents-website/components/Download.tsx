@@ -54,7 +54,8 @@ export default function Download() {
             {/* Download buttons */}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
-                href="https://drive.google.com/uc?export=download&id=11SW5oN-PzmJ_NAfmFnQSAFma9er1RCkb"
+                href="https://drive.google.com/file/d/11SW5oN-PzmJ_NAfmFnQSAFma9er1RCkb/view?usp=sharing"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center gap-4 px-8 py-4 bg-brand-red rounded-2xl hover:bg-brand-red-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md"
               >
