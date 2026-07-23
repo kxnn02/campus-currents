@@ -18,19 +18,19 @@ const team = [
     name: "Marvin Miranda",
     role: "UI/UX Designer & QA",
     initials: "MM",
-    image: null,
+    image: "/images/marvin-portrait.jpg",
   },
   {
     name: "Andrei Baguisa",
     role: "Documentation & QA",
     initials: "AB",
-    image: null,
+    image: "/images/andrei-portrait.jpg",
   },
   {
     name: "Jheniel Maglinte",
     role: "Documentation & QA",
     initials: "JM",
-    image: null,
+    image: "/images/jheniel-portrait.jpg",
   },
 ];
 
@@ -50,61 +50,72 @@ export default function Team() {
           </p>
         </Animate>
 
-        {/* Bento-style grid — large cards with overlaid info */}
-        <div className="grid grid-cols-6 md:grid-cols-12 gap-4 max-w-5xl mx-auto auto-rows-[180px] md:auto-rows-[220px]">
-          {team.map((member, i) => {
-            // First member gets a large card spanning more columns
-            const spanClass =
-              i === 0
-                ? "col-span-6 md:col-span-5 row-span-2"
-                : i === 1
-                ? "col-span-3 md:col-span-4"
-                : i === 2
-                ? "col-span-3 md:col-span-3"
-                : i === 3
-                ? "col-span-3 md:col-span-4"
-                : "col-span-3 md:col-span-3";
-
-            return (
-              <Animate
-                key={i}
-                className={spanClass}
-                delay={i * 0.08}
-              >
-                <div className="relative w-full h-full rounded-2xl overflow-hidden group cursor-default">
-                  {/* Background — image or gradient placeholder */}
-                  {member.image ? (
-                    <Image
-                      src={member.image}
-                      alt={member.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes={i === 0 ? "500px" : "300px"}
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-warm-200 via-warm-150 to-warm-100 flex items-center justify-center">
-                      <span className="text-5xl md:text-6xl font-bold text-brand-red/20 select-none">
-                        {member.initials}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Gradient overlay for text readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-
-                  {/* Name & role — bottom-left */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
-                    <p className="text-white font-bold text-sm md:text-base leading-tight drop-shadow-sm">
-                      {member.name}
-                    </p>
-                    <p className="text-white/80 text-xs md:text-sm mt-1 drop-shadow-sm">
-                      {member.role}
-                    </p>
+        {/* Top row — 3 members */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-6">
+          {team.slice(0, 3).map((member, i) => (
+            <Animate key={i} delay={i * 0.08}>
+              <div className="group relative rounded-2xl overflow-hidden cursor-default aspect-[3/4]">
+                {member.image ? (
+                  <Image
+                    src={member.image}
+                    alt={member.name}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 90vw, 320px"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-warm-200 via-warm-150 to-warm-100 flex items-center justify-center">
+                    <span className="text-6xl font-bold text-brand-red/20 select-none">
+                      {member.initials}
+                    </span>
                   </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <p className="text-white font-bold text-base leading-tight drop-shadow-sm">
+                    {member.name}
+                  </p>
+                  <p className="text-white/75 text-sm mt-1 drop-shadow-sm">
+                    {member.role}
+                  </p>
                 </div>
-              </Animate>
-            );
-          })}
+              </div>
+            </Animate>
+          ))}
+        </div>
+
+        {/* Bottom row — 2 members, centered */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          {team.slice(3).map((member, i) => (
+            <Animate key={i + 3} delay={(i + 3) * 0.08}>
+              <div className="group relative rounded-2xl overflow-hidden cursor-default aspect-[3/4]">
+                {member.image ? (
+                  <Image
+                    src={member.image}
+                    alt={member.name}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 90vw, 320px"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-warm-200 via-warm-150 to-warm-100 flex items-center justify-center">
+                    <span className="text-6xl font-bold text-brand-red/20 select-none">
+                      {member.initials}
+                    </span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <p className="text-white font-bold text-base leading-tight drop-shadow-sm">
+                    {member.name}
+                  </p>
+                  <p className="text-white/75 text-sm mt-1 drop-shadow-sm">
+                    {member.role}
+                  </p>
+                </div>
+              </div>
+            </Animate>
+          ))}
         </div>
       </div>
     </section>

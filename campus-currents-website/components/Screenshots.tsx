@@ -1,29 +1,30 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { ListBullets, GraduationCap, CalendarBlank, UserCircle } from "@phosphor-icons/react";
 import Animate from "./Animate";
 import InteractivePhone from "./InteractivePhone";
 import PhoneErrorBoundary from "./PhoneErrorBoundary";
 
 const features = [
   {
-    icon: "📋",
+    icon: ListBullets,
     title: "Notification Feed",
     description: "Filtered announcements with tier-based priority and pinned posts",
   },
   {
-    icon: "🎓",
+    icon: GraduationCap,
     title: "Suspension Status",
     description: "Real-time class suspension monitoring with upcoming alerts and history",
   },
   {
-    icon: "📅",
+    icon: CalendarBlank,
     title: "School Calendar",
     description: "Interactive month view with color-coded events, suspensions, and announcements",
   },
   {
-    icon: "👤",
-    title: "Profile & Preferences",
+    icon: UserCircle,
+    title: "Profile and Preferences",
     description: "Academic info, notification settings, and quick access to support",
   },
 ];
@@ -80,19 +81,24 @@ export default function Screenshots() {
 
           {/* Feature list */}
           <div className="flex-1 grid sm:grid-cols-2 gap-6">
-            {features.map((feature, i) => (
-              <Animate key={i} delay={0.1 + i * 0.1}>
-                <div className="p-5 rounded-2xl border border-warm-200 bg-white/60 backdrop-blur-sm">
-                  <span className="text-2xl mb-3 block" aria-hidden="true">{feature.icon}</span>
-                  <p className="text-sm font-semibold text-warm-950">
-                    {feature.title}
-                  </p>
-                  <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </Animate>
-            ))}
+            {features.map((feature, i) => {
+              const Icon = feature.icon;
+              return (
+                <Animate key={i} delay={0.1 + i * 0.1}>
+                  <div className="p-5 rounded-2xl border border-warm-200 bg-white/60 backdrop-blur-sm">
+                    <div className="w-9 h-9 rounded-lg bg-brand-red/8 flex items-center justify-center mb-3">
+                      <Icon size={18} weight="duotone" className="text-brand-red" />
+                    </div>
+                    <p className="text-sm font-semibold text-warm-950">
+                      {feature.title}
+                    </p>
+                    <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </Animate>
+              );
+            })}
           </div>
         </div>
       </div>
