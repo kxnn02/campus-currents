@@ -27,6 +27,14 @@ export default function Download() {
               improves the experience for every Sebastinian.
             </p>
 
+            {/* Call to action context */}
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-red-light border border-brand-red/10">
+              <span className="w-2 h-2 rounded-full bg-brand-red animate-pulse" />
+              <span className="text-xs font-medium text-brand-red">
+                Now accepting beta testers — your feedback shapes the app
+              </span>
+            </div>
+
             {/* What testers get */}
             <div className="mt-8 grid sm:grid-cols-3 gap-4 max-w-lg mx-auto text-left">
               <div className="flex items-start gap-2">
@@ -46,8 +54,7 @@ export default function Download() {
             {/* Download buttons */}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
-                href="https://expo.dev/accounts/kxnn02/projects/campus-currents/builds/770404da-1c30-489c-aa77-c219222fad15"
-                target="_blank"
+                href="https://github.com/kxnn02/campus-currents/releases/download/v1.0.0-beta.1/campus-currents-beta.apk"
                 rel="noopener noreferrer"
                 className="group flex items-center gap-4 px-8 py-4 bg-brand-red rounded-2xl hover:bg-brand-red-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md"
               >
@@ -74,6 +81,23 @@ export default function Download() {
             <p className="mt-8 text-xs text-text-muted">
               Requires Android 8.0+ and an SSC-R Google account for login
             </p>
+
+            {/* QR Code for desktop users */}
+            <div className="mt-8 pt-6 border-t border-warm-200 hidden md:flex flex-col items-center">
+              <p className="text-xs text-text-muted mb-3">
+                On desktop? Scan with your phone to download
+              </p>
+              <div className="w-32 h-32 rounded-2xl border border-warm-200 bg-white p-2.5 shadow-sm">
+                <img
+                  src="/images/qr-download.png"
+                  alt="QR code to download CampusCurrents"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <p className="text-[10px] text-text-muted mt-2">
+                Scan to open the download page
+              </p>
+            </div>
           </div>
         </Animate>
       </div>

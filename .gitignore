@@ -82,3 +82,6 @@ campus-currents-website/out/
 # Supabase
 # ===================
 supabase/.temp/
+
+# APK build artifacts
+*.apk

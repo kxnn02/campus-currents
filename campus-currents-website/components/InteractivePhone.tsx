@@ -570,9 +570,17 @@ function TabIcon({ tab, active }: { tab: Tab; active: boolean }) {
 /* ─── Main Component ─── */
 export default function InteractivePhone({ defaultTab = "feed" }: { defaultTab?: Tab }) {
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
+  const [showHint, setShowHint] = useState(true);
 
   const handleTab = useCallback((tab: Tab) => {
     setActiveTab(tab);
+    setShowHint(false);
+  }, []);
+
+  // Auto-dismiss hint after 4 seconds
+  React.useEffect(() => {
+    const timer = setTimeout(() => setShowHint(false), 4000);
+    return () => clearTimeout(timer);
   }, []);
 
   const tabs: { key: Tab; label: string }[] = [
@@ -592,10 +600,29 @@ export default function InteractivePhone({ defaultTab = "feed" }: { defaultTab?:
 
   return (
     <div className="relative w-[280px] md:w-[300px] h-[560px] md:h-[600px] select-none interactive-phone">
+      {/* Interaction hint overlay */}
+      {showHint && (
+        <div
+          className="absolute inset-0 z-20 rounded-[3rem] flex items-center justify-center pointer-events-none animate-fade-out"
+          style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+        >
+          <div className="flex flex-col items-center gap-2 text-center px-8">
+            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-bounce">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+                <path d="M15 15l-2 5L9 9l11 4-5 2z" />
+                <path d="M14.828 14.828L20 20" />
+              </svg>
+            </div>
+            <p className="text-white text-xs font-semibold">Tap & scroll to explore</p>
+            <p className="text-white/70 text-[10px]">This is interactive</p>
+          </div>
+        </div>
+      )}
       {/* Phone body */}
       <div
         className="absolute inset-0 rounded-[3rem] border-[8px] border-warm-900 overflow-hidden flex flex-col shadow-2xl shadow-warm-900/10"
         style={{ backgroundColor: c.background }}
+        onPointerDown={() => setShowHint(false)}
       >
         {/* Notch */}
         <div className="shrink-0 h-7 bg-warm-950 flex items-center justify-center">
@@ -637,10 +664,22 @@ export default function InteractivePhone({ defaultTab = "feed" }: { defaultTab?:
               <button
                 key={tab.key}
                 onClick={() => handleTab(tab.key)}
-                className="flex flex-col items-center gap-0.5 px-2 py-0.5"
+                className="flex flex-col items-center gap-0.5 px-2 py-0.5 relative"
                 aria-label={tab.label}
               >
-                <TabIcon tab={tab.key} active={isActive} />
+                <div className="relative">
+                  <TabIcon tab={tab.key} active={isActive} />
+                  {/* Unread badge on Feed tab */}
+                  {tab.key === "feed" && !isActive && (
+                    <div className="absolute -top-0.5 -right-1.5 w-3 h-3 rounded-full bg-[#AF101A] flex items-center justify-center">
+                      <span className="text-[6px] text-white font-bold">3</span>
+                    </div>
+                  )}
+                  {/* Suspension dot on Status tab */}
+                  {tab.key === "status" && !isActive && (
+                    <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#BA1A1A]" />
+                  )}
+                </div>
                 <span
                   className="text-[9px] font-semibold mt-0.5"
                   style={{ color: isActive ? c.tabActive : c.tabInactive }}
