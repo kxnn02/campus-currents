@@ -50,7 +50,7 @@ export default function Hero() {
             </a>
           </div>
 
-          {/* Social proof */}
+          {/* Social proof — team credibility */}
           <div className="mt-8 flex items-center gap-3 justify-center lg:justify-start">
             <div className="flex -space-x-2">
               {["KF", "CL", "MM", "AB", "JM"].map((initials, i) => (
@@ -63,7 +63,7 @@ export default function Hero() {
               ))}
             </div>
             <p className="text-sm text-text-muted">
-              <span className="font-semibold text-text-brown">15+ beta testers</span> at SSC-R Manila
+              Built by <span className="font-semibold text-text-brown">5 BSIT students</span> for SSC-R Manila
             </p>
           </div>
         </Animate>
