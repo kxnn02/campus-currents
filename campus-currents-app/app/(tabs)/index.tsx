@@ -448,6 +448,8 @@ export default function FeedScreen() {
       );
     }
 
+    if (item.type !== 'broadcast') return null;
+
     return (
       <BroadcastCard broadcast={item.broadcast} onPress={handleCardPress} />
     );

@@ -39,6 +39,12 @@ export async function createEvent(formData: FormData) {
   const poster = formData.get("poster") as File | null;
   if (poster && poster.size > 0 && eventData?.id) {
     if (poster.size > 5 * 1024 * 1024) throw new Error("Poster file must be under 5MB");
+
+    const ALLOWED_POSTER_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
+    if (!ALLOWED_POSTER_TYPES.includes(poster.type)) {
+      throw new Error("Invalid poster type. Allowed: JPEG, PNG, WebP, GIF, PDF");
+    }
+
     try {
       const filePath = `${eventData.id}/${poster.name}`;
       const buffer = Buffer.from(await poster.arrayBuffer());
@@ -128,6 +134,12 @@ export async function updateEvent(id: string, formData: FormData) {
   const poster = formData.get("poster") as File | null;
   if (poster && poster.size > 0) {
     if (poster.size > 5 * 1024 * 1024) throw new Error("Poster file must be under 5MB");
+
+    const ALLOWED_POSTER_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
+    if (!ALLOWED_POSTER_TYPES.includes(poster.type)) {
+      throw new Error("Invalid poster type. Allowed: JPEG, PNG, WebP, GIF, PDF");
+    }
+
     try {
       const filePath = `${id}/${poster.name}`;
       const buffer = Buffer.from(await poster.arrayBuffer());

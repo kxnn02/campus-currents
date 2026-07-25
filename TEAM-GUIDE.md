@@ -443,6 +443,10 @@ campus-currents/                   ← GitHub repo root
 - UI styling: Mobile uses React Native `StyleSheet`, Admin uses Tailwind CSS
 - Edge Functions (push notifications, receipt checking) are deployed to Supabase. Source code is in `supabase/functions/`
 - Run `npm test` in `campus-currents-app/` to run unit tests before pushing
+- **Admin scripts** (`admin-dashboard/scripts/`) require environment variables for passwords — they no longer contain hardcoded credentials. See the script comments for required env vars.
+- **Rate limiting** is enforced on the admin login page (5 attempts per 15 minutes per IP)
+- **Audit logging** — all admin actions (broadcast, suspension, emergency) are logged to the `audit_log` table
+- All file uploads (broadcast images, event posters) are validated for type (JPEG/PNG/WebP/GIF only) and size
 
 ### For Testing
 - To test as a **student**: Use the mobile app, sign in with a Google account (@sscrmnl.edu.ph)
@@ -497,4 +501,4 @@ git push
 
 ---
 
-*Last updated: July 23, 2026*
+*Last updated: July 25, 2026*

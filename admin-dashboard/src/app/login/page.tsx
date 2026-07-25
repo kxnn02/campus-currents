@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { checkLoginRateLimit, recordLoginFailure, recordLoginSuccess } from "./actions";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -18,6 +19,15 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // Check rate limit before attempting login
+      const rateLimit = await checkLoginRateLimit();
+      if (!rateLimit.allowed) {
+        const minutes = Math.ceil((rateLimit.retryAfterSeconds ?? 900) / 60);
+        setError(`Too many login attempts. Please try again in ${minutes} minutes.`);
+        setLoading(false);
+        return;
+      }
+
       const { data, error: signInError } =
         await supabase.auth.signInWithPassword({
           email,
@@ -25,6 +35,7 @@ export default function LoginPage() {
         });
 
       if (signInError) {
+        await recordLoginFailure();
         const msg =
           signInError.message ||
           (signInError as unknown as Record<string, unknown>).error_description ||
@@ -43,6 +54,7 @@ export default function LoginPage() {
 
         if (profileError) {
           console.error("Profile fetch error:", profileError);
+          await recordLoginFailure();
           setError("Unable to verify your account. Please contact support.");
           await supabase.auth.signOut();
           setLoading(false);
@@ -50,6 +62,7 @@ export default function LoginPage() {
         }
 
         if (!profile) {
+          await recordLoginFailure();
           setError("No profile found for this account. Please contact support to complete account setup.");
           await supabase.auth.signOut();
           setLoading(false);
@@ -57,6 +70,7 @@ export default function LoginPage() {
         }
 
         if (!["admin", "super_admin"].includes(profile.role)) {
+          await recordLoginFailure();
           setError(
             "Access denied. This dashboard is for administrators only."
           );
@@ -65,6 +79,8 @@ export default function LoginPage() {
           return;
         }
 
+        // Successful login — clear rate limit
+        await recordLoginSuccess();
         router.push("/dashboard");
         router.refresh();
       }

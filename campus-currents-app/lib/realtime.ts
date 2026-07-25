@@ -93,7 +93,7 @@ export function useRealtimeSubscription(config: RealtimeSubscriptionConfig): {
       channelRef.current = null;
     }
 
-    const channelName = `realtime-${table}-${event}-${filter ?? 'all'}-${Date.now()}`;
+    const channelName = `realtime-${table}-${event}-${filter ?? 'all'}`;
 
     const channelConfig: {
       event: 'INSERT' | 'UPDATE' | '*';

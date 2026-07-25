@@ -190,10 +190,15 @@ campus-currents/
 |---------|-------------|
 | **Two-Phase Push Delivery** | Send → store tickets → verify receipts → confirm delivery |
 | **Stale Token Cleanup** | Auto-clear `fcm_token` on `DeviceNotRegistered` |
-| **Row Level Security** | 39 RLS policies — students read-only, admins write |
-| **Webhook Secret** | Push function validates `X-Webhook-Secret` header |
+| **Row Level Security** | 40+ RLS policies — students read-only, admins write |
+| **Service Role Auth** | Push function validates `Authorization: Bearer` service_role key |
 | **Duplicate Emergency Prevention** | DB trigger rejects new emergency while one is active |
 | **Auto-Level Derivation** | DB trigger sets `level` from `program` on insert/update |
+| **Audit Logging** | All admin actions logged to `audit_log` table with user, action, timestamp |
+| **Rate Limiting** | Admin login limited to 5 attempts per 15 minutes per IP |
+| **Input Sanitization** | HTML tags stripped from all user inputs; file type validation on uploads |
+| **Security Headers** | HSTS, X-Frame-Options, CSP directives on all web apps |
+| **Middleware Role Check** | Admin dashboard verifies role at edge (middleware) + layout level |
 
 ## Getting Started
 

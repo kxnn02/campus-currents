@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { compare } from "bcryptjs";
-import { requireAdmin, validateString } from "@/lib/server-utils";
+import { requireAdmin, validateString, logAuditEvent } from "@/lib/server-utils";
 import { EMERGENCY_TYPES } from "@/lib/constants";
 
 export async function triggerEmergency(formData: FormData) {
@@ -64,6 +64,15 @@ export async function triggerEmergency(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await logAuditEvent({
+    supabase,
+    userId: user.id,
+    action: "trigger_emergency",
+    targetTable: "active_emergencies",
+    targetId: broadcast.id,
+    metadata: { emergency_type: emergencyType, title },
+  });
+
   revalidatePath("/dashboard/emergency");
   revalidatePath("/dashboard");
 }
@@ -93,6 +102,15 @@ export async function resolveEmergency(id: string) {
     .eq("id", id);
 
   if (error) throw new Error(error.message);
+
+  await logAuditEvent({
+    supabase,
+    userId: user.id,
+    action: "resolve_emergency",
+    targetTable: "active_emergencies",
+    targetId: id,
+    metadata: { emergency_type: emergency.emergency_type },
+  });
 
   // Send an "ALL CLEAR" broadcast so all students get a push notification
   const typeLabel = formatEmergencyTypeLabel(emergency.emergency_type);
@@ -143,6 +161,15 @@ export async function resolveAsFalseAlarm(id: string) {
     .eq("id", id);
 
   if (error) throw new Error(error.message);
+
+  await logAuditEvent({
+    supabase,
+    userId: user.id,
+    action: "resolve_emergency_false_alarm",
+    targetTable: "active_emergencies",
+    targetId: id,
+    metadata: { emergency_type: emergency.emergency_type },
+  });
 
   // Send a "FALSE ALARM" broadcast so all students get a push notification
   const typeLabel = formatEmergencyTypeLabel(emergency.emergency_type);
