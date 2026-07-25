@@ -5,6 +5,7 @@ import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { queryClient } from './query';
 import type { Profile } from '@/types/database';
 
 const ALLOWED_DOMAIN = 'sscrmnl.edu.ph';
@@ -82,6 +83,9 @@ export async function signOut() {
   } catch {
     // Silently fail — sign out should still proceed
   }
+
+  // Clear all cached query data so the next user doesn't see stale profile/feed
+  queryClient.clear();
 
   const { error } = await supabase.auth.signOut();
   if (error) throw error;

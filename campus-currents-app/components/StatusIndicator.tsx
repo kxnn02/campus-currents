@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { theme, useThemeColors } from '@/constants/Theme';
 
 type StatusState = 'on' | 'suspended' | 'monitoring';
@@ -64,8 +65,10 @@ export default function StatusIndicator({ status, lastChecked, upcomingDate }: S
       ? monitoringText
       : 'CLASSES ARE ON';
 
-  const statusEmoji =
-    status === 'suspended' ? '🚫' : status === 'monitoring' ? '⚠️' : '✓';
+  const statusIcon =
+    status === 'suspended' ? 'close-circle' : status === 'monitoring' ? 'alert-circle' : 'checkmark-circle';
+
+  const statusIconColor = '#FFFFFF';
 
   // Monitoring subtext includes the actual date
   const monitoringSubtext = (() => {
@@ -86,53 +89,55 @@ export default function StatusIndicator({ status, lastChecked, upcomingDate }: S
       ? monitoringSubtext
       : "You're all set for today.";
 
-  // Subtle pulse animation for the glow ring — communicates "alive" status
+  // Single animation loop drives both pulse and glow — reduces frame drops on budget devices
   useEffect(() => {
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.06,
-          duration: 1800,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1800,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
+    const animation = Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.06,
+            duration: 1800,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1800,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.sequence([
+          Animated.timing(glowAnim, {
+            toValue: 0.25,
+            duration: 1800,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0.12,
+            duration: 1800,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ]),
       ])
     );
 
-    const glow = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, {
-          toValue: 0.25,
-          duration: 1800,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowAnim, {
-          toValue: 0.12,
-          duration: 1800,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-
-    pulse.start();
-    glow.start();
+    animation.start();
 
     return () => {
-      pulse.stop();
-      glow.stop();
+      animation.stop();
     };
   }, [pulseAnim, glowAnim]);
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      accessibilityRole="summary"
+      accessibilityLiveRegion="polite"
+      accessibilityLabel={`${statusText}. ${statusSubtext}`}
+    >
       {/* Outer glow ring — animated pulse for emotional feedback */}
       <Animated.View
         style={[
@@ -148,7 +153,7 @@ export default function StatusIndicator({ status, lastChecked, upcomingDate }: S
         <View style={[styles.innerGlow, { backgroundColor: circleColor + '20' }]}>
           {/* Main status circle */}
           <View style={[styles.circle, { backgroundColor: circleColor }, theme.shadows.xl]}>
-            <Text style={styles.icon}>{statusEmoji}</Text>
+            <Ionicons name={statusIcon} size={ICON_SIZE} color={statusIconColor} />
           </View>
         </View>
       </Animated.View>
@@ -195,11 +200,6 @@ const styles = StyleSheet.create({
     borderRadius: CIRCLE_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  icon: {
-    fontSize: ICON_SIZE,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
   },
   statusText: {
     ...theme.typography.display,

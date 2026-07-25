@@ -12,4 +12,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: false,
   },
+  realtime: {
+    params: {
+      eventsPerSecond: 2, // Rate-limit realtime events to reduce data usage
+    },
+  },
+  global: {
+    headers: {
+      'x-client-info': 'campus-currents-mobile/1.0.0',
+    },
+  },
 });

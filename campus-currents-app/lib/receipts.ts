@@ -122,9 +122,10 @@ export async function queueReceipt(receipt: PendingReceipt): Promise<void> {
 }
 
 /**
- * Drain the local pending receipts queue by processing each receipt.
+ * Drain the local pending receipts queue by processing receipts in batches.
  * Successfully synced items are removed; failed items remain for next attempt.
  * Called on: app foreground, connectivity restored, successful network request.
+ * Batches by type for more efficient Supabase calls.
  */
 export async function syncPendingReceipts(): Promise<void> {
   try {
@@ -136,7 +137,33 @@ export async function syncPendingReceipts(): Promise<void> {
 
     const failed: PendingReceipt[] = [];
 
-    for (const receipt of queue) {
+    // Batch receipts by type for more efficient processing
+    const deliveries = queue.filter(r => r.type === 'delivery');
+    const reads = queue.filter(r => r.type === 'read');
+    const acks = queue.filter(r => r.type === 'acknowledgment');
+
+    // Process deliveries in batch (upsert supports arrays)
+    if (deliveries.length > 0) {
+      try {
+        const { error } = await supabase
+          .from('delivery_receipts')
+          .upsert(
+            deliveries.map(r => ({
+              broadcast_id: r.broadcast_id,
+              student_id: r.student_id,
+              delivered_at: r.timestamp,
+            })),
+            { onConflict: 'broadcast_id,student_id', ignoreDuplicates: true }
+          );
+        if (error) throw error;
+      } catch {
+        // If batch fails, add all back to retry
+        failed.push(...deliveries);
+      }
+    }
+
+    // Process reads and acks individually (they use UPDATE which can't batch easily)
+    for (const receipt of [...reads, ...acks]) {
       try {
         await processReceipt(receipt);
       } catch {

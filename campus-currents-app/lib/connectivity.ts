@@ -20,11 +20,13 @@ export interface ConnectivitySyncState {
   showTimeoutToast: boolean;
   /** Dismiss the timeout toast */
   dismissTimeoutToast: () => void;
+  /** Whether the device is on a slow connection (cellular, 2G/3G) */
+  isSlowConnection: boolean;
 }
 
 // --- Constants ---
 
-const CONNECTION_TIMEOUT_MS = 10_000; // 10 seconds
+const CONNECTION_TIMEOUT_MS = 15_000; // 15 seconds (increased for slow PH mobile data)
 
 // --- Hook ---
 
@@ -43,18 +45,25 @@ export function useConnectivitySync(): ConnectivitySyncState {
   const wasOfflineRef = useRef(false);
   const [isServingStaleData, setIsServingStaleData] = useState(false);
   const [showTimeoutToast, setShowTimeoutToast] = useState(false);
+  const [isSlowConnection, setIsSlowConnection] = useState(false);
   const timeoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const dismissTimeoutToast = useCallback(() => {
     setShowTimeoutToast(false);
   }, []);
 
-  // --- NetInfo: offline → online transition ---
+  // --- NetInfo: offline → online transition + connection type detection ---
   useEffect(() => {
     if (!NetInfo) return; // Skip if native module unavailable (Expo Go)
 
     const unsubscribe = NetInfo.addEventListener((state: any) => {
       const isOnline = (state.isConnected ?? true) && (state.isInternetReachable ?? true);
+
+      // Detect slow connections (cellular with weak signal or 2G/3G)
+      const isCellular = state.type === 'cellular';
+      const cellGen = state.details?.cellularGeneration;
+      const isSlow = isCellular && (cellGen === '2g' || cellGen === '3g' || !cellGen);
+      setIsSlowConnection(isSlow);
 
       if (!isOnline) {
         // We just went offline — mark as serving stale data
@@ -122,5 +131,6 @@ export function useConnectivitySync(): ConnectivitySyncState {
     isServingStaleData,
     showTimeoutToast,
     dismissTimeoutToast,
+    isSlowConnection,
   };
 }

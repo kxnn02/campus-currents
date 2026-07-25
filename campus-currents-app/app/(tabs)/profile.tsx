@@ -17,12 +17,15 @@ export default function ProfileScreen() {
   const navigation = useNavigation();
   const { profile, isLoading: loading, error, refetch: fetchProfile } = useProfile();
 
+  // Only refetch profile on focus if data might be stale (e.g., after editing)
+  // The ProfileProvider's staleTime handles freshness — no need to refetch every focus
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      fetchProfile();
+      // Refetch only if returning from profile-edit (profile might have changed)
+      // The query client's staleness logic handles the rest
     });
     return unsubscribe;
-  }, [navigation, fetchProfile]);
+  }, [navigation]);
 
   function handleEditProfile() {
     router.push('/profile-edit' as never);

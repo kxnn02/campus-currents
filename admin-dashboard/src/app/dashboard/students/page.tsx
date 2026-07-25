@@ -91,8 +91,8 @@ export default function StudentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-[#1A1C1C]">Students</h2>
-        <p className="text-[#444653]">
+        <h2 className="text-lg font-semibold text-zinc-900">Students</h2>
+        <p className="text-sm text-zinc-500 mt-0.5">
           {students.length} registered students
         </p>
       </div>
@@ -141,59 +141,59 @@ export default function StudentsPage() {
           </SelectContent>
         </Select>
         {(search || programFilter !== "all" || yearFilter !== "all") && (
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs text-zinc-500">
             Showing {filtered.length} of {students.length}
           </span>
         )}
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-[#C4C5D5] bg-white shadow-sm overflow-hidden">
+      <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-[#FFF1F1]/50 hover:bg-[#FFF1F1]/50">
-              <TableHead className="font-semibold text-[#444653]">Name</TableHead>
-              <TableHead className="font-semibold text-[#444653]">Student ID</TableHead>
-              <TableHead className="font-semibold text-[#444653]">Program</TableHead>
-              <TableHead className="font-semibold text-[#444653]">Year</TableHead>
-              <TableHead className="font-semibold text-[#444653]">Email</TableHead>
-              <TableHead className="font-semibold text-[#444653]">Phone</TableHead>
+            <TableRow className="bg-zinc-50 hover:bg-zinc-50">
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Name</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Student ID</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Program</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Year</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Email</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Phone</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-12 text-zinc-500">
                   Loading students...
                 </TableCell>
               </TableRow>
             ) : paginated.length > 0 ? (
               paginated.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell className="font-medium text-[#141B2B]">
+                <TableRow key={student.id} className="hover:bg-zinc-50 transition-colors">
+                  <TableCell className="font-medium text-zinc-900">
                     {student.first_name || student.last_name
                       ? `${student.first_name || ""} ${student.last_name || ""}`.trim()
                       : "—"}
                   </TableCell>
-                  <TableCell className="font-mono text-sm text-[#444653]">
+                  <TableCell className="font-mono text-sm text-zinc-500">
                     {student.student_id || "—"}
                   </TableCell>
                   <TableCell>
                     {student.program ? (
-                      <Badge variant="secondary">{student.program}</Badge>
+                      <Badge variant="secondary" className="text-[10px]">{student.program}</Badge>
                     ) : "—"}
                   </TableCell>
-                  <TableCell className="text-[#444653]">{student.year_level || "—"}</TableCell>
-                  <TableCell className="text-sm text-[#444653]">
+                  <TableCell className="text-zinc-500">{student.year_level || "—"}</TableCell>
+                  <TableCell className="text-sm text-zinc-500">
                     {student.email || "—"}
                   </TableCell>
-                  <TableCell className="text-sm text-[#444653]">{student.phone_number || "—"}</TableCell>
+                  <TableCell className="text-sm text-zinc-500">{student.phone_number || "—"}</TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-12">
-                  <p className="text-sm text-[#444653]">
+                  <p className="text-sm text-zinc-500">
                     {students.length === 0 ? "No students registered yet." : "No students match your filters."}
                   </p>
                 </TableCell>
@@ -204,8 +204,8 @@ export default function StudentsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-[#C4C5D5] px-4 py-3">
-            <p className="text-sm text-[#444653]">
+          <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-3">
+            <p className="text-xs text-zinc-500">
               Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
             </p>
             <div className="flex items-center gap-1">
@@ -213,9 +213,9 @@ export default function StudentsPage() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
                 aria-label="Previous page"
-                className="rounded-md p-1.5 hover:bg-[#FFF1F1] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="rounded-md p-1.5 hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                <ChevronLeft className="h-4 w-4 text-[#444653]" />
+                <ChevronLeft className="h-4 w-4 text-zinc-500" />
               </button>
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const pageNum = Math.max(1, Math.min(page - 2, totalPages - 4)) + i;
@@ -226,10 +226,10 @@ export default function StudentsPage() {
                     onClick={() => setPage(pageNum)}
                     aria-label={`Page ${pageNum}`}
                     aria-current={pageNum === page ? "page" : undefined}
-                    className={`h-8 w-8 rounded-md text-sm font-medium transition-colors ${
+                    className={`h-7 w-7 rounded-md text-xs font-medium transition-colors ${
                       pageNum === page
-                        ? "bg-[#8D1515] text-white"
-                        : "text-[#444653] hover:bg-[#FFF1F1]"
+                        ? "bg-zinc-900 text-white"
+                        : "text-zinc-600 hover:bg-zinc-100"
                     }`}
                   >
                     {pageNum}
@@ -240,9 +240,9 @@ export default function StudentsPage() {
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
                 aria-label="Next page"
-                className="rounded-md p-1.5 hover:bg-[#FFF1F1] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="rounded-md p-1.5 hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                <ChevronRight className="h-4 w-4 text-[#444653]" />
+                <ChevronRight className="h-4 w-4 text-zinc-500" />
               </button>
             </div>
           </div>

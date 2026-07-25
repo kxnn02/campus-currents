@@ -6,10 +6,11 @@ import {
   CalendarDays,
   AlertTriangle,
   Users,
-  Radio,
   Send,
-  Shield,
   ExternalLink,
+  TrendingUp,
+  Activity,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -18,6 +19,11 @@ export default async function DashboardPage() {
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
+
+  // 24h ago for push delivery health
+  const yesterday = new Date(todayStart);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayISO = yesterday.toISOString();
 
   const [
     { count: broadcastCount },
@@ -56,7 +62,27 @@ export default async function DashboardPage() {
       .gte("sent_at", todayStart.toISOString()),
   ]);
 
-  // Fetch recent broadcasts — the 5 most recent, which are what admins need to monitor
+  // Push delivery health - last 24h
+  const [
+    { count: ticketsTotal },
+    { count: ticketsDelivered },
+  ] = await Promise.all([
+    supabase
+      .from("push_tickets")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", yesterdayISO),
+    supabase
+      .from("push_tickets")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", yesterdayISO)
+      .eq("status", "delivered"),
+  ]);
+
+  const deliveryRate = (ticketsTotal ?? 0) > 0
+    ? Math.round(((ticketsDelivered ?? 0) / (ticketsTotal ?? 1)) * 100)
+    : 0;
+
+  // Recent broadcasts
   const { data: recentBroadcasts } = await supabase
     .from("broadcasts")
     .select("id, title, tier, channel, sent_at, is_pinned")
@@ -64,7 +90,7 @@ export default async function DashboardPage() {
     .order("sent_at", { ascending: false })
     .limit(5);
 
-  // Get delivery receipts for those broadcasts to show reach/engagement
+  // Delivery receipts for recent broadcasts
   const broadcastIds = recentBroadcasts?.map((b) => b.id) ?? [];
   const { data: receipts } = broadcastIds.length > 0
     ? await supabase
@@ -73,7 +99,6 @@ export default async function DashboardPage() {
         .in("broadcast_id", broadcastIds)
     : { data: [] };
 
-  // Aggregate: for each broadcast, how many delivered and how many read
   const statsMap: Record<string, { delivered: number; read: number }> = {};
   if (receipts) {
     for (const r of receipts) {
@@ -83,10 +108,10 @@ export default async function DashboardPage() {
     }
   }
 
-  // Read engagement over last 5 days — shows whether students are actually reading what we send
+  // Engagement trend - last 7 days
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const dayQueries = Array.from({ length: 5 }, (_, idx) => {
-    const i = 4 - idx;
+  const dayQueries = Array.from({ length: 7 }, (_, idx) => {
+    const i = 6 - idx;
     const d = new Date();
     d.setDate(d.getDate() - i);
     d.setHours(0, 0, 0, 0);
@@ -105,324 +130,286 @@ export default async function DashboardPage() {
     )
   );
 
-  const last5Days = dayQueries.map((q, i) => ({
+  const last7Days = dayQueries.map((q, i) => ({
     label: q.label,
     readCount: dayResults[i].count ?? 0,
   }));
-  const maxRead = Math.max(...last5Days.map((d) => d.readCount), 1);
+  const maxRead = Math.max(...last7Days.map((d) => d.readCount), 1);
 
-  // Determine if there's something the admin should pay attention to
+  // Attention items
+  const { count: openBugs } = await supabase
+    .from("bug_reports")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "open");
+
+  const { count: unreadFeedback } = await supabase
+    .from("feedback")
+    .select("*", { count: "exact", head: true });
+
   const hasActiveEmergency = (emergencyCount ?? 0) > 0;
   const hasActiveSuspension = (suspensionCount ?? 0) > 0;
 
   return (
     <div className="space-y-6">
 
-      {/* ─── EMERGENCY BANNER ─── */}
+      {/* Emergency Banner */}
       {hasActiveEmergency && (
         <Link href="/dashboard/emergency" className="block">
-          <div className="emergency-glow flex items-center gap-3 rounded-xl border-2 border-[#BA1A1A]/40 bg-gradient-to-r from-[#BA1A1A]/[0.08] to-[#FFDAD6] px-5 py-4 transition-all duration-200 hover:border-[#BA1A1A]/60">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#BA1A1A]/10">
-              <AlertTriangle className="h-5 w-5 text-[#BA1A1A] emergency-pulse" />
+          <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 transition-colors hover:bg-red-100">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100">
+              <AlertTriangle className="h-4 w-4 text-red-600 animate-pulse-dot" />
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-[#BA1A1A]">
-                {emergencyCount} active emergency alert{(emergencyCount ?? 0) > 1 ? "s" : ""} — requires your attention
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-red-800">
+                {emergencyCount} active emergency alert{(emergencyCount ?? 0) > 1 ? "s" : ""}
               </p>
-              <p className="text-xs text-[#5B403D] mt-0.5">Click to manage emergency response</p>
+              <p className="text-xs text-red-600">Requires immediate attention</p>
             </div>
-            <span className="text-xs font-bold text-[#BA1A1A] bg-[#BA1A1A]/10 px-3 py-1.5 rounded-md">Manage →</span>
+            <span className="text-xs font-medium text-red-700 shrink-0">Manage &rarr;</span>
           </div>
         </Link>
       )}
 
-      {/* ─── QUICK ACTIONS ─── */}
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-        <Link href="/dashboard/broadcasts" className="block group">
-          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#AF101A] to-[#8B0D15] p-6 shadow-lg shadow-[#AF101A]/15 transition-all duration-200 group-hover:shadow-xl group-hover:shadow-[#AF101A]/20 group-hover:scale-[1.02] active:scale-[0.98]">
-            <div className="relative z-10 flex flex-col gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
-                <Megaphone className="h-[18px] w-[18px] text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mt-1">New Broadcast</h3>
-              <p className="text-sm text-white/80 leading-relaxed">
-                Reach {studentCount?.toLocaleString() ?? 0} students via push, SMS, and feed.
-              </p>
-            </div>
-            <Send className="absolute bottom-[-12px] right-[-12px] h-24 w-24 text-white/[0.07] rotate-[-15deg]" />
-          </div>
-        </Link>
-        <Link href="/dashboard/suspensions" className="block group">
-          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#F89C00] to-[#E08900] p-6 shadow-lg shadow-[#F89C00]/15 transition-all duration-200 group-hover:shadow-xl group-hover:shadow-[#F89C00]/20 group-hover:scale-[1.02] active:scale-[0.98]">
-            <div className="relative z-10 flex flex-col gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
-                <CloudOff className="h-[18px] w-[18px] text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mt-1">Post Suspension</h3>
-              <p className="text-sm text-white/85 leading-relaxed">
-                {hasActiveSuspension
-                  ? `${suspensionCount} suspension${(suspensionCount ?? 0) > 1 ? "s" : ""} active now. Manage or post new.`
-                  : "Declare class suspension and auto-notify all students."}
-              </p>
-            </div>
-            <CloudOff className="absolute bottom-[-10px] right-[-10px] h-24 w-24 text-white/[0.08]" />
-          </div>
-        </Link>
-        <Link href="/dashboard/calendar" className="block group">
-          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#16A34A] to-[#128A3E] p-6 shadow-lg shadow-[#16A34A]/15 transition-all duration-200 group-hover:shadow-xl group-hover:shadow-[#16A34A]/20 group-hover:scale-[1.02] active:scale-[0.98]">
-            <div className="relative z-10 flex flex-col gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
-                <CalendarDays className="h-[18px] w-[18px] text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mt-1">New Event</h3>
-              <p className="text-sm text-white/85 leading-relaxed">
-                {(eventCount ?? 0) > 0
-                  ? `${eventCount} upcoming event${(eventCount ?? 0) > 1 ? "s" : ""} scheduled. Add another.`
-                  : "Schedule campus activities, deadlines, and reminders."}
-              </p>
-            </div>
-            <CalendarDays className="absolute bottom-[-10px] right-[-10px] h-24 w-24 text-white/[0.08]" />
-          </div>
-        </Link>
-      </div>
-
-      {/* ─── KEY METRICS ─── */}
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-        <div className="flex items-center gap-4 rounded-xl border border-[#F0DDD9] bg-white p-5 card-hover">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#AF101A]/[0.08]">
-            <Users className="h-5 w-5 text-[#AF101A]" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-[#5B403D]">Audience Reach</p>
-            <p className="text-2xl font-bold text-[#1A1C1C] tabular-nums">{studentCount?.toLocaleString() ?? 0}</p>
-            <p className="text-[11px] text-[#5B403D]">students with push enabled</p>
-          </div>
+      {/* Status Bar */}
+      <div className="flex items-center gap-4 rounded-lg border border-zinc-200 bg-white px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <div className={`h-2 w-2 rounded-full ${hasActiveEmergency ? "bg-red-500 animate-pulse-dot" : hasActiveSuspension ? "bg-amber-500" : "bg-emerald-500"}`} />
+          <span className="text-xs font-medium text-zinc-700">
+            {hasActiveEmergency ? "Emergency Active" : hasActiveSuspension ? "Classes Suspended" : "Normal Operations"}
+          </span>
         </div>
-        <div className="flex items-center gap-4 rounded-xl border border-[#F0DDD9] bg-white p-5 card-hover">
-          <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${hasActiveSuspension ? "bg-[#F89C00]/10" : "bg-[#16A34A]/10"}`}>
-            <Radio className={`h-5 w-5 ${hasActiveSuspension ? "text-[#F89C00]" : "text-[#16A34A]"}`} />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-[#5B403D]">Class Operations</p>
-            <div className="flex items-center gap-2">
-              <span className={`text-lg font-bold ${hasActiveSuspension ? "text-[#F89C00]" : "text-[#16A34A]"}`}>
-                {hasActiveSuspension ? "SUSPENDED" : "RUNNING"}
-              </span>
-            </div>
-            <p className="text-[11px] text-[#5B403D]">
-              {hasActiveSuspension
-                ? `${suspensionCount} active suspension${(suspensionCount ?? 0) > 1 ? "s" : ""}`
-                : "all levels operational"}
-            </p>
-          </div>
+        <div className="h-4 w-px bg-zinc-200" />
+        <div className="flex items-center gap-2">
+          <div className={`h-2 w-2 rounded-full ${deliveryRate >= 80 ? "bg-emerald-500" : deliveryRate >= 50 ? "bg-amber-500" : "bg-red-500"}`} />
+          <span className="text-xs text-zinc-500">
+            Push: {deliveryRate}% delivery (24h)
+          </span>
         </div>
-        <div className="flex items-center gap-4 rounded-xl border border-[#F0DDD9] bg-white p-5 card-hover">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#5E67C2]/10">
-            <Send className="h-5 w-5 text-[#5E67C2]" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-[#5B403D]">Today&apos;s Activity</p>
-            <p className="text-2xl font-bold text-[#1A1C1C] tabular-nums">{broadcastsTodayCount ?? 0}</p>
-            <p className="text-[11px] text-[#5B403D]">
-              broadcast{(broadcastsTodayCount ?? 0) !== 1 ? "s" : ""} sent today · {broadcastCount ?? 0} total
-            </p>
-          </div>
+        <div className="h-4 w-px bg-zinc-200" />
+        <div className="flex items-center gap-2">
+          <Users className="h-3 w-3 text-zinc-400" />
+          <span className="text-xs text-zinc-500">
+            {studentCount?.toLocaleString() ?? 0} reachable
+          </span>
         </div>
       </div>
 
-      {/* ─── RECENT BROADCASTS ─── */}
-      <div className="overflow-hidden rounded-xl border border-[#F0DDD9] bg-white shadow-sm">
-        <div className="flex items-center justify-between px-5 py-4">
-          <div>
-            <h3 className="text-base font-semibold text-[#1A1C1C]">Recent Broadcasts</h3>
-            <p className="text-xs text-[#5B403D] mt-0.5">Delivery and engagement tracking</p>
+      {/* Key Metrics */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-zinc-200 bg-white p-4 stat-card">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-zinc-500">Audience</span>
+            <Users className="h-3.5 w-3.5 text-zinc-400" />
           </div>
-          <Link href="/dashboard/history" className="text-xs font-bold text-[#AF101A] hover:text-[#8B0D15] transition-colors px-3 py-1.5 rounded-md hover:bg-[#AF101A]/[0.06]">
-            View All →
-          </Link>
+          <p className="text-2xl font-semibold text-zinc-900 tabular-nums">{studentCount?.toLocaleString() ?? 0}</p>
+          <p className="text-[11px] text-zinc-500 mt-0.5">students with push enabled</p>
         </div>
+        <div className="rounded-lg border border-zinc-200 bg-white p-4 stat-card">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-zinc-500">Today</span>
+            <Send className="h-3.5 w-3.5 text-zinc-400" />
+          </div>
+          <p className="text-2xl font-semibold text-zinc-900 tabular-nums">{broadcastsTodayCount ?? 0}</p>
+          <p className="text-[11px] text-zinc-500 mt-0.5">{broadcastCount ?? 0} total broadcasts</p>
+        </div>
+        <div className="rounded-lg border border-zinc-200 bg-white p-4 stat-card">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-zinc-500">Delivery Rate</span>
+            <TrendingUp className="h-3.5 w-3.5 text-zinc-400" />
+          </div>
+          <p className={`text-2xl font-semibold tabular-nums ${deliveryRate >= 80 ? "text-emerald-600" : deliveryRate >= 50 ? "text-amber-600" : "text-red-600"}`}>
+            {deliveryRate}%
+          </p>
+          <p className="text-[11px] text-zinc-500 mt-0.5">push success last 24h</p>
+        </div>
+        <div className="rounded-lg border border-zinc-200 bg-white p-4 stat-card">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-zinc-500">Events</span>
+            <CalendarDays className="h-3.5 w-3.5 text-zinc-400" />
+          </div>
+          <p className="text-2xl font-semibold text-zinc-900 tabular-nums">{eventCount ?? 0}</p>
+          <p className="text-[11px] text-zinc-500 mt-0.5">upcoming active events</p>
+        </div>
+      </div>
 
-        <div className="w-full overflow-x-auto">
-          <div className="grid grid-cols-[100px_1fr_130px_90px_90px_50px] min-w-[640px] border-y border-[#F0DDD9] bg-[#FDF5F3]">
-            <div className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Tier</div>
-            <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Title</div>
-            <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Sent</div>
-            <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Delivered</div>
-            <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Opened</div>
-            <div className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#5B403D]"></div>
+      {/* Recent Broadcasts + Quick Actions side by side */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_280px]">
+
+        {/* Recent Broadcasts */}
+        <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
+            <h2 className="text-sm font-semibold text-zinc-900">Recent Broadcasts</h2>
+            <Link href="/dashboard/history" className="text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors">
+              View all &rarr;
+            </Link>
           </div>
 
           {recentBroadcasts && recentBroadcasts.length > 0 ? (
-            recentBroadcasts.map((broadcast) => {
-              const bStats = statsMap[broadcast.id] || { delivered: 0, read: 0 };
-              const total = studentCount ?? 1;
-              const deliveredPct = total > 0 ? Math.round((bStats.delivered / total) * 100) : 0;
-              const readPct = total > 0 ? Math.round((bStats.read / total) * 100) : 0;
-              const tier = TIER_CONFIG[broadcast.tier] || TIER_CONFIG.routine;
+            <div className="divide-y divide-zinc-100">
+              {recentBroadcasts.map((broadcast) => {
+                const bStats = statsMap[broadcast.id] || { delivered: 0, read: 0 };
+                const total = studentCount ?? 1;
+                const deliveredPct = total > 0 ? Math.round((bStats.delivered / total) * 100) : 0;
+                const readPct = total > 0 ? Math.round((bStats.read / total) * 100) : 0;
+                const tier = TIER_CONFIG[broadcast.tier] || TIER_CONFIG.routine;
 
-              return (
-                <div
-                  key={broadcast.id}
-                  className="relative grid grid-cols-[100px_1fr_130px_90px_90px_50px] min-w-[640px] items-center border-b border-[#F0DDD9] last:border-b-0 warm-table-row"
-                >
-                  <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${tier.border} rounded-r`} />
-
-                  <div className="px-5 py-3.5">
-                    <span className={`inline-block rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${tier.bg} ${tier.text}`}>
-                      {tier.label}
-                    </span>
+                return (
+                  <div key={broadcast.id} className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 transition-colors">
+                    <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${tier.border}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-zinc-900 truncate">{broadcast.title}</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">
+                        {broadcast.sent_at
+                          ? new Date(broadcast.sent_at).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })
+                          : "Draft"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <p className="text-xs font-medium text-zinc-700 tabular-nums">{deliveredPct}%</p>
+                        <p className="text-[10px] text-zinc-400">delivered</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-medium text-zinc-700 tabular-nums">{readPct}%</p>
+                        <p className="text-[10px] text-zinc-400">opened</p>
+                      </div>
+                      <Link
+                        href={`/dashboard/broadcasts/${broadcast.id}`}
+                        className="rounded p-1 hover:bg-zinc-100 transition-colors"
+                        title="View details"
+                      >
+                        <ExternalLink className="h-3 w-3 text-zinc-400" />
+                      </Link>
+                    </div>
                   </div>
-
-                  <div className="px-4 py-3.5">
-                    <span className="text-sm font-medium text-[#1A1C1C] truncate block">
-                      {broadcast.title}
-                    </span>
-                  </div>
-
-                  <div className="px-4 py-3.5 text-xs text-[#5B403D] tabular-nums">
-                    {broadcast.sent_at
-                      ? new Date(broadcast.sent_at).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })
-                      : "—"}
-                  </div>
-
-                  <div className="px-4 py-3.5 tabular-nums">
-                    <span className="text-sm font-medium text-[#1A1C1C]">{bStats.delivered.toLocaleString()}</span>
-                    <span className="text-[10px] font-bold text-[#16A34A] ml-1">{deliveredPct}%</span>
-                  </div>
-
-                  <div className="px-4 py-3.5 tabular-nums">
-                    <span className="text-sm font-medium text-[#1A1C1C]">{bStats.read.toLocaleString()}</span>
-                    <span className="text-[10px] font-bold text-[#5E67C2] ml-1">{readPct}%</span>
-                  </div>
-
-                  <div className="px-4 py-3.5">
-                    <Link
-                      href={`/dashboard/broadcasts/${broadcast.id}`}
-                      className="rounded-md p-1.5 hover:bg-[#FFF1ED] transition-colors inline-flex"
-                      title="View delivery details"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5 text-[#AF101A]" />
-                    </Link>
-                  </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           ) : (
-            <div className="py-14 text-center">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#FDF5F3] mb-3">
-                <Megaphone className="h-5 w-5 text-[#E4BEBA]" />
+            <div className="py-12 text-center">
+              <Megaphone className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
+              <p className="text-sm text-zinc-500">No broadcasts yet</p>
+              <Link href="/dashboard/broadcasts" className="text-xs font-medium text-[#B91C1C] mt-1 inline-block hover:underline">
+                Send your first broadcast
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column - Quick Actions + Attention */}
+        <div className="space-y-4">
+          {/* Quick Actions */}
+          <div className="rounded-lg border border-zinc-200 bg-white p-4">
+            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">Quick Actions</h2>
+            <div className="space-y-2">
+              <Link
+                href="/dashboard/broadcasts"
+                className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium text-zinc-700 bg-zinc-50 hover:bg-zinc-100 transition-colors"
+              >
+                <Megaphone className="h-4 w-4 text-[#B91C1C]" />
+                New Broadcast
+              </Link>
+              <Link
+                href="/dashboard/suspensions"
+                className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium text-zinc-700 bg-zinc-50 hover:bg-zinc-100 transition-colors"
+              >
+                <CloudOff className="h-4 w-4 text-amber-600" />
+                Post Suspension
+              </Link>
+              <Link
+                href="/dashboard/calendar"
+                className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium text-zinc-700 bg-zinc-50 hover:bg-zinc-100 transition-colors"
+              >
+                <CalendarDays className="h-4 w-4 text-emerald-600" />
+                New Event
+              </Link>
+              <Link
+                href="/dashboard/emergency"
+                className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
+              >
+                <Zap className="h-4 w-4" />
+                Emergency Alert
+              </Link>
+            </div>
+          </div>
+
+          {/* Attention Needed */}
+          {((openBugs ?? 0) > 0 || (unreadFeedback ?? 0) > 0 || hasActiveSuspension) && (
+            <div className="rounded-lg border border-zinc-200 bg-white p-4">
+              <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">Needs Attention</h2>
+              <div className="space-y-2">
+                {(openBugs ?? 0) > 0 && (
+                  <Link href="/dashboard/bugs" className="flex items-center justify-between py-1.5 group">
+                    <span className="text-xs text-zinc-600 group-hover:text-zinc-900 transition-colors">Open bug reports</span>
+                    <span className="text-xs font-semibold text-red-600 tabular-nums">{openBugs}</span>
+                  </Link>
+                )}
+                {(unreadFeedback ?? 0) > 0 && (
+                  <Link href="/dashboard/feedback" className="flex items-center justify-between py-1.5 group">
+                    <span className="text-xs text-zinc-600 group-hover:text-zinc-900 transition-colors">Feedback entries</span>
+                    <span className="text-xs font-semibold text-zinc-700 tabular-nums">{unreadFeedback}</span>
+                  </Link>
+                )}
+                {hasActiveSuspension && (
+                  <Link href="/dashboard/suspensions" className="flex items-center justify-between py-1.5 group">
+                    <span className="text-xs text-zinc-600 group-hover:text-zinc-900 transition-colors">Active suspensions</span>
+                    <span className="text-xs font-semibold text-amber-600 tabular-nums">{suspensionCount}</span>
+                  </Link>
+                )}
               </div>
-              <p className="text-sm font-medium text-[#1A1C1C]">No broadcasts yet</p>
-              <p className="text-xs text-[#5B403D] mt-1">
-                Send your first broadcast to start tracking delivery metrics.
-              </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* ─── BOTTOM SECTION ─── */}
-      <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
-        {/* System Health */}
-        <div className="rounded-xl border border-[#F0DDD9] bg-white p-6 shadow-sm">
-          <div className="mb-5 flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1A1C1C]">
-              <Shield className="h-4 w-4 text-white" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-[#1A1C1C]">Notification Channels</h3>
-              <p className="text-[11px] text-[#5B403D]">All must be active for emergency delivery</p>
-            </div>
-          </div>
-          <div className="space-y-0">
-            <div className="flex items-center justify-between border-b border-[#F0DDD9] py-3">
-              <span className="text-sm text-[#1A1C1C]">SMS Gateway</span>
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-[#16A34A]" />
-                <span className="text-xs font-semibold text-[#16A34A]">Active</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between border-b border-[#F0DDD9] py-3">
-              <span className="text-sm text-[#1A1C1C]">Push Notifications</span>
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-[#16A34A]" />
-                <span className="text-xs font-semibold text-[#16A34A]">Active</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between border-b border-[#F0DDD9] py-3">
-              <span className="text-sm text-[#1A1C1C]">In-App Feed</span>
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-[#16A34A]" />
-                <span className="text-xs font-semibold text-[#16A34A]">Active</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-[#1A1C1C]">Campus Status</span>
-              <div className="flex items-center gap-1.5">
-                {hasActiveEmergency ? (
-                  <>
-                    <div className="h-2 w-2 rounded-full bg-[#BA1A1A] emergency-pulse" />
-                    <span className="text-xs font-bold text-[#BA1A1A]">Emergency Active</span>
-                  </>
-                ) : hasActiveSuspension ? (
-                  <>
-                    <div className="h-2 w-2 rounded-full bg-[#F89C00]" />
-                    <span className="text-xs font-bold text-[#F89C00]">Classes Suspended</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="h-2 w-2 rounded-full bg-[#16A34A]" />
-                    <span className="text-xs font-semibold text-[#16A34A]">Normal Operations</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Engagement Trend */}
-        <div className="rounded-xl border border-[#F0DDD9] bg-white p-6 shadow-sm">
-          <div className="mb-5">
-            <h3 className="text-sm font-semibold text-[#1A1C1C]">Student Engagement</h3>
-            <p className="text-[11px] text-[#5B403D] mt-0.5">
-              Broadcasts opened per day — indicates student responsiveness
+      {/* Engagement Trend */}
+      <div className="rounded-lg border border-zinc-200 bg-white p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-sm font-semibold text-zinc-900">Student Engagement</h2>
+            <p className="text-[11px] text-zinc-500 mt-0.5">
+              Broadcasts opened per day - last 7 days
             </p>
           </div>
-          <div
-            className="flex items-end justify-between gap-3 h-[130px]"
-            role="img"
-            aria-label={`Bar chart showing opened engagement over last 5 days. Total: ${last5Days.reduce((sum, d) => sum + d.readCount, 0)} opened.`}
-          >
-            {last5Days.map((day, i) => {
-              const pct = Math.max(10, Math.round((day.readCount / maxRead) * 100));
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
-                  <span className="text-[10px] font-bold text-[#5B403D] tabular-nums">{day.readCount}</span>
-                  <div
-                    className="w-full max-w-[44px] rounded-t-md transition-all duration-300"
-                    style={{
-                      height: `${pct}%`,
-                      backgroundColor: i === 4 ? "#AF101A" : "#E4BEBA",
-                    }}
-                  />
-                  <span className="text-[10px] font-medium text-[#5B403D]">{day.label}</span>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-4 pt-3 border-t border-[#F0DDD9] flex items-center justify-between">
-            <span className="text-xs text-[#5B403D]">
-              Total opened this week: <span className="font-bold text-[#1A1C1C] tabular-nums">{last5Days.reduce((sum, d) => sum + d.readCount, 0).toLocaleString()}</span>
-            </span>
-            <Link href="/dashboard/analytics" className="text-xs font-bold text-[#AF101A] hover:text-[#8B0D15] transition-colors">
-              Full Analytics →
-            </Link>
-          </div>
+          <Link href="/dashboard/analytics" className="text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors">
+            Full analytics &rarr;
+          </Link>
+        </div>
+        <div
+          className="flex items-end gap-2 h-[100px]"
+          role="img"
+          aria-label={`Bar chart showing engagement over last 7 days. Total: ${last7Days.reduce((sum, d) => sum + d.readCount, 0)} opened.`}
+        >
+          {last7Days.map((day, i) => {
+            const pct = Math.max(8, Math.round((day.readCount / maxRead) * 100));
+            const isToday = i === 6;
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                <span className="text-[10px] font-medium text-zinc-500 tabular-nums">{day.readCount || ""}</span>
+                <div
+                  className="w-full rounded-sm transition-all duration-300"
+                  style={{
+                    height: `${pct}%`,
+                    backgroundColor: isToday ? "#B91C1C" : "#E4E4E7",
+                  }}
+                />
+                <span className={`text-[10px] ${isToday ? "font-semibold text-zinc-900" : "text-zinc-400"}`}>
+                  {day.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-3 pt-3 border-t border-zinc-100 flex items-center gap-2">
+          <Activity className="h-3 w-3 text-zinc-400" />
+          <span className="text-[11px] text-zinc-500">
+            {last7Days.reduce((sum, d) => sum + d.readCount, 0).toLocaleString()} total opens this week
+          </span>
         </div>
       </div>
     </div>

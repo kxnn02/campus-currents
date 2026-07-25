@@ -48,11 +48,25 @@ const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 
 Deno.serve(async (req: Request) => {
   try {
-    // --- Webhook secret validation ---
+    // --- Auth validation ---
+    // Accept either:
+    // 1. Standard Supabase Authorization Bearer token (service_role key)
+    // 2. Legacy X-Webhook-Secret header (for backward compat)
+    const authHeader = req.headers.get("authorization");
     const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
     const requestSecret = req.headers.get("x-webhook-secret");
 
-    if (!webhookSecret || requestSecret !== webhookSecret) {
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    const isAuthorizedByBearer = authHeader &&
+      serviceRoleKey &&
+      authHeader === `Bearer ${serviceRoleKey}`;
+
+    const isAuthorizedByWebhookSecret = webhookSecret &&
+      requestSecret &&
+      requestSecret === webhookSecret;
+
+    if (!isAuthorizedByBearer && !isAuthorizedByWebhookSecret) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },

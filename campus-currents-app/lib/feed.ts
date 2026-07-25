@@ -79,7 +79,7 @@ export function formatRelativeTime(sentAt: string): string {
   return `${months[date.getMonth()]} ${date.getDate()}`;
 }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10; // Smaller page size for faster initial loads on slow mobile data
 
 /**
  * Fetches paginated broadcast feed using the server-side `get_broadcasts_for_student` RPC.
@@ -144,7 +144,7 @@ export function useBroadcastFeed(profile: Profile | null) {
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     staleTime: staleTimeConfig.broadcasts,
-    refetchOnMount: 'always',
+    refetchOnMount: true, // Only refetch if stale (not on every mount)
     enabled: !!profile,
   });
 }

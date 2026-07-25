@@ -18,23 +18,57 @@ import { isSchoolEmail } from '@/lib/auth';
 import { Program, Level } from '@/types/database';
 import { deriveLevelFromProgram } from '@/lib/suspensions';
 
-const PROGRAMS: { label: string; value: Program }[] = [
-  { label: 'BSIT', value: 'BSIT' },
-  { label: 'BSBA', value: 'BSBA' },
-  { label: 'BSA', value: 'BSA' },
-  { label: 'BSED', value: 'BSED' },
-  { label: 'BEED', value: 'BEED' },
-  { label: 'AB Psychology', value: 'AB_PSYCH' },
-  { label: 'AB Communication', value: 'AB_COMM' },
-  { label: 'Juris Doctor', value: 'JD' },
-  { label: 'ETEEAP', value: 'ETEEAP' },
-  { label: 'STEM', value: 'STEM' },
-  { label: 'ABM', value: 'ABM' },
-  { label: 'HUMSS', value: 'HUMSS' },
-  { label: 'GAS', value: 'GAS' },
-  { label: 'TVL', value: 'TVL' },
-  { label: 'Other', value: 'OTHER' },
+const PROGRAM_GROUPS: { title: string; level: Level; items: { label: string; value: Program }[] }[] = [
+  {
+    title: 'College',
+    level: 'college',
+    items: [
+      { label: 'BSIT', value: 'BSIT' },
+      { label: 'BSBA', value: 'BSBA' },
+      { label: 'BSA', value: 'BSA' },
+      { label: 'BSED', value: 'BSED' },
+      { label: 'BEED', value: 'BEED' },
+      { label: 'AB Psychology', value: 'AB_PSYCH' },
+      { label: 'AB Communication', value: 'AB_COMM' },
+      { label: 'ETEEAP', value: 'ETEEAP' },
+    ],
+  },
+  {
+    title: 'Senior High',
+    level: 'senior_high',
+    items: [
+      { label: 'STEM', value: 'STEM' },
+      { label: 'ABM', value: 'ABM' },
+      { label: 'HUMSS', value: 'HUMSS' },
+      { label: 'GAS', value: 'GAS' },
+      { label: 'TVL', value: 'TVL' },
+    ],
+  },
+  {
+    title: 'Junior High School',
+    level: 'junior_high',
+    items: [
+      { label: 'Junior High (General)', value: 'OTHER' },
+    ],
+  },
+  {
+    title: 'Grade School',
+    level: 'grade_school',
+    items: [
+      { label: 'Grade School (General)', value: 'OTHER' },
+    ],
+  },
+  {
+    title: 'Graduate / Law',
+    level: 'law',
+    items: [
+      { label: 'Juris Doctor', value: 'JD' },
+    ],
+  },
 ];
+
+// Flat list for label lookups
+const PROGRAMS: { label: string; value: Program }[] = PROGRAM_GROUPS.flatMap(g => g.items);
 
 const YEAR_LEVELS = [
   { label: '1st Year', value: 1 },
@@ -60,6 +94,7 @@ export default function ProfileCompletionScreen() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [program, setProgram] = useState<Program | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [yearLevel, setYearLevel] = useState<number | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -130,8 +165,8 @@ export default function ProfileCompletionScreen() {
       }
 
       if (isSchoolUser) {
-        // Full student profile
-        const level = deriveLevelFromProgram(program!);
+        // Full student profile — use explicitly selected level (handles grade school/junior high)
+        const level = selectedLevel ?? deriveLevelFromProgram(program!);
 
         const { error } = await supabase
           .from('profiles')
@@ -208,7 +243,7 @@ export default function ProfileCompletionScreen() {
               <Text style={[styles.label, { color: colors.text }]}>Student ID</Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.surface, borderColor: errors.studentId ? '#DC2626' : colors.border, color: colors.text }]}
-                placeholder="2024101291"
+                placeholder="e.g. 2024101291"
                 placeholderTextColor={colors.textSecondary}
                 value={studentId}
                 onChangeText={setStudentId}
@@ -255,7 +290,12 @@ export default function ProfileCompletionScreen() {
               onPress={() => setShowProgramPicker(!showProgramPicker)}
             >
               <Text style={[styles.pickerText, { color: program ? colors.text : colors.textSecondary }]}>
-                {program ? PROGRAMS.find(p => p.value === program)?.label : 'Select program'}
+                {program
+                  ? (selectedLevel
+                    ? PROGRAM_GROUPS.find(g => g.level === selectedLevel)?.items.find(p => p.value === program)?.label
+                    : PROGRAMS.find(p => p.value === program)?.label)
+                  ?? 'Select program'
+                  : 'Select program'}
               </Text>
             </Pressable>
             {showProgramPicker && (
@@ -266,17 +306,24 @@ export default function ProfileCompletionScreen() {
                   nestedScrollEnabled={true}
                   persistentScrollbar={true}
                 >
-                  {PROGRAMS.map((p) => (
-                    <Pressable
-                      key={p.value}
-                      style={[styles.pickerOption, program === p.value && { backgroundColor: colors.tint + '15' }]}
-                      onPress={() => { setProgram(p.value); setShowProgramPicker(false); }}
-                    >
-                      <Text style={[styles.pickerOptionText, { color: colors.text }]}>{p.label}</Text>
-                      {program === p.value && (
-                        <Text style={{ color: colors.tint, fontSize: 16 }}>✓</Text>
-                      )}
-                    </Pressable>
+                  {PROGRAM_GROUPS.map((group) => (
+                    <View key={group.title}>
+                      <Text style={[styles.pickerGroupTitle, { color: colors.textSecondary }]}>
+                        {group.title}
+                      </Text>
+                      {group.items.map((p) => (
+                        <Pressable
+                          key={`${group.title}-${p.value}`}
+                          style={[styles.pickerOption, program === p.value && selectedLevel === group.level && { backgroundColor: colors.tint + '15' }]}
+                          onPress={() => { setProgram(p.value); setSelectedLevel(group.level); setShowProgramPicker(false); }}
+                        >
+                          <Text style={[styles.pickerOptionText, { color: colors.text }]}>{p.label}</Text>
+                          {program === p.value && selectedLevel === group.level && (
+                            <Text style={{ color: colors.tint, fontSize: 16 }}>✓</Text>
+                          )}
+                        </Pressable>
+                      ))}
+                    </View>
                   ))}
                 </ScrollView>
               </View>
@@ -346,7 +393,7 @@ export default function ProfileCompletionScreen() {
             disabled={submitting}
           >
             <Text style={styles.submitText}>
-              {submitting ? 'Saving...' : 'Complete Profile'}
+              {submitting ? 'Saving...' : "Let's Go"}
             </Text>
           </Pressable>
         </ScrollView>
@@ -400,6 +447,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md + 2,
     paddingVertical: theme.spacing.sm + 2,
   },
+  pickerGroupTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    paddingHorizontal: theme.spacing.md + 2,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.xs,
+  },
   pickerOptionText: { ...theme.typography.body },
   phoneRow: { flexDirection: 'row', gap: theme.spacing.sm },
   phonePrefix: {
@@ -419,7 +475,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   submitButton: {
-    borderRadius: 2,
+    borderRadius: theme.radius.lg,
     paddingVertical: theme.spacing.lg,
     alignItems: 'center',
     marginTop: theme.spacing['2xl'],

@@ -8,7 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -49,88 +49,85 @@
 }
 
 :root {
-  /* ─── CampusCurrents SSC-R Manila Brand Palette ─── */
-  /* Warm palette — matches the mobile app's visual identity */
+  /* Clean, professional palette - Zinc neutrals + SSC-R red accent */
+  --background: #FAFAFA;
+  --foreground: #18181B;
 
-  --background: #F9F9F9;                       /* warm off-white */
-  --foreground: #1A1C1C;                       /* near-black text */
-
-  --card: #FFFFFF;                             /* pure white surface */
-  --card-foreground: #1A1C1C;
+  --card: #FFFFFF;
+  --card-foreground: #18181B;
 
   --popover: #FFFFFF;
-  --popover-foreground: #1A1C1C;
+  --popover-foreground: #18181B;
 
-  --primary: #AF101A;                          /* SSC-R red — headers, CTAs, brand accent */
+  --primary: #B91C1C;
   --primary-foreground: #FFFFFF;
 
-  --secondary: #FFF8F7;                        /* warm blush — subtle backgrounds */
-  --secondary-foreground: #1A1C1C;
+  --secondary: #F4F4F5;
+  --secondary-foreground: #18181B;
 
-  --muted: #FDF5F3;                            /* warm cream — muted surfaces */
-  --muted-foreground: #5B403D;                 /* warm brown — secondary text */
+  --muted: #F4F4F5;
+  --muted-foreground: #71717A;
 
-  --accent: #FFF1ED;                           /* warm peach tint — hover/active bg */
-  --accent-foreground: #1A1C1C;
+  --accent: #F4F4F5;
+  --accent-foreground: #18181B;
 
-  --destructive: #BA1A1A;                      /* emergency red */
+  --destructive: #DC2626;
 
-  --border: #E4BEBA;                           /* pinkish-tan border — NOT cool gray */
-  --input: #E4BEBA;
-  --ring: #AF101A;                             /* brand red focus ring */
+  --border: #E4E4E7;
+  --input: #E4E4E7;
+  --ring: #B91C1C;
 
-  /* Chart colors — using tier/brand colors */
-  --chart-1: #AF101A;                          /* Brand red */
-  --chart-2: #BA1A1A;                          /* Emergency */
-  --chart-3: #F89C00;                          /* Important/amber */
-  --chart-4: #16A34A;                          /* Success green */
-  --chart-5: #5E67C2;                          /* Routine indigo */
+  --chart-1: #B91C1C;
+  --chart-2: #059669;
+  --chart-3: #D97706;
+  --chart-4: #4F46E5;
+  --chart-5: #7C3AED;
 
-  --radius: 0.625rem;
+  --radius: 0.5rem;
 
-  /* ─── Sidebar ─── */
-  --sidebar: #1A1C1C;                          /* dark near-black sidebar */
-  --sidebar-foreground: #F0DDD9;              /* warm light text */
-  --sidebar-primary: #AF101A;                  /* brand red */
+  /* Sidebar - dark, professional */
+  --sidebar: #18181B;
+  --sidebar-foreground: #E4E4E7;
+  --sidebar-primary: #B91C1C;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #AF101A;                   /* active state = brand red */
+  --sidebar-accent: rgba(255, 255, 255, 0.06);
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #3D2E2C;                   /* warm dark border */
-  --sidebar-ring: #AF101A;
+  --sidebar-border: #27272A;
+  --sidebar-ring: #B91C1C;
 }
 
 .dark {
-  --background: #1A1C1C;
-  --foreground: #F9F9F9;
-  --card: #2A2220;
-  --card-foreground: #F9F9F9;
-  --popover: #2A2220;
-  --popover-foreground: #F9F9F9;
-  --primary: #FF6B6B;
-  --primary-foreground: #1A1C1C;
-  --secondary: #2A2220;
-  --secondary-foreground: #F9F9F9;
-  --muted: #2A2220;
-  --muted-foreground: #C4A9A5;
-  --accent: #3D2E2C;
-  --accent-foreground: #F9F9F9;
-  --destructive: #FF6B6B;
-  --border: #3D2E2C;
-  --input: #3D2E2C;
-  --ring: #FF6B6B;
-  --chart-1: #FF6B6B;
-  --chart-2: #FF8A8A;
-  --chart-3: #F89C00;
-  --chart-4: #4ADE80;
-  --chart-5: #818CF8;
-  --sidebar: #151313;
-  --sidebar-foreground: #F0DDD9;
-  --sidebar-primary: #FF6B6B;
-  --sidebar-primary-foreground: #1A1C1C;
-  --sidebar-accent: #3D2E2C;
-  --sidebar-accent-foreground: #F9F9F9;
-  --sidebar-border: #3D2E2C;
-  --sidebar-ring: #FF6B6B;
+  --background: #09090B;
+  --foreground: #FAFAFA;
+  --card: #18181B;
+  --card-foreground: #FAFAFA;
+  --popover: #18181B;
+  --popover-foreground: #FAFAFA;
+  --primary: #EF4444;
+  --primary-foreground: #FFFFFF;
+  --secondary: #27272A;
+  --secondary-foreground: #FAFAFA;
+  --muted: #27272A;
+  --muted-foreground: #A1A1AA;
+  --accent: #27272A;
+  --accent-foreground: #FAFAFA;
+  --destructive: #EF4444;
+  --border: #27272A;
+  --input: #27272A;
+  --ring: #EF4444;
+  --chart-1: #EF4444;
+  --chart-2: #34D399;
+  --chart-3: #FBBF24;
+  --chart-4: #818CF8;
+  --chart-5: #A78BFA;
+  --sidebar: #09090B;
+  --sidebar-foreground: #A1A1AA;
+  --sidebar-primary: #EF4444;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: rgba(255, 255, 255, 0.04);
+  --sidebar-accent-foreground: #FAFAFA;
+  --sidebar-border: #27272A;
+  --sidebar-ring: #EF4444;
 }
 
 @layer base {
@@ -144,46 +141,49 @@
   html {
     @apply font-sans scroll-smooth;
   }
+}
 
-  /* Tabular numbers for data-heavy interfaces */
+@layer components {
+  /* Tabular numbers for data */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
-}
 
-/* ─── Premium Table Styles ─── */
-@layer components {
-  /* Warm row hover for all tables */
-  .warm-table-row {
-    @apply transition-colors duration-150;
-  }
-  .warm-table-row:hover {
-    background-color: #FFF8F7;
-  }
-
-  /* Emergency pulse animation — dramatic but not distracting */
-  @keyframes emergency-pulse {
+  /* Emergency pulse - subtle and professional */
+  @keyframes pulse-dot {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
+    50% { opacity: 0.4; }
   }
+  .animate-pulse-dot {
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  /* Legacy emergency animations (used on emergency page) */
   .emergency-pulse {
-    animation: emergency-pulse 2s ease-in-out infinite;
+    animation: pulse-dot 2s ease-in-out infinite;
   }
 
   @keyframes emergency-glow {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(186, 26, 26, 0.3); }
-    50% { box-shadow: 0 0 20px 4px rgba(186, 26, 26, 0.15); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.3); }
+    50% { box-shadow: 0 0 16px 4px rgba(185, 28, 28, 0.15); }
   }
   .emergency-glow {
     animation: emergency-glow 2s ease-in-out infinite;
   }
 
-  /* Smooth card hover lift */
-  .card-hover {
-    @apply transition-all duration-200 ease-out;
+  /* Table row hover */
+  .warm-table-row {
+    @apply transition-colors duration-150;
   }
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px -4px rgba(90, 45, 40, 0.08), 0 4px 8px -2px rgba(90, 45, 40, 0.04);
+  .warm-table-row:hover {
+    background-color: #F4F4F5;
+  }
+
+  /* Stat card subtle hover */
+  .stat-card {
+    @apply transition-shadow duration-200;
+  }
+  .stat-card:hover {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
   }
 }
