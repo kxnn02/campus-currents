@@ -61,63 +61,63 @@ export default async function BugsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-[#1A1C1C]">Bug Reports</h2>
-        <p className="text-[#5B403D] mt-1">
+        <h2 className="text-2xl font-bold tracking-tight text-[zinc-900]">Bug Reports</h2>
+        <p className="text-[zinc-500] mt-1">
           Issues reported by testers from the mobile app.
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-xl border border-[#E4BEBA] bg-white p-5 shadow-sm">
+        <div className="rounded-lg border border-[zinc-200] bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <Bug className="h-4 w-4 text-[#AF101A]" />
-            <p className="text-xs font-medium text-[#5B403D] uppercase">Total</p>
+            <Bug className="h-4 w-4 text-[[#B91C1C]]" />
+            <p className="text-xs font-medium text-[zinc-500] uppercase">Total</p>
           </div>
-          <p className="text-2xl font-bold text-[#1A1C1C] tabular-nums">{entries.length}</p>
+          <p className="text-2xl font-bold text-[zinc-900] tabular-nums">{entries.length}</p>
         </div>
-        <div className="rounded-xl border border-[#E4BEBA] bg-white p-5 shadow-sm">
+        <div className="rounded-lg border border-[zinc-200] bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="h-4 w-4 text-[#DC2626]" />
-            <p className="text-xs font-medium text-[#5B403D] uppercase">Open</p>
+            <Clock className="h-4 w-4 text-[red-600]" />
+            <p className="text-xs font-medium text-[zinc-500] uppercase">Open</p>
           </div>
-          <p className="text-2xl font-bold text-[#DC2626] tabular-nums">{openCount}</p>
+          <p className="text-2xl font-bold text-[red-600] tabular-nums">{openCount}</p>
         </div>
-        <div className="rounded-xl border border-[#E4BEBA] bg-white p-5 shadow-sm">
+        <div className="rounded-lg border border-[zinc-200] bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="h-4 w-4 text-[#F59E0B]" />
-            <p className="text-xs font-medium text-[#5B403D] uppercase">Critical Unfixed</p>
+            <AlertTriangle className="h-4 w-4 text-[amber-500]" />
+            <p className="text-xs font-medium text-[zinc-500] uppercase">Critical Unfixed</p>
           </div>
-          <p className="text-2xl font-bold text-[#F59E0B] tabular-nums">{criticalCount}</p>
+          <p className="text-2xl font-bold text-[amber-500] tabular-nums">{criticalCount}</p>
         </div>
-        <div className="rounded-xl border border-[#E4BEBA] bg-white p-5 shadow-sm">
+        <div className="rounded-lg border border-[zinc-200] bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="h-4 w-4 text-[#16A34A]" />
-            <p className="text-xs font-medium text-[#5B403D] uppercase">Fixed</p>
+            <CheckCircle className="h-4 w-4 text-[emerald-600]" />
+            <p className="text-xs font-medium text-[zinc-500] uppercase">Fixed</p>
           </div>
-          <p className="text-2xl font-bold text-[#16A34A] tabular-nums">{fixedCount}</p>
+          <p className="text-2xl font-bold text-[emerald-600] tabular-nums">{fixedCount}</p>
         </div>
       </div>
 
       {/* Bug Reports Table */}
       {entries.length === 0 ? (
-        <div className="text-center py-16 text-[#5B403D]">
+        <div className="text-center py-16 text-[zinc-500]">
           <Bug className="h-12 w-12 mx-auto mb-4 opacity-30" />
           <p className="text-lg font-medium">No bug reports yet</p>
           <p className="text-sm mt-1">Bug reports will appear here once testers submit them from the app.</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-[#E4BEBA] bg-white overflow-hidden shadow-sm">
+        <div className="rounded-lg border border-[zinc-200] bg-white overflow-hidden shadow-sm">
           <Table>
             <TableHeader>
-              <TableRow className="bg-[#F9F9F9]">
-                <TableHead className="font-semibold text-[#5B403D]">Severity</TableHead>
-                <TableHead className="font-semibold text-[#5B403D]">Bug</TableHead>
-                <TableHead className="font-semibold text-[#5B403D]">Screen</TableHead>
-                <TableHead className="font-semibold text-[#5B403D]">Reporter</TableHead>
-                <TableHead className="font-semibold text-[#5B403D]">Device</TableHead>
-                <TableHead className="font-semibold text-[#5B403D]">Status</TableHead>
-                <TableHead className="font-semibold text-[#5B403D]">Date</TableHead>
+              <TableRow className="bg-[zinc-50]">
+                <TableHead className="font-semibold text-[zinc-500]">Severity</TableHead>
+                <TableHead className="font-semibold text-[zinc-500]">Bug</TableHead>
+                <TableHead className="font-semibold text-[zinc-500]">Screen</TableHead>
+                <TableHead className="font-semibold text-[zinc-500]">Reporter</TableHead>
+                <TableHead className="font-semibold text-[zinc-500]">Device</TableHead>
+                <TableHead className="font-semibold text-[zinc-500]">Status</TableHead>
+                <TableHead className="font-semibold text-[zinc-500]">Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -143,30 +143,30 @@ export default async function BugsPage() {
                       </span>
                     </TableCell>
                     <TableCell className="max-w-[250px]">
-                      <p className="text-sm font-medium text-[#1A1C1C] truncate">{bug.title}</p>
-                      <p className="text-xs text-[#5B403D] mt-0.5 line-clamp-2">{bug.description}</p>
+                      <p className="text-sm font-medium text-[zinc-900] truncate">{bug.title}</p>
+                      <p className="text-xs text-[zinc-500] mt-0.5 line-clamp-2">{bug.description}</p>
                       {bug.steps_to_reproduce && (
-                        <p className="text-[10px] text-[#5B403D]/70 mt-1 italic">Has repro steps</p>
+                        <p className="text-[10px] text-[zinc-500]/70 mt-1 italic">Has repro steps</p>
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className="text-xs text-[#5B403D]">{bug.screen ?? "—"}</span>
+                      <span className="text-xs text-[zinc-500]">{bug.screen ?? "—"}</span>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="text-xs font-medium text-[#1A1C1C]">{name}</p>
-                        <p className="text-[10px] text-[#5B403D]">{bug.profiles?.program || "Guest"}</p>
+                        <p className="text-xs font-medium text-[zinc-900]">{name}</p>
+                        <p className="text-[10px] text-[zinc-500]">{bug.profiles?.program || "Guest"}</p>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <p className="text-[10px] text-[#5B403D]">{device}</p>
-                      <p className="text-[10px] text-[#5B403D]/60">v{bug.app_version ?? "?"}</p>
+                      <p className="text-[10px] text-[zinc-500]">{device}</p>
+                      <p className="text-[10px] text-[zinc-500]/60">v{bug.app_version ?? "?"}</p>
                     </TableCell>
                     <TableCell>
                       <BugStatusActions bugId={bug.id} currentStatus={bug.status} />
                     </TableCell>
                     <TableCell>
-                      <p className="text-xs text-[#5B403D]">{date}</p>
+                      <p className="text-xs text-[zinc-500]">{date}</p>
                     </TableCell>
                   </TableRow>
                 );

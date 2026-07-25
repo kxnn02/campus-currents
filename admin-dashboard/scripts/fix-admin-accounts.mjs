@@ -57,7 +57,7 @@ const ADMIN_ACCOUNTS = [
   {
     id: "a1000000-0000-0000-0000-000000000001",
     email: "superadmin@campuscurrents.app",
-    password: "REDACTED_PASSWORD",
+    password: process.env.ADMIN_SUPERADMIN_PASSWORD || (() => { throw new Error("ADMIN_SUPERADMIN_PASSWORD env var required"); })(),
     first_name: "System",
     last_name: "Admin",
     role: "super_admin",
@@ -67,7 +67,7 @@ const ADMIN_ACCOUNTS = [
   {
     id: "a1000000-0000-0000-0000-000000000002",
     email: "admin.osa@campuscurrents.app",
-    password: "REDACTED_PASSWORD",
+    password: process.env.ADMIN_OSA_PASSWORD || (() => { throw new Error("ADMIN_OSA_PASSWORD env var required"); })(),
     first_name: "OSA",
     last_name: "Admin",
     role: "admin",
@@ -77,7 +77,7 @@ const ADMIN_ACCOUNTS = [
   {
     id: "a1000000-0000-0000-0000-000000000003",
     email: "admin.it@campuscurrents.app",
-    password: "REDACTED_PASSWORD",
+    password: process.env.ADMIN_IT_PASSWORD || (() => { throw new Error("ADMIN_IT_PASSWORD env var required"); })(),
     first_name: "IT",
     last_name: "Admin",
     role: "admin",
@@ -144,22 +144,29 @@ async function fixAccounts() {
   }
 
   // Set PIN for super_admin
-  console.log("Setting PIN for super_admin...");
-  const { error: pinError } = await supabase.rpc("set_pin_hash", {
-    user_id: "a1000000-0000-0000-0000-000000000001",
-    pin: "REDACTED_PIN",
-  });
-  if (pinError) {
-    // Fallback: set via raw update if RPC doesn't exist
-    console.log(`  PIN RPC not available (${pinError.message}), skipping PIN setup.`);
-    console.log("  You can set the PIN manually via the Supabase SQL editor.");
+  const emergencyPin = process.env.ADMIN_EMERGENCY_PIN;
+  if (!emergencyPin) {
+    console.log("\n⚠️  ADMIN_EMERGENCY_PIN not set — skipping PIN setup.");
+    console.log("  Set it via: $env:ADMIN_EMERGENCY_PIN='your-pin'");
   } else {
-    console.log("  PIN set.");
+    console.log("Setting PIN for super_admin...");
+    const { error: pinError } = await supabase.rpc("set_pin_hash", {
+      user_id: "a1000000-0000-0000-0000-000000000001",
+      pin: emergencyPin,
+    });
+    if (pinError) {
+      // Fallback: set via raw update if RPC doesn't exist
+      console.log(`  PIN RPC not available (${pinError.message}), skipping PIN setup.`);
+      console.log("  You can set the PIN manually via the Supabase SQL editor.");
+    } else {
+      console.log("  PIN set.");
+    }
   }
 
-  console.log("\nDone! Try logging in with:");
-  console.log("  Email: superadmin@campuscurrents.app");
-  console.log("  Password: REDACTED_PASSWORD");
+  console.log("\nDone! Try logging in with the configured admin accounts.");
+  console.log("\nRequired env vars for this script:");
+  console.log("  ADMIN_SUPERADMIN_PASSWORD, ADMIN_OSA_PASSWORD, ADMIN_IT_PASSWORD");
+  console.log("  ADMIN_EMERGENCY_PIN (optional)");
 }
 
 fixAccounts().catch(console.error);

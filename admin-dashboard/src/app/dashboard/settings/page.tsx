@@ -18,14 +18,12 @@ export default async function SettingsPage() {
     .eq("id", user.id)
     .single();
 
-  // Fetch all admin accounts
   const { data: admins } = await supabase
     .from("profiles")
     .select("id, email, first_name, last_name, role, office, can_send_emergency")
     .in("role", ["admin", "super_admin"])
     .order("role", { ascending: false });
 
-  // System stats
   const { count: totalStudents } = await supabase
     .from("profiles")
     .select("*", { count: "exact", head: true })
@@ -54,70 +52,60 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-[#1A1C1C]">Settings</h2>
-        <p className="text-[#5B403D] mt-1">
-          Account and system configuration.
-        </p>
+        <h2 className="text-lg font-semibold text-zinc-900">Settings</h2>
+        <p className="text-sm text-zinc-500 mt-0.5">Account and system configuration.</p>
       </div>
 
       {/* Your Account */}
-      <section className="space-y-4">
+      <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <User className="h-4 w-4 text-[#AF101A]" />
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-[#5B403D]">
-            Your Account
-          </h3>
+          <User className="h-3.5 w-3.5 text-zinc-400" />
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Your Account</h3>
         </div>
-        <div className="rounded-xl border border-[#E4BEBA] bg-white p-6 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="rounded-lg border border-zinc-200 bg-white p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <p className="text-xs font-medium text-[#5B403D] uppercase tracking-wide">Name</p>
-              <p className="mt-1 text-sm font-semibold text-[#1A1C1C]">
-                {profile?.first_name} {profile?.last_name}
-              </p>
+              <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Name</p>
+              <p className="mt-1 text-sm font-medium text-zinc-900">{profile?.first_name} {profile?.last_name}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-[#5B403D] uppercase tracking-wide">Email</p>
-              <p className="mt-1 text-sm text-[#1A1C1C]">{profile?.email}</p>
+              <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Email</p>
+              <p className="mt-1 text-sm text-zinc-700">{profile?.email}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-[#5B403D] uppercase tracking-wide">Role</p>
+              <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Role</p>
               <span className={`mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                isSuperAdmin
-                  ? "bg-[#AF101A]/10 text-[#AF101A]"
-                  : "bg-[#5E67C2]/10 text-[#5E67C2]"
+                isSuperAdmin ? "bg-red-50 text-red-700" : "bg-indigo-50 text-indigo-700"
               }`}>
                 <Shield className="h-3 w-3" />
                 {isSuperAdmin ? "Super Admin" : "Admin"}
               </span>
             </div>
             <div>
-              <p className="text-xs font-medium text-[#5B403D] uppercase tracking-wide">Office</p>
-              <p className="mt-1 text-sm text-[#1A1C1C]">{profile?.office || "—"}</p>
+              <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wide">Office</p>
+              <p className="mt-1 text-sm text-zinc-700">{profile?.office || "—"}</p>
             </div>
           </div>
           {isSuperAdmin && (
-            <div className="mt-4 pt-4 border-t border-[#F0DDD9]">
+            <div className="mt-4 pt-4 border-t border-zinc-100">
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-[#16A34A]" />
-                <span className="text-xs text-[#5B403D]">Emergency trigger permission enabled</span>
+                <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="text-xs text-zinc-500">Emergency trigger permission enabled</span>
               </div>
             </div>
           )}
         </div>
       </section>
 
-      {/* Change PIN — super_admin only */}
+      {/* Change PIN */}
       {isSuperAdmin && (
-        <section className="space-y-4">
+        <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <Key className="h-4 w-4 text-[#AF101A]" />
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#5B403D]">
-              Emergency PIN
-            </h3>
+            <Key className="h-3.5 w-3.5 text-zinc-400" />
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Emergency PIN</h3>
           </div>
-          <div className="rounded-xl border border-[#E4BEBA] bg-white p-6 shadow-sm">
-            <p className="text-sm text-[#5B403D] mb-4">
+          <div className="rounded-lg border border-zinc-200 bg-white p-5">
+            <p className="text-sm text-zinc-500 mb-4">
               This PIN is required to trigger emergency alerts. Keep it confidential.
             </p>
             <ChangePinForm />
@@ -126,39 +114,33 @@ export default async function SettingsPage() {
       )}
 
       {/* Admin Accounts */}
-      <section className="space-y-4">
+      <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-[#AF101A]" />
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-[#5B403D]">
-            Admin Accounts
-          </h3>
+          <Users className="h-3.5 w-3.5 text-zinc-400" />
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Admin Accounts</h3>
         </div>
-        <div className="rounded-xl border border-[#E4BEBA] bg-white overflow-hidden shadow-sm">
-          <div className="divide-y divide-[#F0DDD9]">
+        <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+          <div className="divide-y divide-zinc-100">
             {admins && admins.map((admin) => (
               <div key={admin.id} className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
-                  <div className={`h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold ${
-                    admin.role === "super_admin" ? "bg-[#AF101A]" : "bg-[#5E67C2]"
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-semibold ${
+                    admin.role === "super_admin" ? "bg-[#B91C1C]" : "bg-indigo-600"
                   }`}>
                     {admin.first_name?.[0]}{admin.last_name?.[0]}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[#1A1C1C]">
-                      {admin.first_name} {admin.last_name}
-                    </p>
-                    <p className="text-xs text-[#5B403D]">{admin.email}</p>
+                    <p className="text-sm font-medium text-zinc-900">{admin.first_name} {admin.last_name}</p>
+                    <p className="text-xs text-zinc-500">{admin.email}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                    admin.role === "super_admin"
-                      ? "bg-[#AF101A]/10 text-[#AF101A]"
-                      : "bg-[#5E67C2]/10 text-[#5E67C2]"
+                    admin.role === "super_admin" ? "bg-red-50 text-red-700" : "bg-indigo-50 text-indigo-700"
                   }`}>
                     {admin.role === "super_admin" ? "Super Admin" : "Admin"}
                   </span>
-                  <p className="text-[10px] text-[#5B403D] mt-0.5">{admin.office || "—"}</p>
+                  <p className="text-[10px] text-zinc-400 mt-0.5">{admin.office || "—"}</p>
                 </div>
               </div>
             ))}
@@ -167,29 +149,27 @@ export default async function SettingsPage() {
       </section>
 
       {/* System Stats */}
-      <section className="space-y-4">
+      <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-[#AF101A]" />
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-[#5B403D]">
-            System Overview
-          </h3>
+          <BarChart3 className="h-3.5 w-3.5 text-zinc-400" />
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">System Overview</h3>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-[#E4BEBA] bg-white p-5 shadow-sm">
-            <p className="text-xs font-medium text-[#5B403D] uppercase tracking-wide">Registered Students</p>
-            <p className="mt-2 text-2xl font-bold text-[#1A1C1C] tabular-nums">{(totalStudents ?? 0).toLocaleString()}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="rounded-lg border border-zinc-200 bg-white p-4">
+            <p className="text-[11px] font-medium text-zinc-500 uppercase">Students</p>
+            <p className="mt-1.5 text-xl font-semibold text-zinc-900 tabular-nums">{(totalStudents ?? 0).toLocaleString()}</p>
           </div>
-          <div className="rounded-xl border border-[#E4BEBA] bg-white p-5 shadow-sm">
-            <p className="text-xs font-medium text-[#5B403D] uppercase tracking-wide">Total Broadcasts</p>
-            <p className="mt-2 text-2xl font-bold text-[#1A1C1C] tabular-nums">{(totalBroadcasts ?? 0).toLocaleString()}</p>
+          <div className="rounded-lg border border-zinc-200 bg-white p-4">
+            <p className="text-[11px] font-medium text-zinc-500 uppercase">Broadcasts</p>
+            <p className="mt-1.5 text-xl font-semibold text-zinc-900 tabular-nums">{(totalBroadcasts ?? 0).toLocaleString()}</p>
           </div>
-          <div className="rounded-xl border border-[#E4BEBA] bg-white p-5 shadow-sm">
-            <p className="text-xs font-medium text-[#5B403D] uppercase tracking-wide">Push Delivery Rate</p>
-            <p className="mt-2 text-2xl font-bold text-[#16A34A] tabular-nums">{deliveryRate}%</p>
+          <div className="rounded-lg border border-zinc-200 bg-white p-4">
+            <p className="text-[11px] font-medium text-zinc-500 uppercase">Delivery Rate</p>
+            <p className="mt-1.5 text-xl font-semibold text-emerald-600 tabular-nums">{deliveryRate}%</p>
           </div>
-          <div className="rounded-xl border border-[#E4BEBA] bg-white p-5 shadow-sm">
-            <p className="text-xs font-medium text-[#5B403D] uppercase tracking-wide">Admin Accounts</p>
-            <p className="mt-2 text-2xl font-bold text-[#1A1C1C] tabular-nums">{admins?.length ?? 0}</p>
+          <div className="rounded-lg border border-zinc-200 bg-white p-4">
+            <p className="text-[11px] font-medium text-zinc-500 uppercase">Admins</p>
+            <p className="mt-1.5 text-xl font-semibold text-zinc-900 tabular-nums">{admins?.length ?? 0}</p>
           </div>
         </div>
       </section>

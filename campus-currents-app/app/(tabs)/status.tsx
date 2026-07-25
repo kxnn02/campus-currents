@@ -6,16 +6,21 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
+  Share,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { theme, useThemeColors } from '@/constants/Theme';
 import StatusIndicator from '@/components/StatusIndicator';
+import WeekStrip from '@/components/WeekStrip';
 import ErrorState from '@/components/ErrorState';
 import { useNetworkContext } from '@/lib/network';
 import { useProfile } from '@/lib/profile';
 import {
   useActiveSuspensions,
+  suspensionAppliesToStudent,
   formatSuspensionSource,
   formatSuspensionReason,
   formatSuspensionDuration,
@@ -63,21 +68,27 @@ export default function StatusScreen() {
     { enabled: !!profile }
   );
 
-  // Fetch recent suspension history (last 3)
+  // Fetch recent suspension history (last 3) — filtered to student's level
   const { data: suspensionHistory } = useQuery<ClassSuspension[]>({
-    queryKey: ['suspensions', 'history'],
+    queryKey: ['suspensions', 'history', profile?.level, profile?.program],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('class_suspensions')
         .select('*')
         .in('status', ['active', 'lifted'])
         .order('suspension_date', { ascending: false })
-        .limit(3);
+        .limit(10);
 
       if (error) throw error;
-      return (data as ClassSuspension[]) ?? [];
+
+      // Filter to suspensions that apply to this student's level/program
+      const allSuspensions = (data as ClassSuspension[]) ?? [];
+      return allSuspensions
+        .filter((s) => suspensionAppliesToStudent(s, { level: profile?.level ?? null, program: profile?.program ?? null }))
+        .slice(0, 3);
     },
     staleTime: 60_000,
+    enabled: !!profile,
   });
 
   const [refreshing, setRefreshing] = useState(false);
@@ -176,32 +187,55 @@ export default function StatusScreen() {
           upcomingDate={upcomingDate ?? undefined}
         />
 
-        {/* Today's suspension details — Bento grid */}
+        {/* Week-at-a-glance strip — shows this week's status at a glance */}
+        <WeekStrip suspensions={[...todaySuspensions, ...upcomingSuspensions]} />
+
+        {/* Share button — visible when there's an active suspension */}
+        {isSuspendedToday && primarySuspension && (
+          <Pressable
+            style={[styles.shareButton, { borderColor: colors.border }]}
+            onPress={async () => {
+              const msg = `🚫 SSC-R Manila: Classes suspended ${new Date(primarySuspension.suspension_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'Asia/Manila' })} — ${formatSuspensionReason(primarySuspension.reason)}. Source: ${formatSuspensionSource(primarySuspension.source)}. Duration: ${formatSuspensionDuration(primarySuspension.duration)}.`;
+              await Share.share({ message: msg });
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Share suspension status"
+          >
+            <Ionicons name="share-outline" size={16} color={colors.tint} />
+            <Text style={[styles.shareButtonText, { color: colors.tint }]}>Share to GC</Text>
+          </Pressable>
+        )}
+
+        {/* Today's suspension details — 2×2 Bento grid */}
         {isSuspendedToday && primarySuspension && (
           <View style={styles.bentoGrid}>
-            <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Source</Text>
-              <Text style={[styles.bentoValue, { color: colors.text }]} numberOfLines={2}>
-                {formatSuspensionSource(primarySuspension.source)}
-              </Text>
+            <View style={styles.bentoRow}>
+              <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Source</Text>
+                <Text style={[styles.bentoValue, { color: colors.text }]} numberOfLines={2}>
+                  {formatSuspensionSource(primarySuspension.source)}
+                </Text>
+              </View>
+              <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Reason</Text>
+                <Text style={[styles.bentoValue, { color: colors.text }]} numberOfLines={2}>
+                  {formatSuspensionReason(primarySuspension.reason)}
+                </Text>
+              </View>
             </View>
-            <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Reason</Text>
-              <Text style={[styles.bentoValue, { color: colors.text }]} numberOfLines={2}>
-                {formatSuspensionReason(primarySuspension.reason)}
-              </Text>
-            </View>
-            <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Scope</Text>
-              <Text style={[styles.bentoValue, { color: colors.text }]} numberOfLines={2}>
-                {formatSuspensionScope(primarySuspension.scope)}
-              </Text>
-            </View>
-            <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Duration</Text>
-              <Text style={[styles.bentoValue, { color: colors.text }]} numberOfLines={2}>
-                {formatSuspensionDuration(primarySuspension.duration)}
-              </Text>
+            <View style={styles.bentoRow}>
+              <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Scope</Text>
+                <Text style={[styles.bentoValue, { color: colors.text }]} numberOfLines={2}>
+                  {formatSuspensionScope(primarySuspension.scope)}
+                </Text>
+              </View>
+              <View style={[styles.bentoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Text style={[styles.bentoLabel, { color: colors.textSecondary }]}>Duration</Text>
+                <Text style={[styles.bentoValue, { color: colors.text }]} numberOfLines={2}>
+                  {formatSuspensionDuration(primarySuspension.duration)}
+                </Text>
+              </View>
             </View>
           </View>
         )}
@@ -225,9 +259,12 @@ export default function StatusScreen() {
         {/* Upcoming suspensions — alert-style cards below the hero */}
         {upcomingSuspensions.length > 0 && (
           <View style={styles.upcomingSection}>
-            <Text style={[styles.upcomingSectionTitle, { color: colors.textSecondary }]}>
-              ⚠️  HEADS UP
-            </Text>
+            <View style={styles.upcomingSectionHeader}>
+              <Ionicons name="alert-circle" size={14} color={colors.textSecondary} />
+              <Text style={[styles.upcomingSectionTitle, { color: colors.textSecondary }]}>
+                HEADS UP
+              </Text>
+            </View>
             {upcomingSuspensions.map((suspension) => {
               const suspDate = new Date(suspension.suspension_date + 'T00:00:00');
               const daysAway = Math.ceil((suspDate.getTime() - new Date(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }) + 'T00:00:00').getTime()) / 86400000);
@@ -268,11 +305,14 @@ export default function StatusScreen() {
           </View>
         )}
 
-        {/* Info text when classes are on */}
+        {/* Info card when classes are on */}
         {indicatorStatus === 'on' && (
-          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            You'll be notified immediately if this changes.
-          </Text>
+          <View style={[styles.allClearCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Ionicons name="notifications-outline" size={20} color={colors.tint} />
+            <Text style={[styles.allClearText, { color: colors.textSecondary }]}>
+              You'll be notified immediately if this changes. Pull down to refresh.
+            </Text>
+          </View>
         )}
 
         {/* Recent Suspensions history — card style matching Figma */}
@@ -366,16 +406,21 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-  // Bento grid for suspension details (Figma: full-width stacked cards)
+  // Bento grid for suspension details (2×2 layout)
   bentoGrid: {
     width: '100%',
     marginTop: theme.spacing.lg,
-    gap: theme.spacing.lg,
+    gap: theme.spacing.sm,
+  },
+  bentoRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
   },
   bentoCard: {
-    borderRadius: theme.radius.md,
+    flex: 1,
+    borderRadius: theme.radius.xl,
     borderWidth: 1,
-    padding: 25,
+    padding: theme.spacing.lg,
     ...theme.shadows.sm,
   },
   bentoLabel: {
@@ -383,12 +428,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
   bentoValue: {
-    fontSize: 20,
-    fontWeight: '600',
-    lineHeight: 28,
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 22,
   },
   // Other suspensions (today)
   otherSection: {
@@ -423,9 +468,14 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: theme.spacing['2xl'],
   },
+  upcomingSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    marginBottom: theme.spacing.md,
+  },
   upcomingSectionTitle: {
     ...theme.typography.overline,
-    marginBottom: theme.spacing.md,
     letterSpacing: 1,
   },
   upcomingCard: {
@@ -462,10 +512,33 @@ const styles = StyleSheet.create({
     ...theme.typography.bodySmall,
     lineHeight: 18,
   },
-  infoText: {
-    ...theme.typography.body,
-    textAlign: 'center',
-    marginTop: theme.spacing.lg,
+  allClearCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    borderRadius: theme.radius.xl,
+    borderWidth: 1,
+    padding: theme.spacing.lg,
+    marginTop: theme.spacing.xl,
+  },
+  allClearText: {
+    ...theme.typography.bodySmall,
+    flex: 1,
+    lineHeight: 20,
+  },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    paddingVertical: theme.spacing.sm + 2,
+    marginTop: theme.spacing.md,
+  },
+  shareButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   // History section (Figma card style with colored left stripe)
   historySection: {

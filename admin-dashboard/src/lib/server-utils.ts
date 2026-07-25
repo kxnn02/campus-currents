@@ -27,16 +27,45 @@ export async function requireAdmin() {
 }
 
 /**
+ * Logs an admin action to the audit_log table.
+ * Fire-and-forget — does not throw on failure to avoid blocking the main action.
+ */
+export async function logAuditEvent(params: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  userId: string;
+  action: string;
+  targetTable: string;
+  targetId?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    await params.supabase.from("audit_log").insert({
+      user_id: params.userId,
+      action: params.action,
+      target_table: params.targetTable,
+      target_id: params.targetId ?? null,
+      metadata: params.metadata ?? {},
+    });
+  } catch {
+    // Audit logging is best-effort — don't block the main action
+    console.error("[AUDIT] Failed to log:", params.action);
+  }
+}
+
+/**
  * Validates a string field from FormData.
- * Throws with a clear message if invalid.
+ * Strips HTML tags to prevent XSS. Throws with a clear message if invalid.
  */
 export function validateString(
   formData: FormData,
   field: string,
   options: { required?: boolean; minLength?: number; maxLength?: number; allowedValues?: readonly string[] } = {}
 ): string {
-  const value = (formData.get(field) as string | null)?.trim() ?? "";
+  let value = (formData.get(field) as string | null)?.trim() ?? "";
   const { required = true, minLength = 1, maxLength = 5000, allowedValues } = options;
+
+  // Sanitize: strip HTML tags to prevent XSS
+  value = value.replace(/<[^>]*>/g, "");
 
   if (required && !value) {
     throw new Error(`${field} is required`);

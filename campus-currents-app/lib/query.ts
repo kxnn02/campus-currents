@@ -1,14 +1,25 @@
 import { QueryClient } from '@tanstack/react-query';
 
 /**
- * TanStack Query client configured for offline-first mobile usage.
- * - retry: 2 attempts before failing
- * - retryDelay: exponential backoff capped at 10s
+ * TanStack Query client configured for offline-first mobile usage
+ * optimized for slow/unreliable mobile data connections (common in PH).
+ * - retry: 3 attempts for slow connections
+ * - retryDelay: exponential backoff capped at 15s
  * - networkMode: offlineFirst serves cached data immediately
+ * - gcTime: 30 minutes — keep cached data longer for offline access
+ * - refetchOnReconnect: true — freshen data when connection restores
  */
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      retry: 3,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 15000),
+      networkMode: 'offlineFirst',
+      gcTime: 1800_000, // 30 minutes — keep data cached even when inactive
+      refetchOnReconnect: true,
+      refetchOnWindowFocus: false, // Don't refetch on every app foreground (saves data)
+    },
+    mutations: {
       retry: 2,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
       networkMode: 'offlineFirst',
@@ -45,10 +56,11 @@ export const queryKeys = {
 /**
  * Stale time configuration per data category (in milliseconds).
  * Controls how long cached data is considered fresh before background refetch.
+ * Tuned for slow mobile data in PH — longer stale times reduce unnecessary requests.
  */
 export const staleTimeConfig = {
-  broadcasts: 60_000,      // 60 seconds
-  suspensions: 30_000,     // 30 seconds
-  calendarEvents: 300_000, // 5 minutes
-  profile: 600_000,        // 10 minutes
+  broadcasts: 180_000,     // 3 minutes (was 60s) — feed doesn't change that often
+  suspensions: 120_000,    // 2 minutes (was 30s) — status updates aren't second-by-second
+  calendarEvents: 600_000, // 10 minutes (was 5min) — calendar is relatively static
+  profile: 900_000,        // 15 minutes (was 10min) — profile rarely changes
 };

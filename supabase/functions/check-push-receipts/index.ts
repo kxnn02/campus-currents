@@ -1,4 +1,4 @@
-// @ts-nocheck — This file runs on Supabase Edge (Deno runtime), not Node.js
+// deno-lint-ignore-file -- Supabase Edge (Deno runtime), not Node.js
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -7,8 +7,26 @@ const BATCH_SIZE = 300; // Expo max per request
 const STALE_HOURS = 24;
 const MIN_AGE_SECONDS = 30; // Wait 30s before checking a ticket
 
-Deno.serve(async (_req: Request) => {
+Deno.serve(async (req: Request) => {
   try {
+    // --- Auth validation ---
+    // Accept either:
+    // 1. Standard Supabase Authorization Bearer token (service_role key)
+    // 2. Cron job invocation (internal Supabase cron uses service_role automatically)
+    const authHeader = req.headers.get("authorization");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    const isAuthorizedByBearer = authHeader &&
+      serviceRoleKey &&
+      authHeader === `Bearer ${serviceRoleKey}`;
+
+    if (!isAuthorizedByBearer) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);

@@ -71,22 +71,27 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.log('[PUSH] No authenticated user for token storage');
         return false;
       }
 
+      console.log('[PUSH] Storing token for user:', user.id);
       const { error } = await supabase
         .from('profiles')
         .update({ fcm_token: token })
         .eq('id', user.id);
 
       if (error) {
+        console.log('[PUSH] Supabase update error:', error.message);
         throw error;
       }
 
       // Success - also update local storage as reference
       await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
+      console.log('[PUSH] Token stored successfully!');
       return true;
-    } catch {
+    } catch (err) {
+      console.log('[PUSH] Store attempt', attempt + 1, 'failed:', err);
       if (attempt < maxRetries - 1) {
         // Exponential backoff: 1s, 2s, 4s
         const delay = baseDelay * Math.pow(2, attempt);
@@ -96,6 +101,7 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
   }
 
   // All retries failed — store locally for sync on next launch
+  console.log('[PUSH] All retries failed, storing token locally');
   await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
   return false;
 }
@@ -115,22 +121,26 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
  */
 export async function registerForPushNotifications(): Promise<string | undefined> {
   if (!Device.isDevice) {
+    console.log('[PUSH] Not a physical device, skipping registration');
     return undefined;
   }
 
-  // Set up notification channels before requesting permissions
+  console.log('[PUSH] Starting push registration...');  // Set up notification channels before requesting permissions
   await setupNotificationChannels();
 
   // Request permission
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
+  console.log('[PUSH] Existing permission status:', existingStatus);
 
   if (existingStatus !== 'granted') {
     const { status } = await Notifications.requestPermissionsAsync();
     finalStatus = status;
+    console.log('[PUSH] Requested permission, got:', status);
   }
 
   if (finalStatus !== 'granted') {
+    console.log('[PUSH] Permission not granted, aborting');
     return undefined;
   }
 
@@ -138,15 +148,20 @@ export async function registerForPushNotifications(): Promise<string | undefined
   const projectId =
     Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId ?? '3a405c4f-d07a-4544-b28c-cea875f147c1';
 
+  console.log('[PUSH] Project ID:', projectId);
+
   if (!projectId) {
+    console.log('[PUSH] No project ID found, aborting');
     return undefined;
   }
 
   const token = await getTokenWithRetry(projectId);
+  console.log('[PUSH] Token result:', token ? token.substring(0, 30) + '...' : 'FAILED');
 
   if (token) {
     // Store token in Supabase (with retry logic)
-    await storeTokenInSupabase(token);
+    const stored = await storeTokenInSupabase(token);
+    console.log('[PUSH] Token stored in Supabase:', stored);
   }
 
   return token;
@@ -166,10 +181,13 @@ async function getTokenWithRetry(projectId: string): Promise<string | undefined>
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
+      console.log('[PUSH] getExpoPushTokenAsync attempt', attempt + 1);
       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+      console.log('[PUSH] Got token:', tokenData.data);
       return tokenData.data;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
+      console.log('[PUSH] Token attempt', attempt + 1, 'error:', errorMessage);
       const isTransient =
         errorMessage.includes('SERVICE_NOT_AVAILABLE') ||
         errorMessage.includes('TIMEOUT') ||
@@ -177,8 +195,10 @@ async function getTokenWithRetry(projectId: string): Promise<string | undefined>
 
       if (isTransient && attempt < maxRetries) {
         const delay = baseDelay * Math.pow(2, attempt);
+        console.log('[PUSH] Transient error, retrying in', delay, 'ms');
         await new Promise((resolve) => setTimeout(resolve, delay));
       } else {
+        console.log('[PUSH] Non-transient error or retries exhausted, trying fallback');
         // Non-transient error or all retries exhausted
         // Try native device push token as fallback (works on some MIUI devices where Expo token fails)
         if (Platform.OS === 'android') {

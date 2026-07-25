@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdmin, validateString, validateDate } from "@/lib/server-utils";
+import { requireAdmin, validateString, validateDate, logAuditEvent } from "@/lib/server-utils";
 import { SUSPENSION_SOURCES, SUSPENSION_REASONS, SUSPENSION_SCOPES, SUSPENSION_DURATIONS } from "@/lib/constants";
 import {
   scopeToTargetAudience,
@@ -78,6 +78,15 @@ export async function createSuspension(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await logAuditEvent({
+    supabase,
+    userId: user.id,
+    action: "create_suspension",
+    targetTable: "class_suspensions",
+    targetId: broadcast.id,
+    metadata: { source, reason, scope, duration, suspension_date: suspensionDate },
+  });
+
   revalidatePath("/dashboard/suspensions");
   revalidatePath("/dashboard");
 }
@@ -104,6 +113,15 @@ export async function liftSuspension(id: string) {
     .eq("id", id);
 
   if (error) throw new Error(error.message);
+
+  await logAuditEvent({
+    supabase,
+    userId: user.id,
+    action: "lift_suspension",
+    targetTable: "class_suspensions",
+    targetId: id,
+    metadata: { source: suspension.source, scope: suspension.scope },
+  });
 
   // Send a "Classes Resumed" broadcast so affected students get a push notification
   const targetAudience = scopeToTargetAudience(

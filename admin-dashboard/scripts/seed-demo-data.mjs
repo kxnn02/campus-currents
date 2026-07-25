@@ -37,6 +37,16 @@ if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   process.exit(1);
 }
 
+// Safety guard: refuse to run against production
+const PROTECTED_SLUGS = ["prod", "production", "live"];
+const urlSlug = SUPABASE_URL.replace("https://", "").split(".")[0];
+if (PROTECTED_SLUGS.some(s => urlSlug.toLowerCase().includes(s))) {
+  console.error("❌ REFUSING to run seed script against a production database!");
+  console.error(`   Detected URL slug: ${urlSlug}`);
+  console.error("   This script DELETES ALL DATA. Only run against dev/staging.");
+  process.exit(1);
+}
+
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 });

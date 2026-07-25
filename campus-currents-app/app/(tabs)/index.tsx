@@ -25,6 +25,7 @@ import ErrorState from '@/components/ErrorState';
 import { useQueryClient } from '@tanstack/react-query';
 import { useBroadcastFeed, useUnreadCount } from '@/lib/feed';
 import { useProfile } from '@/lib/profile';
+import { useActiveSuspensions, formatSuspensionSource, formatSuspensionReason } from '@/lib/suspensions';
 import { Broadcast, NotificationTier } from '@/types/database';
 
 // Enable LayoutAnimation on Android
@@ -44,6 +45,30 @@ const FILTER_OPTIONS: { key: FilterOption; label: string; icon: string }[] = [
 /** Max pinned items shown before auto-collapsing */
 const PINNED_COLLAPSE_THRESHOLD = 2;
 
+/**
+ * Categorizes a timestamp into a human-readable date group for feed separators.
+ */
+function getDateGroup(sentAt: string): string {
+  const now = new Date();
+  const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+
+  const sentDate = new Date(sentAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+
+  if (sentDate === todayStr) return 'Today';
+  if (sentDate === yesterdayStr) return 'Yesterday';
+
+  // Check if within this week (last 7 days)
+  const weekAgo = new Date(now);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const weekAgoStr = weekAgo.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  if (sentDate > weekAgoStr) return 'This Week';
+
+  return 'Earlier';
+}
+
 export default function FeedScreen() {
   const colors = useThemeColors();
   const router = useRouter();
@@ -52,6 +77,27 @@ export default function FeedScreen() {
 
   // Get profile from shared context
   const { profile, isLoading: profileLoading } = useProfile();
+
+  // Check for active/upcoming suspensions to show banner in feed
+  const { data: activeSuspensions } = useActiveSuspensions(
+    profile ?? { level: null, program: null },
+    { enabled: !!profile }
+  );
+  const suspensionBannerData = useMemo(() => {
+    if (!activeSuspensions) return null;
+    const { todaySuspensions, upcomingSuspensions } = activeSuspensions;
+    if (todaySuspensions.length > 0) {
+      const s = todaySuspensions[0];
+      return { text: `Classes suspended today — ${formatSuspensionReason(s.reason)}`, isToday: true };
+    }
+    if (upcomingSuspensions.length > 0) {
+      const s = upcomingSuspensions[0];
+      const d = new Date(s.suspension_date + 'T00:00:00');
+      const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'Asia/Manila' });
+      return { text: `Classes suspended ${dayLabel} — ${formatSuspensionReason(s.reason)}`, isToday: false };
+    }
+    return null;
+  }, [activeSuspensions]);
 
   // Reset unread count on screen focus
   const { reset: resetUnread } = useUnreadCount();
@@ -68,8 +114,13 @@ export default function FeedScreen() {
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       resetUnread();
-      // Reset feed to fetch fresh data when tab is focused
-      queryClient.invalidateQueries({ queryKey: ['broadcasts', 'feed'] });
+      // Only invalidate if data is stale — avoids refetching on slow connections
+      // when user just switches tabs quickly
+      const queryState = queryClient.getQueryState(['broadcasts', 'feed']);
+      const isStale = !queryState?.dataUpdatedAt || (Date.now() - queryState.dataUpdatedAt > 180_000);
+      if (isStale) {
+        queryClient.invalidateQueries({ queryKey: ['broadcasts', 'feed'] });
+      }
     });
     return unsubscribe;
   }, [navigation, resetUnread, queryClient]);
@@ -154,51 +205,53 @@ export default function FeedScreen() {
     }
   };
 
-  // Filter chips component
-  const FilterChips = () => (
-    <View style={[styles.filterContainer, { backgroundColor: colors.background }]}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterScroll}
-      >
-        {FILTER_OPTIONS.map((option) => {
-          const isActive = activeFilter === option.key;
-          const chipColor = getFilterChipColor(option.key);
-          return (
-            <Pressable
-              key={option.key}
-              style={[
-                styles.filterChip,
-                {
-                  backgroundColor: isActive ? chipColor + '18' : colors.surface,
-                  borderColor: isActive ? chipColor : colors.borderLight,
-                },
-              ]}
-              onPress={() => setActiveFilter(option.key)}
-              accessibilityRole="button"
-              accessibilityLabel={`Filter by ${option.label}`}
-              accessibilityState={{ selected: isActive }}
-            >
-              <Ionicons
-                name={option.icon as any}
-                size={14}
-                color={isActive ? chipColor : colors.textSecondary}
-              />
-              <Text
+  // Filter chips component — extracted as stable component to avoid recreation on each render
+  const FilterChips = useMemo(() => {
+    return (
+      <View style={[styles.filterContainer, { backgroundColor: colors.background }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterScroll}
+        >
+          {FILTER_OPTIONS.map((option) => {
+            const isActive = activeFilter === option.key;
+            const chipColor = getFilterChipColor(option.key);
+            return (
+              <Pressable
+                key={option.key}
                 style={[
-                  styles.filterChipText,
-                  { color: isActive ? chipColor : colors.textSecondary },
+                  styles.filterChip,
+                  {
+                    backgroundColor: isActive ? chipColor + '18' : colors.surface,
+                    borderColor: isActive ? chipColor : colors.borderLight,
+                  },
                 ]}
+                onPress={() => setActiveFilter(option.key)}
+                accessibilityRole="button"
+                accessibilityLabel={`Filter by ${option.label}`}
+                accessibilityState={{ selected: isActive }}
               >
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
+                <Ionicons
+                  name={option.icon as any}
+                  size={14}
+                  color={isActive ? chipColor : colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    { color: isActive ? chipColor : colors.textSecondary },
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+    );
+  }, [activeFilter, colors]);
 
   // Loading state: profile loading or initial feed loading
   if (profileLoading || (!profile && isLoading)) {
@@ -250,7 +303,9 @@ export default function FeedScreen() {
   // Build list data with collapsible pinned section
   type ListItem =
     | { type: 'filter-bar' }
+    | { type: 'suspension-banner' }
     | { type: 'pinned-section' }
+    | { type: 'date-separator'; label: string }
     | { type: 'broadcast'; broadcast: Broadcast }
     | { type: 'empty-filter' };
 
@@ -259,18 +314,68 @@ export default function FeedScreen() {
   // Filter bar is always first
   listData.push({ type: 'filter-bar' });
 
+  // Suspension banner right after filters (if active/upcoming suspension exists)
+  if (suspensionBannerData) {
+    listData.push({ type: 'suspension-banner' });
+  }
+
   if (filteredBroadcasts.length === 0 && allBroadcasts.length > 0) {
     listData.push({ type: 'empty-filter' });
   } else {
     if (pinnedBroadcasts.length > 0) {
       listData.push({ type: 'pinned-section' });
     }
-    regularBroadcasts.forEach((b) => listData.push({ type: 'broadcast', broadcast: b }));
+    // Add date-group headers between broadcasts
+    let lastDateGroup = '';
+    regularBroadcasts.forEach((b) => {
+      const dateGroup = getDateGroup(b.sent_at);
+      if (dateGroup !== lastDateGroup) {
+        listData.push({ type: 'date-separator', label: dateGroup });
+        lastDateGroup = dateGroup;
+      }
+      listData.push({ type: 'broadcast', broadcast: b });
+    });
   }
 
   const renderItem = ({ item }: { item: ListItem }) => {
     if (item.type === 'filter-bar') {
-      return <FilterChips />;
+      return FilterChips;
+    }
+
+    if (item.type === 'suspension-banner' && suspensionBannerData) {
+      return (
+        <Pressable
+          style={[
+            styles.suspensionBanner,
+            { backgroundColor: suspensionBannerData.isToday ? '#FEE2E2' : '#FEF3C7' },
+          ]}
+          onPress={() => router.push('/(tabs)/status' as never)}
+          accessibilityRole="button"
+          accessibilityLabel={`${suspensionBannerData.text}. Tap to see status.`}
+        >
+          <Ionicons
+            name={suspensionBannerData.isToday ? 'close-circle' : 'alert-circle'}
+            size={16}
+            color={suspensionBannerData.isToday ? '#DC2626' : '#D97706'}
+          />
+          <Text style={[styles.suspensionBannerText, { color: suspensionBannerData.isToday ? '#991B1B' : '#92400E' }]}>
+            {suspensionBannerData.text}
+          </Text>
+          <Text style={[styles.suspensionBannerLink, { color: suspensionBannerData.isToday ? '#DC2626' : '#D97706' }]}>
+            Status →
+          </Text>
+        </Pressable>
+      );
+    }
+
+    if (item.type === 'date-separator') {
+      return (
+        <View style={styles.dateSeparator}>
+          <Text style={[styles.dateSeparatorText, { color: colors.textSecondary }]}>
+            {item.label}
+          </Text>
+        </View>
+      );
     }
 
     if (item.type === 'pinned-section') {
@@ -343,6 +448,8 @@ export default function FeedScreen() {
       );
     }
 
+    if (item.type !== 'broadcast') return null;
+
     return (
       <BroadcastCard broadcast={item.broadcast} onPress={handleCardPress} />
     );
@@ -350,7 +457,9 @@ export default function FeedScreen() {
 
   const keyExtractor = (item: ListItem, index: number) => {
     if (item.type === 'filter-bar') return 'filter-bar';
+    if (item.type === 'suspension-banner') return 'suspension-banner';
     if (item.type === 'pinned-section') return 'pinned-section';
+    if (item.type === 'date-separator') return `date-${item.label}-${index}`;
     if (item.type === 'empty-filter') return 'empty-filter';
     return item.broadcast.id;
   };
@@ -366,6 +475,10 @@ export default function FeedScreen() {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
         stickyHeaderIndices={[0]}
+        maxToRenderPerBatch={5}
+        windowSize={7}
+        removeClippedSubviews={true}
+        initialNumToRender={6}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -392,7 +505,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingTop: theme.spacing.lg,
-    paddingBottom: 80,
+    paddingBottom: 96,
   },
   skeletonContainer: {
     flex: 1,
@@ -401,6 +514,36 @@ const styles = StyleSheet.create({
   // Filter chips
   filterContainer: {
     paddingVertical: theme.spacing.sm,
+  },
+  // Suspension banner
+  suspensionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginHorizontal: theme.spacing.lg,
+    marginVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm + 2,
+    borderRadius: theme.radius.lg,
+  },
+  suspensionBannerText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  suspensionBannerLink: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  // Date separators
+  dateSeparator: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.xs,
+  },
+  dateSeparatorText: {
+    ...theme.typography.overline,
+    letterSpacing: 0.8,
   },
   filterScroll: {
     paddingHorizontal: theme.spacing.lg,

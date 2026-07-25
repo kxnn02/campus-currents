@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { CalendarEvent, EventCategory } from '@/types/database';
 import { getCategoryColor } from '@/lib/calendar';
 import { theme, useThemeColors } from '@/constants/Theme';
@@ -129,7 +130,7 @@ function getTodayString(): string {
   return formatDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
 }
 
-export default function CalendarGrid({
+function CalendarGrid({
   year,
   month,
   events,
@@ -160,13 +161,19 @@ export default function CalendarGrid({
   };
 
   // Swipe gesture handling for month navigation
+  // Requires significant horizontal movement (80px) AND minimal vertical (< 30px)
+  // to prevent conflicts with parent ScrollView vertical scrolling
   const touchStartX = React.useRef(0);
+  const touchStartY = React.useRef(0);
   const handleTouchStart = (e: any) => {
     touchStartX.current = e.nativeEvent.pageX;
+    touchStartY.current = e.nativeEvent.pageY;
   };
   const handleTouchEnd = (e: any) => {
     const deltaX = e.nativeEvent.pageX - touchStartX.current;
-    if (Math.abs(deltaX) > 50) {
+    const deltaY = Math.abs(e.nativeEvent.pageY - touchStartY.current);
+    // Only trigger if horizontal swipe is dominant (2x more than vertical) and > 80px
+    if (Math.abs(deltaX) > 80 && deltaY < 30) {
       if (deltaX > 0) {
         handlePrevMonth();
       } else {
@@ -177,7 +184,7 @@ export default function CalendarGrid({
 
   return (
     <View
-      style={[styles.container, { backgroundColor: colors.surface }]}
+      style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -255,17 +262,27 @@ export default function CalendarGrid({
                 {cell.day}
               </Text>
 
-              {/* Event dots */}
+              {/* Event indicators — × for suspensions, dots for others */}
               <View style={styles.dotsContainer}>
-                {categories.slice(0, MAX_VISIBLE_DOTS).map((category, dotIndex) => (
-                  <View
-                    key={`${category}-${dotIndex}`}
-                    style={[
-                      styles.dot,
-                      { backgroundColor: getCategoryColor(category) },
-                    ]}
-                  />
-                ))}
+                {categories.slice(0, MAX_VISIBLE_DOTS).map((category, dotIndex) => {
+                  const isSuspension = category === 'holiday';
+                  if (isSuspension) {
+                    return (
+                      <View
+                        key={`${category}-${dotIndex}`}
+                        style={[styles.suspensionMark, { backgroundColor: getCategoryColor(category) }]}
+                      >
+                        <Ionicons name="close" size={7} color="#FFFFFF" />
+                      </View>
+                    );
+                  }
+                  return (
+                    <View
+                      key={`${category}-${dotIndex}`}
+                      style={[styles.dot, { backgroundColor: getCategoryColor(category) }]}
+                    />
+                  );
+                })}
                 {extraCount > 0 && (
                   <Text
                     style={[
@@ -285,13 +302,18 @@ export default function CalendarGrid({
   );
 }
 
+/**
+ * Memoized CalendarGrid — avoids re-rendering the 42-cell grid when parent state changes
+ * but year/month/events/selectedDate haven't changed.
+ */
+export default memo(CalendarGrid);
+
 const styles = StyleSheet.create({
   container: {
     borderRadius: 8,
     padding: theme.spacing.lg,
     ...theme.shadows.sm,
     borderWidth: 1,
-    borderColor: '#E2E2E2',
   },
   header: {
     flexDirection: 'row',
@@ -354,6 +376,13 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
+  },
+  suspensionMark: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   extraDotsText: {
     fontSize: 8,

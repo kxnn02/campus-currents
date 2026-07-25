@@ -19,14 +19,14 @@ import { supabase } from '@/lib/supabase';
 import { useProfile } from '@/lib/profile';
 
 const FEATURES = [
-  { key: 'feed', label: '📋 News Feed' },
-  { key: 'status', label: '🏫 Suspension Status' },
-  { key: 'calendar', label: '📅 Calendar' },
-  { key: 'emergency', label: '🚨 Emergency Alerts' },
-  { key: 'push', label: '🔔 Push Notifications' },
-  { key: 'login', label: '🔑 Login Process' },
-  { key: 'design', label: '🎨 Design / UI' },
-  { key: 'speed', label: '⚡ Speed & Performance' },
+  { key: 'feed', label: 'News Feed' },
+  { key: 'status', label: 'Suspension Status' },
+  { key: 'calendar', label: 'Calendar' },
+  { key: 'emergency', label: 'Emergency Alerts' },
+  { key: 'push', label: 'Push Notifications' },
+  { key: 'login', label: 'Login Process' },
+  { key: 'design', label: 'Design / UI' },
+  { key: 'speed', label: 'Speed & Performance' },
 ];
 
 const STAR_LABELS = ['Terrible', 'Poor', 'Okay', 'Good', 'Excellent'];

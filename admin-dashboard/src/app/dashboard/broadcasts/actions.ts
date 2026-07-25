@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdmin, validateString, parseAudience } from "@/lib/server-utils";
+import { requireAdmin, validateString, parseAudience, logAuditEvent } from "@/lib/server-utils";
 import { BROADCAST_TIERS, BROADCAST_CHANNELS } from "@/lib/constants";
 
 export async function createBroadcast(formData: FormData) {
@@ -28,10 +28,24 @@ export async function createBroadcast(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  await logAuditEvent({
+    supabase,
+    userId: user.id,
+    action: "create_broadcast",
+    targetTable: "broadcasts",
+    targetId: broadcast?.id,
+    metadata: { tier, channel, title },
+  });
+
   // Upload image if provided
   const image = formData.get("image") as File | null;
   if (image && image.size > 0 && broadcast?.id) {
     if (image.size > 2 * 1024 * 1024) throw new Error("Image must be under 2MB");
+
+    const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
+      throw new Error("Invalid image type. Allowed: JPEG, PNG, WebP, GIF");
+    }
 
     try {
       const ext = image.name.split(".").pop() ?? "jpg";
@@ -116,6 +130,11 @@ export async function updateBroadcast(id: string, formData: FormData) {
   const image = formData.get("image") as File | null;
   if (image && image.size > 0) {
     if (image.size > 2 * 1024 * 1024) throw new Error("Image must be under 2MB");
+
+    const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
+      throw new Error("Invalid image type. Allowed: JPEG, PNG, WebP, GIF");
+    }
 
     try {
       // Delete any existing image first (handles different extensions)

@@ -1,4 +1,4 @@
-// @ts-nocheck — This file runs on Supabase Edge (Deno runtime), not Node.js
+// deno-lint-ignore-file -- Supabase Edge (Deno runtime), not Node.js
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -48,11 +48,25 @@ const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 
 Deno.serve(async (req: Request) => {
   try {
-    // --- Webhook secret validation ---
+    // --- Auth validation ---
+    // Accept either:
+    // 1. Standard Supabase Authorization Bearer token (service_role key)
+    // 2. Legacy X-Webhook-Secret header (for backward compat)
+    const authHeader = req.headers.get("authorization");
     const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
     const requestSecret = req.headers.get("x-webhook-secret");
 
-    if (!webhookSecret || requestSecret !== webhookSecret) {
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    const isAuthorizedByBearer = authHeader &&
+      serviceRoleKey &&
+      authHeader === `Bearer ${serviceRoleKey}`;
+
+    const isAuthorizedByWebhookSecret = webhookSecret &&
+      requestSecret &&
+      requestSecret === webhookSecret;
+
+    if (!isAuthorizedByBearer && !isAuthorizedByWebhookSecret) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
@@ -75,21 +89,36 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Build query to get student push tokens — include level and notification_preferences
-    const { data: students, error: studentsError } = await supabase
-      .from("profiles")
-      .select("id, fcm_token, program, year_level, level, notification_preferences")
-      .eq("role", "student")
-      .not("fcm_token", "is", null);
+    // Paginate to avoid Supabase's default 1000-row limit
+    let allStudents: StudentProfile[] = [];
+    const PAGE_SIZE_QUERY = 1000;
+    let from = 0;
 
-    if (studentsError) {
-      console.error("Error fetching students:", studentsError);
-      return new Response(JSON.stringify({ error: studentsError.message }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+    while (true) {
+      const { data: batch, error: batchError } = await supabase
+        .from("profiles")
+        .select("id, fcm_token, program, year_level, level, notification_preferences")
+        .eq("role", "student")
+        .not("fcm_token", "is", null)
+        .range(from, from + PAGE_SIZE_QUERY - 1);
+
+      if (batchError) {
+        console.error("Error fetching students:", batchError);
+        return new Response(JSON.stringify({ error: batchError.message }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      if (!batch || batch.length === 0) break;
+      allStudents = allStudents.concat(batch as StudentProfile[]);
+      if (batch.length < PAGE_SIZE_QUERY) break; // Last page
+      from += PAGE_SIZE_QUERY;
     }
 
-    if (!students || students.length === 0) {
+    const students = allStudents;
+
+    if (students.length === 0) {
       return new Response(JSON.stringify({ message: "No students with push tokens" }), {
         headers: { "Content-Type": "application/json" },
       });
@@ -97,7 +126,7 @@ Deno.serve(async (req: Request) => {
 
     // Filter students by target_audience (including levels)
     const targetAudience = broadcast.target_audience;
-    let matchingStudents = (students as StudentProfile[]).filter((student) => {
+    let matchingStudents = students.filter((student) => {
       if (!targetAudience || targetAudience.all === true) return true;
 
       const hasPrograms = Array.isArray(targetAudience.programs) && targetAudience.programs.length > 0;
