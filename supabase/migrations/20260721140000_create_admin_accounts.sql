@@ -7,7 +7,6 @@
 
 -- Enable pgcrypto for crypt() and gen_salt() if not already enabled
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
-
 -- Admin Account 1: Super Admin (campus security head)
 INSERT INTO auth.users (
   id,
@@ -32,7 +31,6 @@ INSERT INTO auth.users (
   now(),
   '{"first_name": "System", "last_name": "Admin"}'::jsonb
 ) ON CONFLICT (id) DO NOTHING;
-
 -- Admin Account 2: Regular Admin (OSA staff)
 INSERT INTO auth.users (
   id,
@@ -57,7 +55,6 @@ INSERT INTO auth.users (
   now(),
   '{"first_name": "OSA", "last_name": "Admin"}'::jsonb
 ) ON CONFLICT (id) DO NOTHING;
-
 -- Admin Account 3: Regular Admin (IT staff)
 INSERT INTO auth.users (
   id,
@@ -82,7 +79,6 @@ INSERT INTO auth.users (
   now(),
   '{"first_name": "IT", "last_name": "Admin"}'::jsonb
 ) ON CONFLICT (id) DO NOTHING;
-
 -- Create identities for each user (required for email/password login)
 INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
 VALUES
@@ -96,7 +92,6 @@ VALUES
    '{"sub": "a1000000-0000-0000-0000-000000000003", "email": "admin.it@campuscurrents.app"}'::jsonb,
    'email', 'a1000000-0000-0000-0000-000000000003', now(), now(), now())
 ON CONFLICT DO NOTHING;
-
 -- Now set profile roles (the trigger creates profiles, but we need to update roles)
 -- Wait for trigger to fire, then update:
 UPDATE public.profiles
@@ -107,7 +102,6 @@ SET
   can_send_emergency = true,
   office = 'Security Office'
 WHERE id = 'a1000000-0000-0000-0000-000000000001';
-
 UPDATE public.profiles
 SET
   role = 'admin',
@@ -116,7 +110,6 @@ SET
   can_send_emergency = false,
   office = 'Office of Student Affairs'
 WHERE id = 'a1000000-0000-0000-0000-000000000002';
-
 UPDATE public.profiles
 SET
   role = 'admin',
@@ -125,7 +118,6 @@ SET
   can_send_emergency = false,
   office = 'IT Department'
 WHERE id = 'a1000000-0000-0000-0000-000000000003';
-
 -- Set PIN hash for super_admin account (PIN: 142857)
 -- This uses bcrypt via pgcrypto so the admin-dashboard compare() works correctly
 UPDATE public.profiles

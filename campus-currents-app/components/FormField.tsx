@@ -9,6 +9,7 @@ interface FormFieldProps {
   placeholder?: string;
   editable?: boolean;
   keyboardType?: KeyboardTypeOptions;
+  maxLength?: number;
 }
 
 /**
@@ -23,6 +24,7 @@ export default function FormField({
   placeholder,
   editable = true,
   keyboardType = 'default',
+  maxLength,
 }: FormFieldProps) {
   return (
     <View style={styles.container}>
@@ -39,6 +41,7 @@ export default function FormField({
         placeholderTextColor="#9CA3AF"
         editable={editable}
         keyboardType={keyboardType}
+        maxLength={maxLength}
         accessibilityLabel={label}
         accessibilityHint={error ? `Error: ${error}` : undefined}
       />

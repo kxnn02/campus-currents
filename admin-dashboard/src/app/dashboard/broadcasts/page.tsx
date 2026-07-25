@@ -29,13 +29,13 @@ export default async function BroadcastsPage() {
   function getTierStyle(tier: string) {
     switch (tier) {
       case "emergency":
-        return "bg-[#BA1A1A]/10 text-[#BA1A1A] border-[#BA1A1A]/20 hover:bg-[#BA1A1A]/15";
+        return "bg-red-50 text-red-700 border-red-200";
       case "important":
-        return "bg-[#F89C00]/10 text-[#92400E] border-[#F89C00]/20 hover:bg-[#F89C00]/15";
+        return "bg-amber-50 text-amber-700 border-amber-200";
       case "routine":
-        return "bg-[#5E67C2]/10 text-[#3B41A0] border-[#5E67C2]/20 hover:bg-[#5E67C2]/15";
+        return "bg-indigo-50 text-indigo-700 border-indigo-200";
       default:
-        return "bg-[#F0DDD9] text-[#5B403D] border-[#E4BEBA]";
+        return "bg-zinc-100 text-zinc-600 border-zinc-200";
     }
   }
 
@@ -53,56 +53,56 @@ export default async function BroadcastsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-[#1A1C1C]">Broadcasts</h2>
-          <p className="text-[#5B403D] mt-1">
+          <h2 className="text-lg font-semibold text-zinc-900">Broadcasts</h2>
+          <p className="text-sm text-zinc-500 mt-0.5">
             Manage announcements and notifications sent to students.
           </p>
         </div>
         <NewBroadcastDialog />
       </div>
 
-      <div className="rounded-xl border border-[#F0DDD9] bg-white shadow-sm overflow-hidden">
+      <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-[#FDF5F3] hover:bg-[#FDF5F3] border-b border-[#F0DDD9]">
-              <TableHead className="text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Title</TableHead>
-              <TableHead className="text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Tier</TableHead>
-              <TableHead className="text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Channel</TableHead>
-              <TableHead className="text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Audience</TableHead>
-              <TableHead className="text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Sent At</TableHead>
-              <TableHead className="w-[100px] text-[11px] font-bold uppercase tracking-wider text-[#5B403D]">Actions</TableHead>
+            <TableRow className="bg-zinc-50 hover:bg-zinc-50 border-b border-zinc-200">
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Title</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Tier</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Channel</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Audience</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Sent At</TableHead>
+              <TableHead className="w-[100px] text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {broadcasts && broadcasts.length > 0 ? (
               broadcasts.map((broadcast) => (
-                <TableRow key={broadcast.id} className="group border-b border-[#F0DDD9] warm-table-row">
-                  <TableCell className="font-medium py-3.5">
+                <TableRow key={broadcast.id} className="group border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
+                  <TableCell className="font-medium py-3">
                     <Link
                       href={`/dashboard/broadcasts/${broadcast.id}`}
-                      className="text-[#1A1C1C] hover:text-[#AF101A] transition-colors font-medium"
+                      className="text-zinc-900 hover:text-[#B91C1C] transition-colors font-medium"
                     >
                       {broadcast.title}
                     </Link>
                     {broadcast.is_pinned && (
-                      <Badge variant="outline" className="ml-2 text-[10px] border-[#E4BEBA] text-[#5B403D]">
-                        📌 Pinned
+                      <Badge variant="outline" className="ml-2 text-[10px] border-zinc-300 text-zinc-500">
+                        Pinned
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="py-3.5">
-                    <Badge className={`${getTierStyle(broadcast.tier)} text-[10px] font-bold uppercase tracking-wide border`}>
+                  <TableCell className="py-3">
+                    <Badge className={`${getTierStyle(broadcast.tier)} text-[10px] font-semibold uppercase tracking-wide border`}>
                       {broadcast.tier}
                     </Badge>
                   </TableCell>
-                  <TableCell className="capitalize text-sm text-[#1A1C1C] py-3.5">{broadcast.channel}</TableCell>
-                  <TableCell className="max-w-[200px] truncate text-sm text-[#5B403D] py-3.5">
+                  <TableCell className="capitalize text-sm text-zinc-700 py-3">{broadcast.channel}</TableCell>
+                  <TableCell className="max-w-[200px] truncate text-sm text-zinc-500 py-3">
                     {formatAudience(broadcast.target_audience)}
                   </TableCell>
-                  <TableCell className="text-sm text-[#5B403D] tabular-nums py-3.5">
+                  <TableCell className="text-sm text-zinc-500 tabular-nums py-3">
                     {broadcast.sent_at
                       ? new Date(broadcast.sent_at).toLocaleDateString("en-US", {
                           month: "short",
@@ -111,7 +111,7 @@ export default async function BroadcastsPage() {
                         })
                       : "—"}
                   </TableCell>
-                  <TableCell className="py-3.5">
+                  <TableCell className="py-3">
                     <BroadcastActions broadcast={broadcast} />
                   </TableCell>
                 </TableRow>
@@ -120,12 +120,12 @@ export default async function BroadcastsPage() {
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-14">
                   <div className="flex flex-col items-center gap-3">
-                    <div className="h-12 w-12 rounded-full bg-[#FDF5F3] flex items-center justify-center">
-                      <Megaphone className="h-5 w-5 text-[#E4BEBA]" />
+                    <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center">
+                      <Megaphone className="h-4 w-4 text-zinc-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-[#1A1C1C]">No broadcasts yet</p>
-                      <p className="text-xs text-[#5B403D] mt-1">Create your first broadcast to reach students.</p>
+                      <p className="text-sm font-medium text-zinc-900">No broadcasts yet</p>
+                      <p className="text-xs text-zinc-500 mt-1">Create your first broadcast to reach students.</p>
                     </div>
                   </div>
                 </TableCell>

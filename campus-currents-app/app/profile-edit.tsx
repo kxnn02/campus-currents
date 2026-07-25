@@ -56,8 +56,9 @@ export default function ProfileEditScreen() {
   const [saving, setSaving] = useState(false);
   const [isSchoolUser, setIsSchoolUser] = useState(true);
 
-  // Non-editable fields (display only)
+  // Display-only field
   const [email, setEmail] = useState('');
+  // Editable student ID
   const [studentId, setStudentId] = useState('');
 
   // Editable fields
@@ -199,6 +200,7 @@ export default function ProfileEditScreen() {
       const { error } = await supabase
         .from('profiles')
         .update({
+          student_id: studentId.trim(),
           first_name: formData.first_name,
           last_name: formData.last_name,
           program: formData.program,
@@ -259,9 +261,16 @@ export default function ProfileEditScreen() {
             <FormField
               label="Student ID"
               value={studentId}
-              onChangeText={() => {}}
-              editable={false}
-              placeholder=""
+              onChangeText={(text) => {
+                // Only allow digits, max 10
+                const digits = text.replace(/\D/g, '').slice(0, 10);
+                setStudentId(digits);
+                if (errors.student_id) setErrors((prev) => ({ ...prev, student_id: '' }));
+              }}
+              error={errors.student_id}
+              placeholder="e.g. 2024101291"
+              keyboardType="number-pad"
+              maxLength={10}
             />
           )}
 

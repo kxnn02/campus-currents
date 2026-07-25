@@ -31,9 +31,9 @@ export default async function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar profile={profile} />
-      <main className="flex-1 overflow-y-auto bg-[#F9F9F9]">
+      <main className="flex-1 overflow-y-auto bg-[#FAFAFA]">
         <DashboardHeader profile={profile} />
-        <div className="max-w-6xl mx-auto p-6">
+        <div className="max-w-[1120px] mx-auto px-6 py-6">
           {children}
         </div>
       </main>

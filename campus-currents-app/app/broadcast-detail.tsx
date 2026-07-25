@@ -136,26 +136,24 @@ function BroadcastDetailImage({ imageUrl }: { imageUrl: string }) {
   // Content area width = screen - padding (24 * 2)
   const imageWidth = screenWidth - 48;
 
-  useEffect(() => {
-    Image.getSize(
-      imageUrl,
-      (w, h) => {
-        if (w > 0 && h > 0) {
-          setAspect(Math.max(0.5, Math.min(2, w / h)));
-        }
-      },
-      () => setHasError(true)
-    );
-  }, [imageUrl]);
+  const handleImageLoad = (event: any) => {
+    // Cross-platform: iOS uses event.nativeEvent.source, Android uses event.nativeEvent directly
+    const source = event.nativeEvent?.source ?? event.nativeEvent ?? {};
+    const { width: w, height: h } = source;
+    if (w > 0 && h > 0) {
+      setAspect(Math.max(0.5, Math.min(2, w / h)));
+    }
+  };
 
   if (hasError) return null;
 
   return (
     <View style={[styles.detailImageContainer, { borderColor: colors.borderLight }]}>
       <Image
-        source={{ uri: imageUrl }}
+        source={{ uri: imageUrl, cache: 'force-cache' }}
         style={{ width: imageWidth, height: imageWidth / aspect, borderRadius: 12 }}
-        resizeMode="contain"
+        resizeMode="cover"
+        onLoad={handleImageLoad}
         onError={() => setHasError(true)}
         accessibilityLabel="Broadcast image"
       />

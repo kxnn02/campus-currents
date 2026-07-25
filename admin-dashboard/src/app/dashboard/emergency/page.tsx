@@ -102,8 +102,8 @@ export default async function EmergencyPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-[#1A1C1C]">Emergency Management</h2>
-          <p className="text-[#5B403D] mt-1">
+          <h2 className="text-2xl font-bold tracking-tight text-[zinc-900]">Emergency Management</h2>
+          <p className="text-[zinc-500] mt-1">
             Trigger and manage campus-wide emergency alerts.
           </p>
         </div>
@@ -125,24 +125,24 @@ export default async function EmergencyPage() {
           </div>
 
           {activeEmergencies.map((emergency) => (
-            <Card key={emergency.id} className="border-2 border-[#BA1A1A]/30 bg-gradient-to-br from-white to-[#FFF8F7] shadow-md shadow-[#BA1A1A]/[0.06] overflow-hidden">
+            <Card key={emergency.id} className="border-2 border-[#BA1A1A]/30 bg-gradient-to-br from-white to-[zinc-50] shadow-md shadow-[#BA1A1A]/[0.06] overflow-hidden">
               {/* Red top accent bar */}
               <div className="h-1 w-full bg-gradient-to-r from-[#BA1A1A] to-[#AF101A]" />
               <CardHeader className="pb-3 pt-5">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1.5">
-                    <CardTitle className="text-lg text-[#1A1C1C]">
+                    <CardTitle className="text-lg text-[zinc-900]">
                       {emergency.broadcasts?.title || "Emergency"}
                     </CardTitle>
                     <CardDescription className="flex items-center gap-2 flex-wrap">
                       <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-[#BA1A1A]/10 text-[#BA1A1A] px-2.5 py-1 rounded-md uppercase tracking-wide">
                         {emergency.emergency_type?.replace(/_/g, " ")}
                       </span>
-                      <span className="inline-flex items-center gap-1 text-xs text-[#5B403D]">
+                      <span className="inline-flex items-center gap-1 text-xs text-[zinc-500]">
                         <User className="h-3 w-3" />
                         {[emergency.broadcasts?.sender?.first_name, emergency.broadcasts?.sender?.last_name].filter(Boolean).join(" ") || "Unknown"}
                       </span>
-                      <span className="inline-flex items-center gap-1 text-xs text-[#5B403D]">
+                      <span className="inline-flex items-center gap-1 text-xs text-[zinc-500]">
                         <Clock className="h-3 w-3" />
                         Started: {formatRelativeTime(emergency.created_at)}
                       </span>
@@ -154,7 +154,7 @@ export default async function EmergencyPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-[#5B403D] leading-relaxed">{emergency.broadcasts?.body}</p>
+                <p className="text-sm text-[zinc-500] leading-relaxed">{emergency.broadcasts?.body}</p>
                 <ResolveEmergencyButton id={emergency.id} />
                 {accountabilityMap[emergency.broadcast_id] && (
                   <EmergencyAccountability
@@ -171,13 +171,13 @@ export default async function EmergencyPage() {
         </div>
       ) : (
         /* Calm state when no emergencies — reassuring, professional */
-        <Card className="border border-[#F0DDD9] shadow-sm">
+        <Card className="border border-[zinc-100] shadow-sm">
           <CardContent className="py-14 text-center">
             <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#16A34A]/10 mb-4">
               <ShieldCheck className="h-7 w-7 text-[#16A34A]" />
             </div>
-            <p className="text-base font-semibold text-[#1A1C1C]">Campus is safe</p>
-            <p className="text-sm text-[#5B403D] mt-1.5 max-w-sm mx-auto">
+            <p className="text-base font-semibold text-[zinc-900]">Campus is safe</p>
+            <p className="text-sm text-[zinc-500] mt-1.5 max-w-sm mx-auto">
               No active emergencies at this time. Use the button above to trigger an alert if needed.
             </p>
           </CardContent>
@@ -187,17 +187,17 @@ export default async function EmergencyPage() {
       {/* Past Emergencies */}
       {pastEmergencies && pastEmergencies.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-base font-semibold text-[#1A1C1C]">Recent Past Emergencies</h3>
+          <h3 className="text-base font-semibold text-[zinc-900]">Recent Past Emergencies</h3>
           <div className="space-y-3">
             {pastEmergencies.map((emergency) => (
-              <Card key={emergency.id} className="border border-[#F0DDD9] shadow-sm">
+              <Card key={emergency.id} className="border border-[zinc-100] shadow-sm">
                 <CardHeader className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <CardTitle className="text-sm font-semibold text-[#1A1C1C]">
+                      <CardTitle className="text-sm font-semibold text-[zinc-900]">
                         {emergency.broadcasts?.title || "Emergency"}
                       </CardTitle>
-                      <CardDescription className="flex items-center gap-2 flex-wrap text-xs text-[#5B403D]">
+                      <CardDescription className="flex items-center gap-2 flex-wrap text-xs text-[zinc-500]">
                         <span className="capitalize">{emergency.emergency_type?.replace(/_/g, " ")}</span>
                         <span className="inline-flex items-center gap-1">
                           <User className="h-3 w-3" />

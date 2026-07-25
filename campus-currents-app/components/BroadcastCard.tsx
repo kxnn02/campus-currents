@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, memo } from 'react';
 import { Pressable, View, Text, Image, StyleSheet, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Broadcast, NotificationTier } from '@/types/database';
@@ -34,7 +34,7 @@ const tierLabels: Record<NotificationTier, string> = {
  * - Clear 3-level text hierarchy: title → body → metadata
  * - Works on all screen sizes (uses percentage-based image width)
  */
-export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
+function BroadcastCardInner({ broadcast, onPress }: BroadcastCardProps) {
   const colors = useThemeColors();
   const { width: screenWidth } = useWindowDimensions();
   const borderColor = tierColors[broadcast.tier] ?? theme.colors.tier.routine;
@@ -47,22 +47,17 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
   const imageWidth = screenWidth - 32 - 36 - 4;
   const imageHeight = imageWidth / imageAspect;
 
-  // Get natural image dimensions to calculate proper aspect ratio
-  useEffect(() => {
-    if (!broadcast.image_url) return;
-    Image.getSize(
-      broadcast.image_url,
-      (width, height) => {
-        if (width > 0 && height > 0) {
-          // Clamp aspect ratio between 1:1 (square) and 2:1 (wide)
-          const natural = width / height;
-          const clamped = Math.max(1, Math.min(2, natural));
-          setImageAspect(clamped);
-        }
-      },
-      () => setImageError(true)
-    );
-  }, [broadcast.image_url]);
+  // Get natural image dimensions on load success
+  // Uses nativeEvent.source (iOS) or nativeEvent (Android) for cross-platform support
+  const handleImageLoad = (event: any) => {
+    const source = event.nativeEvent?.source ?? event.nativeEvent ?? {};
+    const { width, height } = source;
+    if (width > 0 && height > 0) {
+      const natural = width / height;
+      const clamped = Math.max(1, Math.min(2, natural));
+      setImageAspect(clamped);
+    }
+  };
 
   return (
     <Pressable
@@ -112,9 +107,10 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
         {hasImage && (
           <View style={[styles.imageContainer, { borderColor: colors.borderLight }]}>
             <Image
-              source={{ uri: broadcast.image_url! }}
+              source={{ uri: broadcast.image_url!, cache: 'force-cache' }}
               style={[styles.image, { width: imageWidth, height: imageHeight }]}
-              resizeMode="contain"
+              resizeMode="cover"
+              onLoad={handleImageLoad}
               onError={() => setImageError(true)}
               accessibilityLabel={`Image for: ${broadcast.title}`}
             />
@@ -133,6 +129,16 @@ export function BroadcastCard({ broadcast, onPress }: BroadcastCardProps) {
     </Pressable>
   );
 }
+
+/**
+ * Memoized BroadcastCard — prevents re-renders when props haven't changed.
+ * Critical for FlatList performance since parent re-renders on filter/scroll.
+ */
+export const BroadcastCard = memo(BroadcastCardInner, (prev, next) => {
+  return prev.broadcast.id === next.broadcast.id &&
+    prev.broadcast.is_pinned === next.broadcast.is_pinned &&
+    prev.broadcast.title === next.broadcast.title;
+});
 
 const styles = StyleSheet.create({
   card: {

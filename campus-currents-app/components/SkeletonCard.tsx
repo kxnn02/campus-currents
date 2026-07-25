@@ -1,12 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { theme, useThemeColors } from '@/constants/Theme';
 
 /**
  * Shimmer loading placeholder that mimics the BroadcastCard layout.
  * Uses an animated opacity pulse to create a shimmer effect.
+ * Memoized to prevent re-creating animation loops on parent re-render.
  */
-export default function SkeletonCard() {
+function SkeletonCardInner() {
   const colors = useThemeColors();
   const opacity = useRef(new Animated.Value(0.3)).current;
 
@@ -53,6 +54,9 @@ export default function SkeletonCard() {
     </Animated.View>
   );
 }
+
+const SkeletonCard = memo(SkeletonCardInner);
+export default SkeletonCard;
 
 const styles = StyleSheet.create({
   card: {

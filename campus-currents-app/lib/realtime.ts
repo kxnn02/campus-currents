@@ -25,7 +25,7 @@ const INITIAL_BACKOFF_MS = 1000;
 const MAX_BACKOFF_MS = 30000;
 const BACKOFF_MULTIPLIER = 2;
 const SUSTAINED_DISCONNECT_THRESHOLD_MS = 30000;
-const POLLING_INTERVAL_MS = 30000;
+const POLLING_INTERVAL_MS = 60000; // 60s (was 30s) — reduce battery/data usage on slow connections
 
 // --- Generic Realtime Subscription Hook ---
 
