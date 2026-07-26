@@ -91,7 +91,9 @@ export async function signOut() {
   if (error) throw error;
 }
 
-// --- useAuth Hook ---
+// --- useAuth Hook (DEPRECATED) ---
+// This hook is no longer used. The app uses ProfileProvider + onAuthStateChange directly in _layout.tsx.
+// Kept as a reference but not exported.
 
 /**
  * useAuth() — Reactive hook that tracks session and profile state.
@@ -104,7 +106,7 @@ export async function signOut() {
  * 5. Handles session expiry: if auth state fires with null session (was previously set),
  *    clears AsyncStorage emergency keys and shows a "Session expired" toast.
  */
-export function useAuth(): {
+function useAuth(): {
   session: Session | null;
   profile: Profile | null;
   isLoading: boolean;

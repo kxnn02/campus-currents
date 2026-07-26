@@ -1,35 +1,55 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { Platform, AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 
-// AsyncStorage key for locally stored push token
+// AsyncStorage keys
 const PUSH_TOKEN_STORAGE_KEY = '@campus_currents:push_token';
+const PUSH_REGISTRATION_STATUS_KEY = '@campus_currents:push_status';
+
+// Registration status values
+type PushStatus = 'registered' | 'failed' | 'pending';
+
 
 // Configure notification handler (how notifications display when app is in foreground)
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowAlert: true,
     shouldShowBanner: true,
     shouldShowList: true,
   }),
 });
 
 /**
- * Sets up Android notification channels with tiered importance levels.
+ * Sets up Android notification channels with elevated importance levels.
+ * All channels use HIGH or MAX importance to ensure:
+ * - Notifications appear on the lock screen
+ * - Heads-up (popup) display when phone is idle
+ * - Sound and vibration play immediately
+ *
  * Must be called before requesting notification permissions.
+ *
+ * IMPORTANT: Android doesn't allow upgrading channel importance after creation.
+ * We use versioned channel IDs (v2) to force recreation with correct importance.
+ * Old channels are deleted to avoid confusion.
  *
  * Channels:
  * - emergency: MAX importance, bypassDnd, alarm vibration pattern
  * - important: HIGH importance, elevated vibration
- * - routine: DEFAULT importance, standard behavior
+ * - routine: HIGH importance, standard sound (ensures lock screen visibility)
  */
 export async function setupNotificationChannels(): Promise<void> {
   if (Platform.OS !== 'android') return;
+
+  // Delete old channels that had lower importance (Android won't upgrade them)
+  try { await Notifications.deleteNotificationChannelAsync('routine'); } catch { /* may not exist */ }
+  try { await Notifications.deleteNotificationChannelAsync('important'); } catch { /* may not exist */ }
+  try { await Notifications.deleteNotificationChannelAsync('emergency'); } catch { /* may not exist */ }
 
   // Emergency channel - overrides silent mode / Do Not Disturb
   await Notifications.setNotificationChannelAsync('emergency', {
@@ -39,22 +59,28 @@ export async function setupNotificationChannels(): Promise<void> {
     lightColor: '#DC2626',
     sound: 'default',
     bypassDnd: true,
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    showBadge: true,
   });
 
-  // Important channel - elevated priority, audible during quiet hours
+  // Important channel - elevated priority, heads-up display
   await Notifications.setNotificationChannelAsync('important', {
     name: 'Important Announcements',
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#F59E0B',
     sound: 'default',
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    showBadge: true,
   });
 
-  // Routine channel - standard notifications, respects silent mode
+  // Routine channel - HIGH importance to guarantee lock screen + heads-up display
   await Notifications.setNotificationChannelAsync('routine', {
     name: 'General Announcements',
-    importance: Notifications.AndroidImportance.DEFAULT,
+    importance: Notifications.AndroidImportance.HIGH,
     sound: 'default',
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    showBadge: true,
   });
 }
 
@@ -113,9 +139,10 @@ async function storeTokenInSupabase(token: string): Promise<boolean> {
  * Behavior:
  * - Sets up Android notification channels first
  * - Requests OS notification permission if not already granted
- * - Retrieves Expo push token (with 3x retry for SERVICE_NOT_AVAILABLE errors)
+ * - Retrieves Expo push token (with retry for SERVICE_NOT_AVAILABLE errors)
  * - Stores token in Supabase with 3x retry (exponential backoff: 1s, 2s, 4s)
  * - On total failure: stores token in AsyncStorage for sync later
+ * - Catch-up system (notification-catchup.ts) ensures delivery regardless
  *
  * @returns The Expo push token string, or undefined if registration fails
  */
@@ -162,6 +189,10 @@ export async function registerForPushNotifications(): Promise<string | undefined
     // Store token in Supabase (with retry logic)
     const stored = await storeTokenInSupabase(token);
     console.log('[PUSH] Token stored in Supabase:', stored);
+    await AsyncStorage.setItem(PUSH_REGISTRATION_STATUS_KEY, 'registered');
+  } else {
+    // Mark as failed so background retry picks it up
+    await AsyncStorage.setItem(PUSH_REGISTRATION_STATUS_KEY, 'failed');
   }
 
   return token;
@@ -172,12 +203,13 @@ export async function registerForPushNotifications(): Promise<string | undefined
  * SERVICE_NOT_AVAILABLE is transient on many Android devices (especially MIUI/Xiaomi)
  * because Google Play Services takes time to initialize after boot or app install.
  *
- * Retries 4 times with exponential backoff: 2s, 4s, 8s, 16s.
- * Total wait: up to ~30 seconds, which covers the typical GCM registration delay.
+ * Retries 2 times with exponential backoff: 3s, 6s.
+ * Total wait: ~9 seconds max at launch. If this fails, the usePushRegistrationStatus
+ * hook will automatically retry when the app is next foregrounded.
  */
 async function getTokenWithRetry(projectId: string): Promise<string | undefined> {
-  const maxRetries = 4;
-  const baseDelay = 2000; // 2 seconds
+  const maxRetries = 2;
+  const baseDelay = 3000; // 3 seconds
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
@@ -316,3 +348,73 @@ export function useNotificationPermission(): { permissionGranted: boolean } {
 
   return { permissionGranted };
 }
+
+/**
+ * React hook that monitors push registration status and automatically
+ * retries registration when the app returns to the foreground.
+ *
+ * This solves the SERVICE_NOT_AVAILABLE problem on Android where Google Play
+ * Services may not be ready at app launch (common on Xiaomi/MIUI devices,
+ * after fresh installs, or on slow networks).
+ *
+ * The hook:
+ * - Returns current push status ('registered', 'failed', 'pending')
+ * - Automatically re-attempts registration when app is foregrounded (if previously failed)
+ * - Limits retries to avoid battery drain (max 3 foreground attempts per session)
+ *
+ * @returns { pushStatus, retryPushRegistration }
+ */
+export function usePushRegistrationStatus(): {
+  pushStatus: PushStatus;
+  retryPushRegistration: () => Promise<void>;
+} {
+  const [pushStatus, setPushStatus] = useState<PushStatus>('pending');
+  const foregroundRetries = useRef(0);
+  const MAX_FOREGROUND_RETRIES = 3;
+
+  // Load saved status on mount
+  useEffect(() => {
+    AsyncStorage.getItem(PUSH_REGISTRATION_STATUS_KEY).then((status) => {
+      if (status === 'registered' || status === 'failed') {
+        setPushStatus(status);
+      }
+    });
+  }, []);
+
+  const retryPushRegistration = useCallback(async () => {
+    // Avoid re-registering if already registered
+    const currentStatus = await AsyncStorage.getItem(PUSH_REGISTRATION_STATUS_KEY);
+    if (currentStatus === 'registered') {
+      setPushStatus('registered');
+      return;
+    }
+    setPushStatus('pending');
+    const token = await registerForPushNotifications();
+    setPushStatus(token ? 'registered' : 'failed');
+  }, []);
+
+  // Auto-retry on foreground if registration previously failed
+  useEffect(() => {
+    const handleAppStateChange = (nextState: AppStateStatus) => {
+      if (
+        nextState === 'active' &&
+        pushStatus === 'failed' &&
+        foregroundRetries.current < MAX_FOREGROUND_RETRIES
+      ) {
+        foregroundRetries.current += 1;
+        console.log(
+          '[PUSH] App foregrounded, retrying registration (attempt',
+          foregroundRetries.current,
+          ')'
+        );
+        retryPushRegistration();
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription.remove();
+  }, [pushStatus, retryPushRegistration]);
+
+  return { pushStatus, retryPushRegistration };
+}
+

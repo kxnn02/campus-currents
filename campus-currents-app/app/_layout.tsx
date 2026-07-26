@@ -20,7 +20,8 @@ import { UnreadCountProvider } from '@/lib/feed';
 import { ProfileProvider } from '@/lib/profile';
 import { InAppBannerProvider, useInAppBanner } from '@/components/InAppBanner';
 import { registerBannerHandler, handleNotificationResponse, handleForegroundNotification } from '@/lib/notification-router';
-import { registerForPushNotifications, checkAndUpdateToken } from '@/lib/notifications';
+import { registerForPushNotifications, checkAndUpdateToken, usePushRegistrationStatus, setupNotificationChannels } from '@/lib/notifications';
+import { useNotificationCatchup } from '@/lib/notification-catchup';
 import * as Notifications from 'expo-notifications';
 import * as Linking from 'expo-linking';
 
@@ -31,6 +32,10 @@ export const unstable_settings = {
 };
 
 SplashScreen.preventAutoHideAsync();
+
+// Set up notification channels immediately on app load (before any push arrives)
+// This ensures lock screen visibility and heads-up display are configured
+setupNotificationChannels();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -124,13 +129,20 @@ function RootLayoutNav() {
   }, [session, initialized, segments, activeEmergency, hasAcknowledged]);
 
   // Register push notifications when user is authenticated
+  // usePushRegistrationStatus handles automatic foreground retries if initial registration fails
+  const { pushStatus } = usePushRegistrationStatus();
+
   useEffect(() => {
     if (session) {
       registerForPushNotifications().catch(() => {
-        // Silently fail — will retry on next app launch
+        // Silently fail — usePushRegistrationStatus will auto-retry on foreground
       });
     }
   }, [session]);
+
+  // Catch-up: fire local notifications for any broadcasts missed while app was closed
+  // This guarantees delivery even if FCM token registration fails permanently
+  useNotificationCatchup();
 
   // Notification listeners: foreground + tap response
   useEffect(() => {
@@ -156,6 +168,10 @@ function RootLayoutNav() {
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
         // App has come to foreground — check if there's an active unacknowledged emergency
         checkActiveEmergency();
+        // Refresh push token if it has rotated (catches Google token rotation)
+        if (pushStatus === 'registered') {
+          checkAndUpdateToken().catch(() => {});
+        }
       }
       appState.current = nextAppState;
     });

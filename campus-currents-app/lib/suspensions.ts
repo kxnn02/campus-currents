@@ -185,34 +185,4 @@ export function useActiveSuspensions(
   });
 }
 
-/**
- * @deprecated Use `useActiveSuspensions` instead. Kept for backward compatibility.
- */
-export function useTodaySuspensions(
-  profile: { level: Level | null; program: Program | null },
-  options?: { enabled?: boolean }
-) {
-  const level = profile.level ?? (profile.program ? deriveLevelFromProgram(profile.program) : null);
-  const enabled = options?.enabled ?? true;
 
-  return useQuery<ClassSuspension[]>({
-    queryKey: queryKeys.suspensions.today(),
-    queryFn: async () => {
-      const today = getTodayManila();
-
-      const { data, error } = await supabase
-        .from('class_suspensions')
-        .select('*')
-        .eq('suspension_date', today)
-        .eq('status', 'active');
-
-      if (error) throw error;
-
-      return (data as ClassSuspension[]).filter((suspension) =>
-        suspensionAppliesToStudent(suspension, { level, program: profile.program })
-      );
-    },
-    staleTime: staleTimeConfig.suspensions,
-    enabled,
-  });
-}

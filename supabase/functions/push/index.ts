@@ -204,7 +204,7 @@ Deno.serve(async (req: Request) => {
       title: broadcast.title,
       body: broadcast.body,
       channelId: androidChannelId,
-      priority: broadcast.tier === "emergency" ? "high" : "default",
+      priority: "high" as const,
       data: {
         broadcast_id: broadcast.id,
         tier: broadcast.tier,

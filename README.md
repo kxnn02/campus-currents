@@ -40,7 +40,7 @@ graph TB
 
     subgraph Backend["Backend Layer — Supabase"]
         AUTH[🔐 Auth<br/>Google OAuth]
-        DB[(🗄️ PostgreSQL<br/>39 Migrations + RLS)]
+        DB[(🗄️ PostgreSQL<br/>43 Migrations + RLS)]
         RT[⚡ Realtime<br/>WebSocket]
         EF[☁️ Edge Functions<br/>Deno Runtime]
         ST[📦 Storage<br/>Event Posters]
@@ -74,8 +74,8 @@ sequenceDiagram
     participant Phone as 📱 Student Phone
 
     Admin->>DB: INSERT broadcast
-    DB->>EF: Webhook trigger (x-webhook-secret)
-    EF->>DB: Query matching students (audience filter)
+    DB->>EF: Webhook trigger (x-webhook-secret / Bearer token)
+    EF->>DB: Query matching students (audience filter, paginated)
     EF->>DB: Create delivery_receipts (delivered_at = NULL)
     EF->>Expo: Send push batch (100/batch)
     Expo-->>EF: Ticket IDs
@@ -151,7 +151,7 @@ campus-currents/
 │   └── components/                #    Hero, Features, InteractivePhone, Team, etc.
 │
 ├── supabase/                      # 🗄️ Backend
-│   ├── migrations/                #    39 SQL migration files
+│   ├── migrations/                #    43 SQL migration files
 │   └── functions/                 #    Edge Functions (push, check-push-receipts)
 │
 ├── TEAM-GUIDE.md                  # 📖 Complete team onboarding guide
@@ -168,7 +168,7 @@ campus-currents/
 | **Class Suspension Hub** | Three-state indicator (ON/SUSPENDED/MONITORING) with scope-aware filtering by student level |
 | **School Calendar** | Interactive month grid with events, suspensions, and announcements per date |
 | **Emergency Overlay** | Full-screen red alert with I'm Safe / Need Help — persists across app relaunch |
-| **Push Notifications** | Tiered Android channels — emergency overrides silent mode |
+| **Push Notifications** | Tiered Android channels (HIGH/MAX importance) — lock screen + heads-up display, auto-retry on failure, catch-up for missed notifications |
 | **Notification Preferences** | Per-channel mute for routine alerts, enforced server-side at delivery |
 | **Realtime Updates** | WebSocket live feed with exponential backoff reconnection |
 | **Offline Resilience** | Stale data banners, connectivity sync, receipt queue |
@@ -188,10 +188,10 @@ campus-currents/
 
 | Feature | Description |
 |---------|-------------|
-| **Two-Phase Push Delivery** | Send → store tickets → verify receipts → confirm delivery |
+| **Two-Phase Push Delivery** | Send (high priority) → store tickets → verify receipts → confirm delivery |
 | **Stale Token Cleanup** | Auto-clear `fcm_token` on `DeviceNotRegistered` |
 | **Row Level Security** | 40+ RLS policies — students read-only, admins write |
-| **Service Role Auth** | Push function validates `Authorization: Bearer` service_role key |
+| **Dual Auth** | Push function validates `Authorization: Bearer` OR `X-Webhook-Secret` header |
 | **Duplicate Emergency Prevention** | DB trigger rejects new emergency while one is active |
 | **Auto-Level Derivation** | DB trigger sets `level` from `program` on insert/update |
 | **Audit Logging** | All admin actions logged to `audit_log` table with user, action, timestamp |

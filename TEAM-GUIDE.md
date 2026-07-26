@@ -49,7 +49,7 @@ You need these installed on your computer:
 
 | Software | What it is | How to get it |
 |----------|-----------|----------------|
-| **Expo Go** | App to run the mobile app on your phone | Search "Expo Go" on Google Play Store or Apple App Store |
+| **Dev Client APK** | Custom build of the app that supports push notifications | Download from EAS Build or ask the Project Manager |
 
 ### How to Check if You Have Node.js
 
