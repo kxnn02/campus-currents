@@ -14,6 +14,17 @@ export async function createBroadcast(formData: FormData) {
   const isPinned = formData.get("is_pinned") === "true";
   const targetAudience = parseAudience(formData);
 
+  // Validate image BEFORE inserting the broadcast — prevents orphaned broadcasts
+  // if image validation fails after the push trigger already fired
+  const image = formData.get("image") as File | null;
+  if (image && image.size > 0) {
+    if (image.size > 2 * 1024 * 1024) throw new Error("Image must be under 2MB");
+    const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
+      throw new Error("Invalid image type. Allowed: JPEG, PNG, WebP, GIF");
+    }
+  }
+
   const { data: broadcast, error } = await supabase.from("broadcasts").insert({
     sender_id: user.id,
     title,
@@ -37,16 +48,8 @@ export async function createBroadcast(formData: FormData) {
     metadata: { tier, channel, title },
   });
 
-  // Upload image if provided
-  const image = formData.get("image") as File | null;
+  // Upload image if provided (already validated above)
   if (image && image.size > 0 && broadcast?.id) {
-    if (image.size > 2 * 1024 * 1024) throw new Error("Image must be under 2MB");
-
-    const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
-      throw new Error("Invalid image type. Allowed: JPEG, PNG, WebP, GIF");
-    }
-
     try {
       const ext = image.name.split(".").pop() ?? "jpg";
       const filePath = `${broadcast.id}.${ext}`;
