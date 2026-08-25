@@ -23,7 +23,7 @@ export interface EmergencyState {
 }
 
 interface EmergencyContextValue extends EmergencyState {
-  acknowledge: (type: AcknowledgmentType) => Promise<void>;
+  acknowledge: (type: AcknowledgmentType, locationHint?: string) => Promise<void>;
   checkActiveEmergency: () => Promise<void>;
 }
 
@@ -115,7 +115,7 @@ export function EmergencyProvider({ children }: { children: React.ReactNode }) {
    * On total failure: queues locally, dismisses overlay, shows toast.
    */
   const acknowledge = useCallback(
-    async (type: AcknowledgmentType) => {
+    async (type: AcknowledgmentType, locationHint?: string) => {
       const emergency = stateRef.current.activeEmergency;
       if (!emergency) return;
 
@@ -129,7 +129,7 @@ export function EmergencyProvider({ children }: { children: React.ReactNode }) {
       // Retry up to 3 times with exponential backoff (1s, 2s, 4s)
       for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
         try {
-          await recordAcknowledgment(emergency.broadcast_id, studentId, type);
+          await recordAcknowledgment(emergency.broadcast_id, studentId, type, locationHint);
           success = true;
           break;
         } catch {
@@ -146,6 +146,7 @@ export function EmergencyProvider({ children }: { children: React.ReactNode }) {
           student_id: studentId,
           type: 'acknowledgment',
           acknowledgment_type: type,
+          location_hint: locationHint?.trim().slice(0, 200),
           timestamp: new Date().toISOString(),
         });
 

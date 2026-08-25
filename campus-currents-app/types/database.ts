@@ -114,5 +114,6 @@ export interface DeliveryReceipt {
   read_at: string | null;
   acknowledged_at: string | null;
   acknowledgment_type: AcknowledgmentType | null;
+  location_hint: string | null;
   created_at: string;
 }

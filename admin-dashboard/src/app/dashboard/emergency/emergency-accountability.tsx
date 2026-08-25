@@ -22,6 +22,7 @@ interface NeedHelpStudent {
   year_level: number | null;
   section: string | null;
   phone_number: string | null;
+  location_hint: string | null;
 }
 
 interface Counters {
@@ -91,18 +92,25 @@ export function EmergencyAccountability({
       setCounters({ reached, safe, needHelp, noResponse, notReached });
     }
 
-    // Fetch need help students
+    // Fetch need help students with their location hint
     const { data: helpStudents } = await supabase
       .from("delivery_receipts")
       .select(
-        "student_id, profiles!student_id(id, first_name, last_name, program, year_level, section, phone_number)"
+        "student_id, location_hint, profiles!student_id(id, first_name, last_name, program, year_level, section, phone_number)"
       )
       .eq("broadcast_id", broadcastId)
       .eq("acknowledgment_type", "need_help");
 
     if (helpStudents) {
       const students: NeedHelpStudent[] = helpStudents
-        .map((row: Record<string, unknown>) => row.profiles)
+        .map((row: Record<string, unknown>) => {
+          const profile = row.profiles as Record<string, unknown> | null;
+          if (!profile) return null;
+          return {
+            ...profile,
+            location_hint: (row.location_hint as string) || null,
+          };
+        })
         .filter(Boolean) as NeedHelpStudent[];
       setNeedHelpStudents(students);
     }
@@ -190,6 +198,7 @@ export function EmergencyAccountability({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
+                    <TableHead>Location</TableHead>
                     <TableHead>Program</TableHead>
                     <TableHead>Year</TableHead>
                     <TableHead>Section</TableHead>
@@ -202,11 +211,24 @@ export function EmergencyAccountability({
                       <TableCell className="font-medium">
                         {student.first_name} {student.last_name}
                       </TableCell>
+                      <TableCell>
+                        {student.location_hint ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
+                            📍 {student.location_hint}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic">Not provided</span>
+                        )}
+                      </TableCell>
                       <TableCell>{student.program || "—"}</TableCell>
                       <TableCell>{student.year_level ?? "—"}</TableCell>
                       <TableCell>{student.section || "—"}</TableCell>
                       <TableCell className="font-mono text-xs">
-                        {student.phone_number || "—"}
+                        {student.phone_number ? (
+                          <a href={`tel:${student.phone_number}`} className="text-blue-600 hover:underline">
+                            {student.phone_number}
+                          </a>
+                        ) : "—"}
                       </TableCell>
                     </TableRow>
                   ))}
