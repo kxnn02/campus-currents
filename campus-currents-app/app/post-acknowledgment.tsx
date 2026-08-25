@@ -20,6 +20,7 @@ export default function PostAcknowledgmentScreen() {
   const params = useLocalSearchParams<{ type?: string }>();
   const { activeEmergency, acknowledgmentType } = useEmergency();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const channelCountRef = useRef(0);
 
   const ackType: AcknowledgmentType =
     (params.type as AcknowledgmentType) || acknowledgmentType || 'safe';
@@ -33,7 +34,7 @@ export default function PostAcknowledgmentScreen() {
     }
 
     const channel = supabase
-      .channel('post-ack-emergency-updates')
+      .channel(`post-ack-emergency-${activeEmergency.id}-${++channelCountRef.current}`)
       .on(
         'postgres_changes',
         {
