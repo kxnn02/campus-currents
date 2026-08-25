@@ -39,11 +39,11 @@ graph TB
     end
 
     subgraph Backend["Backend Layer — Supabase"]
-        AUTH[🔐 Auth<br/>Google OAuth]
-        DB[(🗄️ PostgreSQL<br/>43 Migrations + RLS)]
+        AUTH[🔐 Auth<br/>Google OAuth + Email/Password]
+        DB[(🗄️ PostgreSQL<br/>10 tables · RLS · 43 migrations)]
         RT[⚡ Realtime<br/>WebSocket]
         EF[☁️ Edge Functions<br/>Deno Runtime]
-        ST[📦 Storage<br/>Event Posters]
+        ST[📦 Storage<br/>broadcast-images bucket]
     end
 
     subgraph External["External Services"]
@@ -53,54 +53,77 @@ graph TB
 
     MA <-->|Auth + Queries| AUTH
     MA <-->|Live Updates| RT
-    MA <-->|Data| DB
+    MA <-->|Data, RLS enforced| DB
     AD <-->|SSR + Auth| AUTH
-    AD <-->|CRUD| DB
-    AD -->|Trigger| EF
-    EF -->|Send Notifications| EXPO
+    AD <-->|CRUD, RLS enforced| DB
+    AD -->|Image Upload| ST
+    DB -.->|WAL replication| RT
+    DB -->|pg_net async POST on INSERT| EF
+    EF -->|Send Push Batch| EXPO
+    EXPO -.->|Delivery Receipts, polled every minute| EF
     EXPO -->|Deliver| FCM
-    FCM -->|Push| MA
-    DB -->|Webhook on INSERT| EF
+    FCM -->|Push, even if app closed| MA
 ```
 
 ## Push Notification Flow
 
 ```mermaid
-sequenceDiagram
-    participant Admin as 🖥️ Admin Dashboard
-    participant DB as 🗄️ Supabase DB
-    participant EF as ☁️ Edge Function
-    participant Expo as 📤 Expo Push API
-    participant Phone as 📱 Student Phone
+flowchart TB
+    A["🖥️ Admin Dashboard<br/>INSERT broadcast"]
+    B["🗄️ Supabase DB<br/>AFTER INSERT trigger → pg_net async POST<br/>Bearer service_role token"]
+    C["☁️ Edge Function<br/>Query students with a push token<br/>paginated, 1000/page"]
+    D["☁️ Edge Function<br/>filter by audience · drop muted channels<br/>routine only · dedupe by token"]
+    E["🗄️ Supabase DB<br/>Create delivery_receipts<br/>delivered_at = NULL"]
+    F["📤 Expo Push API<br/>Send push batch, 100/batch"]
+    G["🗄️ Supabase DB<br/>Store push_tickets<br/>status = pending/failed"]
+    H["🔔 FCM<br/>Relay notification"]
+    I["📱 Student Phone<br/>Deliver — even with the app closed"]
+    J["☁️ Edge Function<br/>pg_cron runs check-push-receipts<br/>every minute"]
+    K["📤 Expo Push API<br/>Check receipt status<br/>300/batch, tickets ≥30s old"]
+    L["🗄️ Supabase DB<br/>Set delivered_at · clear invalid fcm_token<br/>mark tickets &gt;24h old as failed"]
 
-    Admin->>DB: INSERT broadcast
-    DB->>EF: Webhook trigger (x-webhook-secret / Bearer token)
-    EF->>DB: Query matching students (audience filter, paginated)
-    EF->>DB: Create delivery_receipts (delivered_at = NULL)
-    EF->>Expo: Send push batch (100/batch)
-    Expo-->>EF: Ticket IDs
-    EF->>DB: Store push_tickets
-    Expo->>Phone: Deliver notification via FCM
-    Note over EF,DB: pg_cron (every 60s)
-    EF->>Expo: Check receipt status
-    Expo-->>EF: Delivered / DeviceNotRegistered
-    EF->>DB: Update delivery_receipts.delivered_at
-    EF->>DB: Clear stale fcm_tokens
+    A --> B --> C --> D --> E --> F
+    F --> G
+    F --> H --> I
+    G -.->|~1 min later| J --> K --> L
 ```
 
 ## Emergency Response Flow
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Idle: No active emergency
-    Idle --> PINValidation: Admin triggers emergency
-    PINValidation --> Countdown: PIN verified
-    Countdown --> Active: 5s countdown complete
-    Active --> Monitoring: Students receive overlay
-    Monitoring --> Resolved: Admin marks All Clear
-    Monitoring --> FalseAlarm: Admin marks False Alarm
-    Resolved --> [*]
-    FalseAlarm --> [*]
+    [*] --> Idle : no active emergency
+
+    Idle --> PinConfirm : admin clicks "Trigger Emergency"
+    PinConfirm --> Idle : cancelled
+    PinConfirm --> Countdown : PIN verified (bcrypt)
+
+    Countdown --> Active : 5s countdown elapses
+
+    state Active {
+        [*] --> Notifying
+        Notifying --> AwaitingAck : Realtime + push delivered, overlay shown
+        AwaitingAck --> Acknowledged : student responds Safe / Need Help
+    }
+
+    Active --> Resolved : admin marks All Clear
+    Active --> FalseAlarm : admin marks False Alarm
+    Resolved --> Idle
+    FalseAlarm --> Idle
+
+    note left of PinConfirm
+        only super_admin may trigger
+        or resolve an emergency
+    end note
+    note left of Active
+        a DB trigger blocks a second
+        emergency while this one is active
+    end note
+    note right of AwaitingAck
+        write retried 3x on failure,
+        then queued on-device so the
+        overlay still clears
+    end note
 ```
 
 ## Tech Stack
@@ -246,6 +269,7 @@ Tests cover: audience targeting, notification routing, time formatting, suspensi
 ## Database Schema
 
 ```mermaid
+%%{init: {'er': {'layoutDirection': 'TB', 'fontSize': 11, 'diagramPadding': 8, 'entityPadding': 8, 'minEntityWidth': 80, 'minEntityHeight': 32}}}%%
 erDiagram
     profiles {
         uuid id PK
@@ -264,17 +288,21 @@ erDiagram
     broadcasts {
         uuid id PK
         uuid sender_id FK
-        enum tier "emergency | important | routine"
+        uuid linked_event_id FK
+        enum tier "routine | important | emergency"
         enum channel "suspension | event | academic | security | general"
         text title
         text body
         jsonb target_audience
         bool is_pinned
+        bool is_deleted
         timestamp sent_at
     }
 
     class_suspensions {
         uuid id PK
+        uuid declared_by FK
+        uuid broadcast_id FK
         date suspension_date
         enum source
         enum reason
@@ -285,26 +313,32 @@ erDiagram
 
     calendar_events {
         uuid id PK
+        uuid created_by FK
         text title
         enum category
         timestamp start_date
         timestamp end_date
         jsonb target_audience
+        enum status "active | cancelled"
     }
 
     active_emergencies {
         uuid id PK
-        text title
-        text instructions
-        enum type "active_threat | fire | earthquake | flooding"
+        uuid broadcast_id FK
+        enum emergency_type "active_threat | fire | earthquake | flooding"
         enum status "active | resolved | false_alarm"
-        uuid triggered_by FK
+        timestamp resolved_at
     }
 
     delivery_receipts {
+        uuid id PK
         uuid broadcast_id FK
         uuid student_id FK
+        enum delivery_method "push | sms | both"
         timestamp delivered_at
+        timestamp read_at
+        timestamp acknowledged_at
+        enum acknowledgment_type "safe | need_help"
     }
 
     push_tickets {
@@ -312,14 +346,47 @@ erDiagram
         uuid broadcast_id FK
         uuid student_id FK
         text expo_ticket_id
-        enum status "pending | delivered | failed"
+        enum status "pending | delivered | failed | invalid_token"
+        timestamp checked_at
+    }
+
+    audit_log {
+        uuid id PK
+        uuid user_id FK
+        text action
+        text target_table
+        uuid target_id
+        jsonb metadata
+    }
+
+    feedback {
+        uuid id PK
+        uuid user_id FK
+        int rating "1 to 5"
+        text comment
+    }
+
+    bug_reports {
+        uuid id PK
+        uuid user_id FK
+        text title
+        enum severity "critical | major | minor"
+        enum status "open | acknowledged | fixed"
     }
 
     profiles ||--o{ broadcasts : "sends"
     profiles ||--o{ delivery_receipts : "receives"
+    profiles ||--o{ push_tickets : "targeted by"
+    profiles ||--o{ class_suspensions : "declares"
+    profiles ||--o{ calendar_events : "creates"
+    profiles ||--o{ audit_log : "logs"
+    profiles ||--o{ feedback : "gives"
+    profiles ||--o{ bug_reports : "reports"
     broadcasts ||--o{ delivery_receipts : "tracks"
     broadcasts ||--o{ push_tickets : "has"
-    profiles ||--o{ active_emergencies : "triggers"
+    broadcasts |o--o| class_suspensions : "announces"
+    broadcasts }o--o| calendar_events : "may link to"
+    broadcasts ||--o| active_emergencies : "escalates to"
 ```
 
 ## Edge Functions
