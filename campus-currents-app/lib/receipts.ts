@@ -9,6 +9,7 @@ export interface PendingReceipt {
   student_id: string;
   type: 'delivery' | 'read' | 'acknowledgment';
   acknowledgment_type?: AcknowledgmentType;
+  location_hint?: string;
   timestamp: string;
 }
 
@@ -49,19 +50,35 @@ export async function recordDelivery(broadcastId: string, studentId: string): Pr
 
 /**
  * Update read_at to current timestamp where it is currently null.
+ * Uses upsert as fallback if no delivery_receipt row exists yet (race condition
+ * where student opens a broadcast before the push function created their receipt).
  * Fire-and-forget: errors are caught and queued silently.
  */
 export async function recordRead(broadcastId: string, studentId: string): Promise<void> {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('delivery_receipts')
       .update({ read_at: new Date().toISOString() })
       .eq('broadcast_id', broadcastId)
       .eq('student_id', studentId)
-      .is('read_at', null);
+      .is('read_at', null)
+      .select('id');
 
-    if (error) {
-      throw error;
+    if (error) throw error;
+
+    // If UPDATE matched 0 rows, create the receipt row (race condition fallback)
+    if (!data || data.length === 0) {
+      const { error: upsertError } = await supabase
+        .from('delivery_receipts')
+        .upsert(
+          {
+            broadcast_id: broadcastId,
+            student_id: studentId,
+            read_at: new Date().toISOString(),
+          },
+          { onConflict: 'broadcast_id,student_id', ignoreDuplicates: false }
+        );
+      if (upsertError) throw upsertError;
     }
   } catch {
     await queueReceipt({
@@ -75,25 +92,47 @@ export async function recordRead(broadcastId: string, studentId: string): Promis
 
 /**
  * Update acknowledged_at and acknowledgment_type on the delivery receipt.
+ * Optionally includes a location_hint (free-text) for "need_help" acknowledgments.
+ * Uses upsert fallback if no delivery_receipt row exists yet.
  * Fire-and-forget: errors are caught and queued silently.
  */
 export async function recordAcknowledgment(
   broadcastId: string,
   studentId: string,
-  type: AcknowledgmentType
+  type: AcknowledgmentType,
+  locationHint?: string
 ): Promise<void> {
   try {
-    const { error } = await supabase
-      .from('delivery_receipts')
-      .update({
-        acknowledged_at: new Date().toISOString(),
-        acknowledgment_type: type,
-      })
-      .eq('broadcast_id', broadcastId)
-      .eq('student_id', studentId);
+    const updatePayload: Record<string, unknown> = {
+      acknowledged_at: new Date().toISOString(),
+      acknowledgment_type: type,
+    };
+    if (locationHint && locationHint.trim().length > 0) {
+      updatePayload.location_hint = locationHint.trim().slice(0, 200);
+    }
 
-    if (error) {
-      throw error;
+    const { data, error } = await supabase
+      .from('delivery_receipts')
+      .update(updatePayload)
+      .eq('broadcast_id', broadcastId)
+      .eq('student_id', studentId)
+      .select('id');
+
+    if (error) throw error;
+
+    // If UPDATE matched 0 rows, create the receipt row (race condition fallback)
+    if (!data || data.length === 0) {
+      const { error: upsertError } = await supabase
+        .from('delivery_receipts')
+        .upsert(
+          {
+            broadcast_id: broadcastId,
+            student_id: studentId,
+            ...updatePayload,
+          },
+          { onConflict: 'broadcast_id,student_id', ignoreDuplicates: false }
+        );
+      if (upsertError) throw upsertError;
     }
   } catch {
     await queueReceipt({
@@ -101,6 +140,7 @@ export async function recordAcknowledgment(
       student_id: studentId,
       type: 'acknowledgment',
       acknowledgment_type: type,
+      location_hint: locationHint?.trim().slice(0, 200),
       timestamp: new Date().toISOString(),
     });
   }
@@ -216,12 +256,16 @@ async function processReceipt(receipt: PendingReceipt): Promise<void> {
       break;
     }
     case 'acknowledgment': {
+      const updatePayload: Record<string, unknown> = {
+        acknowledged_at: receipt.timestamp,
+        acknowledgment_type: receipt.acknowledgment_type,
+      };
+      if (receipt.location_hint) {
+        updatePayload.location_hint = receipt.location_hint;
+      }
       const { error } = await supabase
         .from('delivery_receipts')
-        .update({
-          acknowledged_at: receipt.timestamp,
-          acknowledgment_type: receipt.acknowledgment_type,
-        })
+        .update(updatePayload)
         .eq('broadcast_id', receipt.broadcast_id)
         .eq('student_id', receipt.student_id);
       if (error) throw error;

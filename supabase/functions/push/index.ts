@@ -198,8 +198,12 @@ Deno.serve(async (req: Request) => {
           : "routine";
 
     // Build Expo push messages
+    // Filter out `fcm:` prefixed tokens — these are native FCM device tokens from the
+    // fallback path (Xiaomi/MIUI devices) that Expo's Push API cannot handle directly.
+    // Strip the prefix and send as-is; Expo will reject invalid ones and check-push-receipts
+    // will clear them via DeviceNotRegistered.
     const messages = matchingStudents.map((student) => ({
-      to: student.fcm_token,
+      to: student.fcm_token.startsWith("fcm:") ? student.fcm_token.slice(4) : student.fcm_token,
       sound: "default",
       title: broadcast.title,
       body: broadcast.body,

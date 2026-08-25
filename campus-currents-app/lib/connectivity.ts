@@ -56,6 +56,15 @@ export function useConnectivitySync(): ConnectivitySyncState {
   useEffect(() => {
     if (!NetInfo) return; // Skip if native module unavailable (Expo Go)
 
+    // Check initial state — if app starts offline, mark it immediately
+    NetInfo.fetch().then((state: any) => {
+      const isOnline = (state.isConnected ?? true) && (state.isInternetReachable ?? true);
+      if (!isOnline) {
+        wasOfflineRef.current = true;
+        setIsServingStaleData(true);
+      }
+    }).catch(() => {});
+
     const unsubscribe = NetInfo.addEventListener((state: any) => {
       const isOnline = (state.isConnected ?? true) && (state.isInternetReachable ?? true);
 

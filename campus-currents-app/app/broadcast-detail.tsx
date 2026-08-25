@@ -10,23 +10,23 @@ import ErrorState from '@/components/ErrorState';
 import { theme, useThemeColors } from '@/constants/Theme';
 
 /**
- * Formats a date string into "MMM D, YYYY • h:mm A" format.
+ * Formats a date string into "MMM D, YYYY • h:mm A" format in Asia/Manila timezone.
  */
 function formatDetailDate(dateStr: string): string {
   const date = new Date(dateStr);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const month = months[date.getMonth()];
-  const day = date.getDate();
-  const year = date.getFullYear();
+  // Use Intl to format in Manila timezone consistently regardless of device locale
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).formatToParts(date);
 
-  let hours = date.getHours();
-  const minutes = date.getMinutes();
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12;
-  if (hours === 0) hours = 12;
-  const minuteStr = minutes < 10 ? `0${minutes}` : `${minutes}`;
-
-  return `${month} ${day}, ${year} \u2022 ${hours}:${minuteStr} ${ampm}`;
+  const get = (type: string) => parts.find(p => p.type === type)?.value ?? '';
+  return `${get('month')} ${get('day')}, ${get('year')} \u2022 ${get('hour')}:${get('minute')} ${get('dayPeriod')}`;
 }
 
 export default function BroadcastDetailScreen() {

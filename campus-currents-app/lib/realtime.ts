@@ -44,6 +44,7 @@ export function useRealtimeSubscription(config: RealtimeSubscriptionConfig): {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryCountRef = useRef(0);
+  const instanceIdRef = useRef(0);
   const disconnectTimestampRef = useRef<number | null>(null);
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onEventRef = useRef(onEvent);
@@ -93,7 +94,7 @@ export function useRealtimeSubscription(config: RealtimeSubscriptionConfig): {
       channelRef.current = null;
     }
 
-    const channelName = `realtime-${table}-${event}-${filter ?? 'all'}`;
+    const channelName = `realtime-${table}-${event}-${filter ?? 'all'}-${++instanceIdRef.current}`;
 
     const channelConfig: {
       event: 'INSERT' | 'UPDATE' | '*';

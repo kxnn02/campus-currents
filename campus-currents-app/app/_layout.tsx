@@ -149,6 +149,13 @@ function RootLayoutNav() {
     // Foreground: handle notifications while app is open
     const foregroundSub = Notifications.addNotificationReceivedListener((notification) => {
       handleForegroundNotification(notification);
+
+      // If this is an emergency notification and app is in foreground,
+      // immediately trigger emergency check so the overlay appears without waiting for Realtime
+      const data = notification.request.content.data as { tier?: string } | undefined;
+      if (data?.tier === 'emergency') {
+        checkActiveEmergency();
+      }
     });
 
     // Tap: handle when user taps a notification
@@ -160,7 +167,7 @@ function RootLayoutNav() {
       foregroundSub.remove();
       responseSub.remove();
     };
-  }, []);
+  }, [checkActiveEmergency]);
 
   // AppState listener: check for active emergency when app returns to foreground
   useEffect(() => {
@@ -248,8 +255,8 @@ function RootLayoutNav() {
         return `/post-acknowledgment?type=${parsed.type}`;
       }
 
-      // Active emergency but not acknowledged — normal flow will show overlay
-      return '/(tabs)';
+      // Active emergency but not acknowledged — route directly to overlay
+      return '/emergency-overlay';
     } catch {
       return '/(tabs)';
     }
