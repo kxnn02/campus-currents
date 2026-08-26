@@ -54,8 +54,8 @@ export async function middleware(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (!profile || !["admin", "super_admin"].includes(profile.role)) {
-      // Non-admin user trying to access dashboard — sign them out and redirect
+    if (!profile || !["admin", "super_admin", "faculty"].includes(profile.role)) {
+      // Non-authorized user trying to access dashboard — sign them out and redirect
       await supabase.auth.signOut();
       const url = request.nextUrl.clone();
       url.pathname = "/login";
@@ -71,7 +71,7 @@ export async function middleware(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (profile && ["admin", "super_admin"].includes(profile.role)) {
+    if (profile && ["admin", "super_admin", "faculty"].includes(profile.role)) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);

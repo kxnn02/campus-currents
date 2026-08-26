@@ -1,8 +1,34 @@
 import { createClient } from "@/lib/supabase/server";
 
 /**
+ * Verifies the current user is authenticated AND has dashboard access (admin, super_admin, or faculty).
+ * Use in server actions that faculty can also perform (e.g., creating routine broadcasts).
+ */
+export async function requireDashboardUser() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role, program, office")
+    .eq("id", user.id)
+    .single();
+
+  if (error || !profile || !["admin", "super_admin", "faculty"].includes(profile.role)) {
+    throw new Error("Unauthorized: dashboard access required");
+  }
+
+  return { supabase, user, role: profile.role as string, profile };
+}
+
+/**
  * Verifies the current user is authenticated AND has admin/super_admin role.
- * Throws if not. Use in every server action.
+ * Use in server actions that faculty CANNOT perform (suspensions, emergencies, events, settings).
  */
 export async function requireAdmin() {
   const supabase = await createClient();

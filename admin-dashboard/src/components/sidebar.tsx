@@ -39,6 +39,7 @@ interface NavItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
+  adminOnly?: boolean;
 }
 
 const navGroups: NavGroup[] = [
@@ -46,25 +47,25 @@ const navGroups: NavGroup[] = [
     label: "Monitor",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-      { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
     ],
   },
   {
     label: "Communicate",
     items: [
       { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Megaphone },
-      { href: "/dashboard/suspensions", label: "Suspensions", icon: CloudOff },
-      { href: "/dashboard/calendar", label: "Events", icon: CalendarDays },
-      { href: "/dashboard/emergency", label: "Emergency", icon: AlertTriangle },
+      { href: "/dashboard/suspensions", label: "Suspensions", icon: CloudOff, adminOnly: true },
+      { href: "/dashboard/calendar", label: "Events", icon: CalendarDays, adminOnly: true },
+      { href: "/dashboard/emergency", label: "Emergency", icon: AlertTriangle, adminOnly: true },
     ],
   },
   {
     label: "Manage",
     items: [
-      { href: "/dashboard/students", label: "Students", icon: Users },
-      { href: "/dashboard/feedback", label: "Feedback", icon: MessageSquare },
-      { href: "/dashboard/bugs", label: "Bug Reports", icon: Bug },
-      { href: "/dashboard/settings", label: "Settings", icon: Settings },
+      { href: "/dashboard/students", label: "Students", icon: Users, adminOnly: true },
+      { href: "/dashboard/feedback", label: "Feedback", icon: MessageSquare, adminOnly: true },
+      { href: "/dashboard/bugs", label: "Bug Reports", icon: Bug, adminOnly: true },
+      { href: "/dashboard/settings", label: "Settings", icon: Settings, adminOnly: true },
     ],
   },
 ];
@@ -74,6 +75,7 @@ export function Sidebar({ profile: _profile }: { profile: Profile }) {
   const router = useRouter();
   const supabase = createClient();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isFaculty = _profile.role === "faculty";
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -120,13 +122,16 @@ export function Sidebar({ profile: _profile }: { profile: Profile }) {
 
       {/* Navigation Groups */}
       <nav className="flex-1 px-3 space-y-6 overflow-y-auto">
-        {navGroups.map((group) => (
+        {navGroups.map((group) => {
+          const visibleItems = group.items.filter((item) => !isFaculty || !item.adminOnly);
+          if (visibleItems.length === 0) return null;
+          return (
           <div key={group.label}>
             <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
               {group.label}
             </p>
             <div className="space-y-0.5">
-              {group.items.map((item) => {
+              {visibleItems.map((item) => {
                 const isActive = item.exact
                   ? pathname === item.href
                   : pathname === item.href || pathname.startsWith(item.href + "/");
@@ -155,7 +160,8 @@ export function Sidebar({ profile: _profile }: { profile: Profile }) {
               })}
             </div>
           </div>
-        ))}
+          );
+        })}
       </nav>
 
       {/* Bottom */}

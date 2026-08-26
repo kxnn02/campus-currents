@@ -1,7 +1,7 @@
 // Core database types matching Supabase schema
 // Import these in components to ensure type safety
 
-export type UserRole = 'student' | 'admin' | 'super_admin';
+export type UserRole = 'student' | 'admin' | 'super_admin' | 'faculty';
 export type Level = 'grade_school' | 'junior_high' | 'senior_high' | 'college' | 'law' | 'eteeap';
 export type Program = 'BSIT' | 'BSBA' | 'BSA' | 'BSED' | 'BEED' | 'AB_PSYCH' | 'AB_COMM' | 'JD' | 'ETEEAP' | 'STEM' | 'ABM' | 'HUMSS' | 'GAS' | 'TVL' | 'OTHER';
 

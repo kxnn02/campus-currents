@@ -16,11 +16,22 @@ import { Megaphone } from "lucide-react";
 export default async function BroadcastsPage() {
   const supabase = await createClient();
 
-  const { data: broadcasts, error } = await supabase
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
+  const role = profile?.role ?? "admin";
+
+  // Faculty sees only their own broadcasts; admins see all
+  let query = supabase
     .from("broadcasts")
     .select("*")
     .eq("is_deleted", false)
     .order("sent_at", { ascending: false });
+
+  if (role === "faculty") {
+    query = query.eq("sender_id", user!.id);
+  }
+
+  const { data: broadcasts, error } = await query;
 
   if (error) {
     return <div className="text-destructive">Error loading broadcasts: {error.message}</div>;
@@ -61,7 +72,7 @@ export default async function BroadcastsPage() {
             Manage announcements and notifications sent to students.
           </p>
         </div>
-        <NewBroadcastDialog />
+        <NewBroadcastDialog role={role} />
       </div>
 
       <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
