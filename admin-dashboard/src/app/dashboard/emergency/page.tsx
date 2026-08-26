@@ -41,7 +41,7 @@ export default async function EmergencyPage() {
   // Accountability data for each active emergency
   const accountabilityMap: Record<string, {
     counters: { reached: number; safe: number; needHelp: number; noResponse: number; notReached: number };
-    needHelpStudents: Array<{ id: string; first_name: string; last_name: string; program: string; year_level: number | null; section: string | null; phone_number: string | null }>;
+    needHelpStudents: Array<{ id: string; first_name: string; last_name: string; program: string; year_level: number | null; section: string | null; phone_number: string | null; location_hint: string | null }>;
     totalStudentsWithTokens: number;
   }> = {};
 
@@ -75,14 +75,18 @@ export default async function EmergencyPage() {
       const { data: helpStudents } = await supabase
         .from("delivery_receipts")
         .select(
-          "student_id, profiles!student_id(id, first_name, last_name, program, year_level, section, phone_number)"
+          "student_id, location_hint, profiles!student_id(id, first_name, last_name, program, year_level, section, phone_number)"
         )
         .eq("broadcast_id", broadcastId)
         .eq("acknowledgment_type", "need_help");
 
       const needHelpStudents = (helpStudents ?? [])
-        .map((row: Record<string, unknown>) => row.profiles)
-        .filter(Boolean) as { id: string; first_name: string; last_name: string; program: string; year_level: number | null; section: string | null; phone_number: string | null; }[];
+        .map((row: Record<string, unknown>) => {
+          const profile = row.profiles as Record<string, unknown> | null;
+          if (!profile) return null;
+          return { ...profile, location_hint: (row.location_hint as string) || null };
+        })
+        .filter(Boolean) as { id: string; first_name: string; last_name: string; program: string; year_level: number | null; section: string | null; phone_number: string | null; location_hint: string | null }[];
 
       accountabilityMap[broadcastId] = {
         counters: { reached, safe, needHelp, noResponse, notReached },
