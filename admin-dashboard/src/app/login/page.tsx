@@ -69,10 +69,10 @@ export default function LoginPage() {
           return;
         }
 
-        if (!["admin", "super_admin"].includes(profile.role)) {
+        if (!["admin", "super_admin", "faculty"].includes(profile.role)) {
           await recordLoginFailure();
           setError(
-            "Access denied. This dashboard is for administrators only."
+            "Access denied. This dashboard is for administrators and faculty only."
           );
           await supabase.auth.signOut();
           setLoading(false);

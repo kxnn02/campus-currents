@@ -1,16 +1,22 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdmin, validateString, parseAudience, logAuditEvent } from "@/lib/server-utils";
+import { requireDashboardUser, validateString, parseAudience, logAuditEvent } from "@/lib/server-utils";
 import { BROADCAST_TIERS, BROADCAST_CHANNELS } from "@/lib/constants";
 
 export async function createBroadcast(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { supabase, user, role } = await requireDashboardUser();
 
   const title = validateString(formData, "title", { maxLength: 200 });
   const body = validateString(formData, "body", { maxLength: 5000 });
   const tier = validateString(formData, "tier", { allowedValues: BROADCAST_TIERS });
   const channel = validateString(formData, "channel", { allowedValues: BROADCAST_CHANNELS });
+
+  // Faculty restriction: only routine tier, academic/general channel
+  if (role === "faculty") {
+    if (tier !== "routine") throw new Error("Faculty can only send routine-tier broadcasts");
+    if (!["academic", "general"].includes(channel)) throw new Error("Faculty can only use academic or general channels");
+  }
   const isPinned = formData.get("is_pinned") === "true";
   const targetAudience = parseAudience(formData);
 
@@ -84,7 +90,7 @@ export async function createBroadcast(formData: FormData) {
 }
 
 export async function updateBroadcast(id: string, formData: FormData) {
-  const { supabase } = await requireAdmin();
+  const { supabase, role } = await requireDashboardUser();
 
   if (!id || typeof id !== "string") throw new Error("Invalid broadcast ID");
 
@@ -194,7 +200,7 @@ function extractStoragePath(publicUrl: string, bucket: string): string | null {
 }
 
 export async function deleteBroadcast(id: string) {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireDashboardUser();
 
   if (!id || typeof id !== "string") throw new Error("Invalid broadcast ID");
 

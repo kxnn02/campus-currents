@@ -39,7 +39,7 @@ function getTierEmoji(tier: string) {
   }
 }
 
-export function NewBroadcastDialog() {
+export function NewBroadcastDialog({ role }: { role?: string }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [audienceType, setAudienceType] = useState("all");
@@ -49,6 +49,7 @@ export function NewBroadcastDialog() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
   const [reachableCount, setReachableCount] = useState<number | null>(null);
+  const isFaculty = role === "faculty";
 
   // Fetch reachable student count (students with push token)
   useEffect(() => {
@@ -149,35 +150,56 @@ export function NewBroadcastDialog() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Tier</Label>
-                <Select
-                  name="tier"
-                  defaultValue="routine"
-                  onValueChange={(value) => setPreviewTier(value ?? "routine")}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="routine">Routine</SelectItem>
-                    <SelectItem value="important">Important</SelectItem>
-                    <SelectItem value="emergency">Emergency</SelectItem>
-                  </SelectContent>
-                </Select>
+                {isFaculty ? (
+                  <>
+                    <input type="hidden" name="tier" value="routine" />
+                    <div className="flex h-9 w-full items-center rounded-md border border-input bg-muted px-3 text-sm text-muted-foreground">
+                      Routine
+                    </div>
+                  </>
+                ) : (
+                  <Select
+                    name="tier"
+                    defaultValue="routine"
+                    onValueChange={(value) => setPreviewTier(value ?? "routine")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="routine">Routine</SelectItem>
+                      <SelectItem value="important">Important</SelectItem>
+                      <SelectItem value="emergency">Emergency</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Channel</Label>
-                <Select name="channel" defaultValue="general">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="academic">Academic</SelectItem>
-                    <SelectItem value="event">Event</SelectItem>
-                    <SelectItem value="suspension">Suspension</SelectItem>
-                    <SelectItem value="security">Security</SelectItem>
-                  </SelectContent>
-                </Select>
+                {isFaculty ? (
+                  <Select name="channel" defaultValue="academic">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="academic">Academic</SelectItem>
+                      <SelectItem value="general">General</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Select name="channel" defaultValue="general">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="academic">Academic</SelectItem>
+                      <SelectItem value="event">Event</SelectItem>
+                      <SelectItem value="suspension">Suspension</SelectItem>
+                      <SelectItem value="security">Security</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
             <AudienceSelector

@@ -24,7 +24,7 @@ export default async function DashboardLayout({
     .eq("id", user.id)
     .single();
 
-  if (!profile || !["admin", "super_admin"].includes(profile.role)) {
+  if (!profile || !["admin", "super_admin", "faculty"].includes(profile.role)) {
     redirect("/login");
   }
 
