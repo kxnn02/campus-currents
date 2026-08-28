@@ -50,7 +50,7 @@ const palette = {
   // Text colors (warm brown tones from Figma)
   textDark: '#1A1C1C',  // Primary text (near-black)
   textBrown: '#5B403D', // Secondary text (warm brown)
-  textMuted: '#8B7370', // Tertiary/muted text
+  textMuted: '#6E5350', // Tertiary/muted text — darkened from #8B7370 to pass WCAG AA (6.6:1 on bg)
 
   white: '#FFFFFF',
   black: '#000000',
@@ -113,38 +113,12 @@ const lightColors = {
   shimmer: palette.warmBorder,
 } as const;
 
-const darkColors = {
-  primary: palette.amber500,
-  primaryLight: palette.amber500,
-  primaryBg: palette.gray800,
-
-  background: '#1A1A1A',
-  surface: '#252525',
-  surfaceElevated: '#2F2F2F',
-
-  text: '#F5F0EF',
-  textSecondary: '#BBA9A5',
-  textTertiary: '#8B7370',
-  textInverse: palette.textDark,
-
-  border: '#3D3332',
-  borderLight: '#2F2828',
-  borderFocus: palette.amber500,
-
-  tint: palette.amber500,
-  tabIconDefault: '#8B7370',
-  tabIconSelected: palette.amber500,
-
-  success: palette.green600,
-  successBg: '#1A2A1F',
-  error: '#E85454',
-  errorBg: '#2A1A1A',
-  warning: palette.amber500,
-  warningBg: '#2A2518',
-
-  overlay: 'rgba(0, 0, 0, 0.7)',
-  shimmer: '#3D3332',
-} as const;
+// Light-only by design. CampusCurrents does not ship a dark theme: the SSC-R brand
+// palette (warm red/amber on off-white) is the identity, and an emergency overlay that
+// must read identically on every device is safer with one calibrated color set than two.
+// `darkColors` is intentionally an alias of `lightColors` so any legacy dark-scheme code
+// path renders the light theme rather than a half-maintained second palette.
+const darkColors = lightColors;
 
 // ============================================================
 // TIER & STATUS COLORS — Shared across themes
@@ -534,7 +508,7 @@ export const theme = {
  * </View>
  */
 export function useThemeColors() {
-  // Always use light mode — app does not follow system dark mode
+  // Light-only by design — the app intentionally does not follow system dark mode.
   return lightColors;
 }
 
@@ -554,7 +528,7 @@ export function useThemeComponents() {
 // TYPE EXPORTS
 // ============================================================
 
-export type ThemeColors = typeof lightColors | typeof darkColors;
+export type ThemeColors = typeof lightColors;
 export type TierName = keyof typeof tier;
 export type StatusName = 'on' | 'suspended' | 'monitoring';
 export type CalendarCategory = keyof typeof calendar;

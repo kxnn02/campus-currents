@@ -18,10 +18,7 @@ import { useEmergency } from '@/lib/emergency';
 import { useBroadcastDetail } from '@/lib/feed';
 import { supabase } from '@/lib/supabase';
 import { theme } from '@/constants/Theme';
-
-// Haptic feedback removed — requires native rebuild to activate.
-// To re-enable, run: npx expo install expo-haptics, then rebuild dev APK.
-const Haptics: any = null;
+import * as Haptics from 'expo-haptics';
 
 /**
  * Emergency Overlay Screen
@@ -50,11 +47,10 @@ export default function EmergencyOverlayScreen() {
     return () => backHandler.remove();
   }, []);
 
-  // Trigger heavy haptic when overlay appears (attention-grabbing)
+  // Trigger heavy haptic when overlay appears (attention-grabbing).
+  // Fire-and-forget — haptics must never block or crash the emergency flow.
   useEffect(() => {
-    if (Haptics) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
   }, []);
 
   // Elapsed timer: updates every second since emergency created_at
@@ -130,15 +126,11 @@ export default function EmergencyOverlayScreen() {
   // Handle "I'm Safe" press
   const handleSafe = useCallback(async () => {
     if (isSubmitting) return;
-    if (Haptics) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
     setIsSubmitting(true);
     try {
       await acknowledge('safe');
-      if (Haptics) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       router.replace('/post-acknowledgment?type=safe' as never);
     } catch {
       setIsSubmitting(false);
@@ -148,9 +140,7 @@ export default function EmergencyOverlayScreen() {
   // Handle "Need Help" press — show location input step
   const handleNeedHelp = useCallback(() => {
     if (isSubmitting) return;
-    if (Haptics) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
     setShowLocationStep(true);
     // Auto-focus the input after a brief delay for the UI to render
     setTimeout(() => locationInputRef.current?.focus(), 150);
@@ -162,9 +152,7 @@ export default function EmergencyOverlayScreen() {
     setIsSubmitting(true);
     try {
       await acknowledge('need_help', locationHint || undefined);
-      if (Haptics) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
       router.replace('/post-acknowledgment?type=need_help' as never);
     } catch {
       setIsSubmitting(false);
@@ -199,8 +187,9 @@ export default function EmergencyOverlayScreen() {
         {/* Emergency Heading */}
         <Text style={styles.heading}>{emergencyHeading}</Text>
 
-        {/* Instruction Text */}
-        <Text style={styles.instructions} numberOfLines={6}>{instructionText}</Text>
+        {/* Instruction Text — never truncate; a cut-off lockdown instruction is dangerous.
+            The screen scrolls, so full text is always reachable. */}
+        <Text style={styles.instructions}>{instructionText}</Text>
 
         {/* Location Step — shown after tapping "Need Help" */}
         {showLocationStep ? (
@@ -333,7 +322,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing['2xl'],
   },
   timerLabel: {
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.85)', // 5.5:1 on red — meets WCAG AA
     fontSize: 12,
     fontWeight: '500',
     letterSpacing: 0.6,
@@ -438,7 +427,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   locationSublabel: {
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.85)', // meets WCAG AA on red
     fontSize: 13,
     textAlign: 'center',
     marginBottom: theme.spacing.sm,

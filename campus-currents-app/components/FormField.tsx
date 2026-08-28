@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, KeyboardTypeOptions } from 'react-native';
+import { theme, useThemeColors } from '@/constants/Theme';
 
 interface FormFieldProps {
   label: string;
@@ -26,60 +27,50 @@ export default function FormField({
   keyboardType = 'default',
   maxLength,
 }: FormFieldProps) {
+  const colors = useThemeColors();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
       <TextInput
         style={[
           styles.input,
-          !editable && styles.inputDisabled,
-          error ? styles.inputError : null,
+          { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text },
+          !editable && { backgroundColor: colors.background, color: colors.textTertiary },
+          error ? { borderColor: colors.error } : null,
         ]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={colors.textTertiary}
         editable={editable}
         keyboardType={keyboardType}
         maxLength={maxLength}
         accessibilityLabel={label}
         accessibilityHint={error ? `Error: ${error}` : undefined}
       />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={[styles.error, { color: colors.error }]}>{error}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
+    ...theme.typography.label,
+    marginBottom: theme.spacing.xs + 2,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm + 2,
     fontSize: 16,
-    color: '#111827',
-    backgroundColor: '#FFFFFF',
-  },
-  inputDisabled: {
-    backgroundColor: '#F3F4F6',
-    color: '#6B7280',
-  },
-  inputError: {
-    borderColor: '#DC2626',
   },
   error: {
-    fontSize: 12,
-    color: '#DC2626',
-    marginTop: 4,
+    ...theme.typography.caption,
+    marginTop: theme.spacing.xs,
   },
 });

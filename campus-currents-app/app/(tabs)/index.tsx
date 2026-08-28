@@ -295,7 +295,7 @@ export default function FeedScreen() {
   if (!isLoading && allBroadcasts.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
-        <EmptyState icon="📭" message="No announcements yet" />
+        <EmptyState icon="mail-open-outline" message="No announcements yet" />
       </SafeAreaView>
     );
   }
