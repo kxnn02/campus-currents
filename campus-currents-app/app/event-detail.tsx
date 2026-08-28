@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { theme, useThemeColors } from '@/constants/Theme';
 import { useEventDetail, getCategoryColor } from '@/lib/calendar';
 import { useProfile } from '@/lib/profile';
@@ -146,7 +147,7 @@ export default function EventDetailScreen() {
           />
         ) : event.attachment_url && imageError ? (
           <View style={[styles.posterPlaceholder, { backgroundColor: categoryColor + '20' }]}>
-            <Text style={[styles.placeholderIcon, { color: categoryColor }]}>🖼️</Text>
+            <Ionicons name="image-outline" size={32} color={categoryColor} style={styles.placeholderIcon} />
             <Text style={[styles.placeholderText, { color: categoryColor }]}>
               Image unavailable
             </Text>
@@ -179,7 +180,7 @@ export default function EventDetailScreen() {
           <View style={[styles.detailsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             {/* Date/Time */}
             <View style={styles.detailRow}>
-              <Text style={styles.detailIcon}>📅</Text>
+              <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} style={styles.detailIcon} accessibilityLabel="Date and time" />
               <Text style={[styles.detailText, { color: colors.text }]}>
                 {formatEventDateTime(event.start_date, event.end_date, event.is_all_day)}
               </Text>
@@ -188,7 +189,7 @@ export default function EventDetailScreen() {
             {/* Location */}
             {event.location && (
               <View style={styles.detailRow}>
-                <Text style={styles.detailIcon}>📍</Text>
+                <Ionicons name="location-outline" size={16} color={colors.textSecondary} style={styles.detailIcon} accessibilityLabel="Location" />
                 <Text style={[styles.detailText, { color: colors.text }]}>
                   {event.location}
                 </Text>
@@ -198,7 +199,7 @@ export default function EventDetailScreen() {
             {/* Organizer */}
             {event.organizer_name && (
               <View style={styles.detailRow}>
-                <Text style={styles.detailIcon}>👤</Text>
+                <Ionicons name="person-outline" size={16} color={colors.textSecondary} style={styles.detailIcon} accessibilityLabel="Organizer" />
                 <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                   {event.organizer_name}
                 </Text>
