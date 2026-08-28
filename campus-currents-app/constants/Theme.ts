@@ -50,7 +50,7 @@ const palette = {
   // Text colors (warm brown tones from Figma)
   textDark: '#1A1C1C',  // Primary text (near-black)
   textBrown: '#5B403D', // Secondary text (warm brown)
-  textMuted: '#8B7370', // Tertiary/muted text
+  textMuted: '#6E5350', // Tertiary/muted text — darkened from #8B7370 to pass WCAG AA (6.6:1 on bg)
 
   white: '#FFFFFF',
   black: '#000000',

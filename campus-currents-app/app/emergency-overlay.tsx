@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing['2xl'],
   },
   timerLabel: {
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.85)', // 5.5:1 on red — meets WCAG AA
     fontSize: 12,
     fontWeight: '500',
     letterSpacing: 0.6,
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   locationSublabel: {
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.85)', // meets WCAG AA on red
     fontSize: 13,
     textAlign: 'center',
     marginBottom: theme.spacing.sm,
