@@ -329,6 +329,7 @@ export default function ProfileEditScreen() {
                     }}
                     accessibilityRole="button"
                     accessibilityLabel={p.label}
+                    accessibilityState={{ selected: program === p.value }}
                   >
                     <Text style={[styles.pickerOptionText, { color: colors.text }]}>{p.label}</Text>
                     {program === p.value && <Text style={{ color: colors.tint }}>✓</Text>}
@@ -373,6 +374,7 @@ export default function ProfileEditScreen() {
                     }}
                     accessibilityRole="button"
                     accessibilityLabel={y.label}
+                    accessibilityState={{ selected: yearLevel === y.value }}
                   >
                     <Text style={[styles.pickerOptionText, { color: colors.text }]}>{y.label}</Text>
                     {yearLevel === y.value && <Text style={{ color: colors.tint }}>✓</Text>}

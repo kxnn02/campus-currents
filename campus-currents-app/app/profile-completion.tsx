@@ -288,6 +288,9 @@ export default function ProfileCompletionScreen() {
             <Pressable
               style={[styles.input, styles.pickerButton, { backgroundColor: colors.surface, borderColor: errors.program ? '#DC2626' : colors.border }]}
               onPress={() => setShowProgramPicker(!showProgramPicker)}
+              accessibilityRole="button"
+              accessibilityLabel="Select program"
+              accessibilityState={{ expanded: showProgramPicker }}
             >
               <Text style={[styles.pickerText, { color: program ? colors.text : colors.textSecondary }]}>
                 {program
@@ -316,6 +319,9 @@ export default function ProfileCompletionScreen() {
                           key={`${group.title}-${p.value}`}
                           style={[styles.pickerOption, program === p.value && selectedLevel === group.level && { backgroundColor: colors.tint + '15' }]}
                           onPress={() => { setProgram(p.value); setSelectedLevel(group.level); setShowProgramPicker(false); }}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${p.label}, ${group.title}`}
+                          accessibilityState={{ selected: program === p.value && selectedLevel === group.level }}
                         >
                           <Text style={[styles.pickerOptionText, { color: colors.text }]}>{p.label}</Text>
                           {program === p.value && selectedLevel === group.level && (
@@ -339,6 +345,9 @@ export default function ProfileCompletionScreen() {
             <Pressable
               style={[styles.input, styles.pickerButton, { backgroundColor: colors.surface, borderColor: errors.yearLevel ? '#DC2626' : colors.border }]}
               onPress={() => setShowYearPicker(!showYearPicker)}
+              accessibilityRole="button"
+              accessibilityLabel="Select year level"
+              accessibilityState={{ expanded: showYearPicker }}
             >
               <Text style={[styles.pickerText, { color: yearLevel ? colors.text : colors.textSecondary }]}>
                 {yearLevel ? YEAR_LEVELS.find(y => y.value === yearLevel)?.label : 'Select year level'}
@@ -351,6 +360,9 @@ export default function ProfileCompletionScreen() {
                     key={y.value}
                     style={[styles.pickerOption, yearLevel === y.value && { backgroundColor: colors.tint + '15' }]}
                     onPress={() => { setYearLevel(y.value); setShowYearPicker(false); }}
+                    accessibilityRole="button"
+                    accessibilityLabel={y.label}
+                    accessibilityState={{ selected: yearLevel === y.value }}
                   >
                     <Text style={[styles.pickerOptionText, { color: colors.text }]}>{y.label}</Text>
                     {yearLevel === y.value && (
