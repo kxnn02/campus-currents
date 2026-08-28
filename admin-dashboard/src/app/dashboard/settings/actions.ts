@@ -1,6 +1,6 @@
 "use server";
 
-import { compare, hash } from "bcryptjs";
+import { hash } from "bcryptjs";
 import { requireAdmin } from "@/lib/server-utils";
 
 export async function changePin(formData: FormData) {
@@ -26,19 +26,11 @@ export async function changePin(formData: FormData) {
     throw new Error("PIN must be 4-6 digits");
   }
 
-  // Fetch current pin_hash
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("pin_hash")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profile?.pin_hash) {
-    throw new Error("Current PIN not configured");
+  // Verify current PIN server-side via SECURITY DEFINER RPC (pin_hash never leaves the DB)
+  const { data: isValid, error: verifyError } = await supabase.rpc("verify_pin", { pin: currentPin });
+  if (verifyError) {
+    throw new Error("Could not verify current PIN");
   }
-
-  // Verify current PIN
-  const isValid = await compare(currentPin, profile.pin_hash);
   if (!isValid) {
     throw new Error("Current PIN is incorrect");
   }

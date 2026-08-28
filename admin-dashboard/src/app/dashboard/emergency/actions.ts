@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { compare } from "bcryptjs";
 import { requireAdmin, validateString, logAuditEvent } from "@/lib/server-utils";
 import { EMERGENCY_TYPES } from "@/lib/constants";
 
@@ -19,19 +18,11 @@ export async function triggerEmergency(formData: FormData) {
   const instructions = validateString(formData, "instructions", { minLength: 10, maxLength: 2000 });
   const pin = validateString(formData, "pin", { minLength: 4, maxLength: 6 });
 
-  // Fetch admin's pin_hash from profiles
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("pin_hash")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profile?.pin_hash) {
-    throw new Error("PIN not configured for this account");
+  // Verify PIN server-side via SECURITY DEFINER RPC (pin_hash never leaves the DB)
+  const { data: pinValid, error: pinError } = await supabase.rpc("verify_pin", { pin });
+  if (pinError) {
+    throw new Error("Could not verify PIN");
   }
-
-  // Validate PIN against stored hash
-  const pinValid = await compare(pin, profile.pin_hash);
   if (!pinValid) {
     throw new Error("Invalid PIN");
   }
