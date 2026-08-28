@@ -81,10 +81,10 @@ export default function PostAcknowledgmentScreen() {
     <View style={[styles.container, isSafe ? styles.safeBackground : styles.helpBackground]}>
       {isSafe ? (
         <>
-          <View style={styles.checkmarkCircle}>
+          <View style={styles.checkmarkCircle} accessibilityRole="image" accessibilityLabel="Marked safe">
             <Text style={styles.checkmarkIcon}>✓</Text>
           </View>
-          <Text style={styles.headingLarge}>You're marked as SAFE</Text>
+          <Text style={styles.headingLarge} accessibilityRole="header">You're marked as SAFE</Text>
           <Text style={styles.instruction}>
             Stay where you are. You will be notified when it is safe to move.
           </Text>
@@ -95,10 +95,10 @@ export default function PostAcknowledgmentScreen() {
         </>
       ) : (
         <>
-          <View style={styles.helpIconCircle}>
+          <View style={styles.helpIconCircle} accessibilityRole="image" accessibilityLabel="Help requested">
             <Text style={styles.helpIcon}>!</Text>
           </View>
-          <Text style={styles.headingLarge}>Security has been notified</Text>
+          <Text style={styles.headingLarge} accessibilityRole="header">Security has been notified</Text>
           <Text style={styles.instruction}>
             Stay where you are. Help is on the way.
           </Text>
