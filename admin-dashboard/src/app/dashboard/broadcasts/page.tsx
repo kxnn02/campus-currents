@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,7 +18,11 @@ export default async function BroadcastsPage() {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   const role = profile?.role ?? "admin";
 
   // Faculty sees only their own broadcasts; admins see all
@@ -28,7 +33,7 @@ export default async function BroadcastsPage() {
     .order("sent_at", { ascending: false });
 
   if (role === "faculty") {
-    query = query.eq("sender_id", user!.id);
+    query = query.eq("sender_id", user.id);
   }
 
   const { data: broadcasts, error } = await query;
