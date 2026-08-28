@@ -1,7 +1,14 @@
 "use client";
 
 import { AndroidLogo, AppleLogo, TestTube } from "@phosphor-icons/react";
+import { QRCodeSVG } from "qrcode.react";
 import Animate from "./Animate";
+
+// Single source of truth for the APK link — the button and the QR both use this,
+// so they can never point at different places. /latest/ auto-resolves to the newest
+// release as long as each release includes an asset named CampusCurrents.apk.
+const APK_DOWNLOAD_URL =
+  "https://github.com/kxnn02/campus-currents/releases/latest/download/CampusCurrents.apk";
 
 export default function Download() {
   return (
@@ -54,7 +61,7 @@ export default function Download() {
             {/* Download buttons */}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
-                href="https://github.com/kxnn02/campus-currents/releases/latest/download/CampusCurrents.apk"
+                href={APK_DOWNLOAD_URL}
                 rel="noopener noreferrer"
                 className="group flex items-center gap-4 px-8 py-4 bg-brand-red rounded-2xl hover:bg-brand-red-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md"
               >
@@ -88,10 +95,12 @@ export default function Download() {
                 On desktop? Scan with your phone to download
               </p>
               <div className="w-32 h-32 rounded-2xl border border-warm-200 bg-white p-2.5 shadow-sm">
-                <img
-                  src="/images/qr-download.png"
-                  alt="QR code to download CampusCurrents"
-                  className="w-full h-full object-contain"
+                <QRCodeSVG
+                  value={APK_DOWNLOAD_URL}
+                  level="M"
+                  className="w-full h-full"
+                  style={{ width: "100%", height: "100%" }}
+                  aria-label="QR code to download CampusCurrents"
                 />
               </div>
               <p className="text-[10px] text-text-muted mt-2">
