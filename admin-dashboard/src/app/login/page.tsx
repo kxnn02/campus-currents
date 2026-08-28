@@ -28,11 +28,26 @@ export default function LoginPage() {
         return;
       }
 
-      const { data, error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      // Sign in with one automatic retry on transient network/parse errors.
+      // The Supabase client throws "An unexpected response was received from the server"
+      // when it gets a non-JSON response (common on cold dev-server starts). This is not
+      // an auth rejection, so we retry once before surfacing it to the user.
+      let data: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>["data"] | null = null;
+      let signInError: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>["error"] = null;
+
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const result = await supabase.auth.signInWithPassword({ email, password });
+        data = result.data;
+        signInError = result.error;
+
+        // Retry only on transient (non-auth) errors — not on "Invalid login credentials"
+        const isTransient =
+          signInError &&
+          /unexpected response|network|fetch failed|failed to fetch/i.test(signInError.message ?? "");
+
+        if (!isTransient) break;
+        if (attempt === 0) await new Promise((r) => setTimeout(r, 800));
+      }
 
       if (signInError) {
         await recordLoginFailure();
@@ -45,7 +60,7 @@ export default function LoginPage() {
         return;
       }
 
-      if (data.user) {
+      if (data?.user) {
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("role")
