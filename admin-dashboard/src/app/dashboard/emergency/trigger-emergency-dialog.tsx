@@ -30,7 +30,10 @@ export function TriggerEmergencyDialog() {
   const [showPinConfirm, setShowPinConfirm] = useState(false);
   const [pin, setPin] = useState("");
   const [countdown, setCountdown] = useState(5);
-  const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
+  // Capture the field VALUES (not the FormData object) when the first step submits.
+  // The <form> unmounts when the PIN step shows, which empties a captured FormData —
+  // so we snapshot the values into state and rebuild FormData at send time.
+  const [pending, setPending] = useState<{ emergency_type: string; title: string; instructions: string } | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const canConfirm = countdown <= 0 && showPinConfirm;
@@ -56,24 +59,32 @@ export function TriggerEmergencyDialog() {
   }
 
   async function handleSubmit(formData: FormData) {
-    // Show PIN confirmation step
-    setPendingFormData(formData);
+    // Snapshot values now, while the form is still mounted.
+    setPending({
+      emergency_type: (formData.get("emergency_type") as string) ?? "",
+      title: (formData.get("title") as string) ?? "",
+      instructions: (formData.get("instructions") as string) ?? "",
+    });
     setShowPinConfirm(true);
     setPin("");
     startCountdown();
   }
 
   async function handleConfirmEmergency() {
-    if (!pendingFormData || pin.length < 4) return;
+    if (!pending || pin.length < 4) return;
     setLoading(true);
     try {
-      // Append PIN to the FormData before sending
-      pendingFormData.set("pin", pin);
-      await triggerEmergency(pendingFormData);
+      // Rebuild FormData from the snapshotted values + the PIN.
+      const fd = new FormData();
+      fd.set("emergency_type", pending.emergency_type);
+      fd.set("title", pending.title);
+      fd.set("instructions", pending.instructions);
+      fd.set("pin", pin);
+      await triggerEmergency(fd);
       toast.success("Emergency alert triggered — all students notified");
       setOpen(false);
       setShowPinConfirm(false);
-      setPendingFormData(null);
+      setPending(null);
       setPin("");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to trigger emergency";
@@ -86,7 +97,7 @@ export function TriggerEmergencyDialog() {
   function handleClose() {
     setOpen(false);
     setShowPinConfirm(false);
-    setPendingFormData(null);
+    setPending(null);
     setPin("");
     stopCountdown();
   }
