@@ -122,7 +122,22 @@ export function EmergencyProvider({ children }: { children: React.ReactNode }) {
       // Get the current user session
       const { data: sessionData } = await supabase.auth.getSession();
       const studentId = sessionData?.session?.user?.id;
-      if (!studentId) return;
+
+      // Guest (no session): we can't write a delivery_receipt (RLS requires student_id =
+      // auth.uid()). Don't silently no-op — persist the acknowledgment locally so the overlay
+      // dismisses and doesn't reappear, then let the UI route to the post-ack screen.
+      // ponytail: guest acks are local-only and never reach the accountability board — known
+      // ceiling; upgrade path is a signed-in-only overlay or an anonymous ack endpoint.
+      if (!studentId) {
+        await AsyncStorage.setItem(getAckStorageKey(emergency.id), JSON.stringify({ type }));
+        setState((prev) => ({
+          ...prev,
+          hasAcknowledged: true,
+          acknowledgmentType: type,
+          showOverlay: false,
+        }));
+        return;
+      }
 
       let success = false;
 
