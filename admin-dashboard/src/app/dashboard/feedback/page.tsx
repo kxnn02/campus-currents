@@ -4,35 +4,11 @@ import { MessageSquare, Star, ThumbsUp, ThumbsDown } from "lucide-react";
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-interface FeedbackEntry {
-  id: string;
-  rating: number;
-  liked_features: string[];
-  improvement_areas: string[];
-  comment: string | null;
-  would_recommend: "yes" | "no" | "maybe" | null;
-  device_info: { brand?: string; model?: string; os?: string; osVersion?: string | number };
-  app_version: string | null;
-  created_at: string;
-  profiles: { first_name: string | null; last_name: string | null; program: string | null; email: string };
-}
-
-const FEATURE_LABELS: Record<string, string> = {
-  feed: "📋 Feed",
-  status: "🏫 Status",
-  calendar: "📅 Calendar",
-  emergency: "🚨 Emergency",
-  push: "🔔 Push",
-  login: "🔑 Login",
-  design: "🎨 Design",
-  speed: "⚡ Speed",
-};
+import { FeedbackRow, FEATURE_LABELS, type FeedbackEntry } from "./feedback-row";
 
 export default async function FeedbackPage() {
   const supabase = await createClient();
@@ -76,7 +52,7 @@ export default async function FeedbackPage() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-[zinc-900]">User Feedback</h2>
         <p className="text-[zinc-500] mt-1">
-          Responses collected from the in-app feedback form.
+          Responses collected from the in-app feedback form. Click a row to see the full response.
         </p>
       </div>
 
@@ -169,66 +145,9 @@ export default async function FeedbackPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {entries.map((entry) => {
-                const name = [entry.profiles?.first_name, entry.profiles?.last_name].filter(Boolean).join(" ") || entry.profiles?.email || "—";
-                const stars = "★".repeat(entry.rating) + "☆".repeat(5 - entry.rating);
-                const device = entry.device_info?.model
-                  ? `${entry.device_info.brand ?? ""} ${entry.device_info.model}`
-                  : "—";
-                const date = new Date(entry.created_at).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                });
-
-                return (
-                  <TableRow key={entry.id}>
-                    <TableCell>
-                      <div>
-                        <p className="text-sm font-medium text-[zinc-900]">{name}</p>
-                        <p className="text-[10px] text-[zinc-500]">{entry.profiles?.program || "Guest"}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-amber-500 text-sm">{stars}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1 max-w-[140px]">
-                        {entry.liked_features?.map((f) => (
-                          <span key={f} className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded">{FEATURE_LABELS[f] ?? f}</span>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1 max-w-[140px]">
-                        {entry.improvement_areas?.map((f) => (
-                          <span key={f} className="text-[10px] bg-red-50 text-red-700 px-1.5 py-0.5 rounded">{FEATURE_LABELS[f] ?? f}</span>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`text-xs font-semibold ${
-                        entry.would_recommend === "yes" ? "text-green-600" :
-                        entry.would_recommend === "no" ? "text-red-600" : "text-amber-600"
-                      }`}>
-                        {entry.would_recommend ?? "—"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-xs text-[zinc-900] max-w-[200px] truncate" title={entry.comment ?? ""}>
-                        {entry.comment || "—"}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-[10px] text-[zinc-500]">{device}</p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-xs text-[zinc-500]">{date}</p>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {entries.map((entry) => (
+                <FeedbackRow key={entry.id} entry={entry} />
+              ))}
             </TableBody>
           </Table>
         </div>

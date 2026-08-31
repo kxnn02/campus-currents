@@ -79,15 +79,18 @@ export default function EmergencyOverlayScreen() {
   // Realtime listener: if admin resolves/cancels the emergency while student is on this overlay,
   // dismiss gracefully instead of leaving them stuck on a red screen.
   //
-  // NOTE: Channel name includes a unique suffix per effect instance to avoid
-  // "cannot add postgres_changes callbacks after subscribe()" errors caused by
-  // Supabase caching the channel object between rapid unmount/remount cycles.
-  const channelIdRef = useRef(0);
+  // The effect must depend ONLY on the emergency id. Depending on `router` re-ran this
+  // effect whenever expo-router handed back a new router identity (e.g. on a back press),
+  // tearing down and re-creating the channel within the same tick. Re-adding a
+  // 'postgres_changes' callback to a channel that supabase-js is still mid-subscribe on
+  // throws "cannot add postgres_changes callbacks after subscribe()". Holding router in a
+  // ref keeps the subscription stable for the life of the emergency.
+  const routerRef = useRef(router);
+  routerRef.current = router;
   useEffect(() => {
     if (!activeEmergency?.id) return;
 
-    channelIdRef.current += 1;
-    const channelName = `overlay-emergency-${activeEmergency.id}-${channelIdRef.current}`;
+    const channelName = `overlay-emergency-${activeEmergency.id}`;
 
     const channel = supabase
       .channel(channelName)
@@ -105,13 +108,13 @@ export default function EmergencyOverlayScreen() {
             Alert.alert(
               'ALL CLEAR',
               'The emergency has been resolved. It is now safe to move.',
-              [{ text: 'OK', onPress: () => router.replace('/(tabs)' as never) }]
+              [{ text: 'OK', onPress: () => routerRef.current.replace('/(tabs)' as never) }]
             );
           } else if (newRecord.status === 'false_alarm') {
             Alert.alert(
               'ALERT CANCELLED',
               'This was a false alarm. You may resume normal activities.',
-              [{ text: 'OK', onPress: () => router.replace('/(tabs)' as never) }]
+              [{ text: 'OK', onPress: () => routerRef.current.replace('/(tabs)' as never) }]
             );
           }
         }
@@ -121,7 +124,7 @@ export default function EmergencyOverlayScreen() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeEmergency?.id, router]);
+  }, [activeEmergency?.id]);
 
   // Handle "I'm Safe" press
   const handleSafe = useCallback(async () => {

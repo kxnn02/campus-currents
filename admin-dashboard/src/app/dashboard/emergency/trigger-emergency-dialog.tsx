@@ -60,11 +60,23 @@ export function TriggerEmergencyDialog() {
 
   async function handleSubmit(formData: FormData) {
     // Snapshot values now, while the form is still mounted.
-    setPending({
-      emergency_type: (formData.get("emergency_type") as string) ?? "",
-      title: (formData.get("title") as string) ?? "",
-      instructions: (formData.get("instructions") as string) ?? "",
-    });
+    const emergency_type = ((formData.get("emergency_type") as string) ?? "").trim();
+    const title = ((formData.get("title") as string) ?? "").trim();
+    const instructions = ((formData.get("instructions") as string) ?? "").trim();
+
+    // Validate here, before the PIN + countdown step — these mirror the server-side
+    // rules in triggerEmergency() so the user gets immediate feedback instead of a
+    // 500 error after sitting through the confirmation countdown.
+    if (title.length < 3) {
+      toast.error("Title must be at least 3 characters");
+      return;
+    }
+    if (instructions.length < 10) {
+      toast.error("Instructions must be at least 10 characters");
+      return;
+    }
+
+    setPending({ emergency_type, title, instructions });
     setShowPinConfirm(true);
     setPin("");
     startCountdown();
@@ -146,8 +158,9 @@ export function TriggerEmergencyDialog() {
                 <Textarea
                   id="instructions"
                   name="instructions"
-                  placeholder="Instructions for students..."
+                  placeholder="Instructions for students (at least 10 characters)..."
                   rows={4}
+                  minLength={10}
                   required
                 />
               </div>

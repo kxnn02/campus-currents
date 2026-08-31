@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { checkLoginRateLimit, recordLoginFailure, recordLoginSuccess } from "./actions";
 
 export default function LoginPage() {
@@ -10,7 +9,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const supabase = createClient();
 
   async function handleLogin(e: React.FormEvent) {
@@ -96,8 +94,15 @@ export default function LoginPage() {
 
         // Successful login — clear rate limit
         await recordLoginSuccess();
-        router.push("/dashboard");
-        router.refresh();
+
+        // Use a full-page navigation instead of router.push(). A soft (client-side)
+        // navigation fires the /dashboard request before the browser has committed the
+        // freshly-set auth cookies, so middleware/layout run getUser() with no session,
+        // bounce back to /login, and the user sees a spurious error. Reloading "fixes" it
+        // only because the cookie is present by then. A hard navigation guarantees the
+        // browser sends the new session cookie with the /dashboard request, closing the race.
+        window.location.assign("/dashboard");
+        return;
       }
     } catch (err) {
       console.error("Login error:", err);
