@@ -7,7 +7,6 @@ import {
   RefreshControl,
   ActivityIndicator,
   Pressable,
-  ScrollView,
   LayoutAnimation,
   Platform,
   UIManager,
@@ -205,15 +204,18 @@ export default function FeedScreen() {
     }
   };
 
-  // Filter chips component — extracted as stable component to avoid recreation on each render
+  // Filter chips component — extracted as stable component to avoid recreation on each render.
+  //
+  // These 4 chips are laid out as a static row (not a horizontal ScrollView). A nested
+  // horizontal ScrollView inside the FlatList's sticky header caused two bugs: the last
+  // chip ("Routine") sat off-screen and needed swiping, and once the feed scrolled the
+  // nested scroller lost its touch responder to the parent list so it couldn't be swiped
+  // at all. With a fixed, small set of options a plain flex row fits every screen and has
+  // no gesture conflict. If the option list ever grows past what fits, revisit this.
   const FilterChips = useMemo(() => {
     return (
       <View style={[styles.filterContainer, { backgroundColor: colors.background }]}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterScroll}
-        >
+        <View style={styles.filterRow}>
           {FILTER_OPTIONS.map((option) => {
             const isActive = activeFilter === option.key;
             const chipColor = getFilterChipColor(option.key);
@@ -242,13 +244,14 @@ export default function FeedScreen() {
                     styles.filterChipText,
                     { color: isActive ? chipColor : colors.textSecondary },
                   ]}
+                  numberOfLines={1}
                 >
                   {option.label}
                 </Text>
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
       </View>
     );
   }, [activeFilter, colors]);
@@ -545,15 +548,19 @@ const styles = StyleSheet.create({
     ...theme.typography.overline,
     letterSpacing: 0.8,
   },
-  filterScroll: {
+  filterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.sm,
+    gap: theme.spacing.xs,
   },
   filterChip: {
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: theme.spacing.xs + 2,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm + 2,
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.radius.full,
     borderWidth: 1,
